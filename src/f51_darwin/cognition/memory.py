@@ -142,7 +142,207 @@ class MemoryReadoutAdapter(nn.Module):
 # ── The organ ───────────────────────────────────────────────────────────────
 
 
-class UniversalMemory(nn.Module):
+
+class _MemoryPersistenceMixin:
+    """Snapshot e restauracao verificados do store de memoria.
+
+    Estes cinco metodos formam uma preocupacao unica: serializar o store e
+    recoloca-lo sob as MESMAS projecoes que o escreveram. Viviam dentro de
+    UniversalMemory ate 2026-07-31, quando os consertos de integridade a
+    levaram de 492 para 631 linhas contra um teto de 500.
+
+    Extrair em vez de aumentar o teto. O orcamento existe para forcar esta
+    separacao, e afroua-lo seria o gesto que o resto deste repositorio existe
+    para impedir. Fica no mesmo modulo porque depende de MemoryRecord e das
+    taxonomias declaradas acima; um modulo separado criaria import circular.
+    """
+    # ── persistence ──────────────────────────────────────────────────────
+
+    def encoder_snapshot(self) -> dict[str, Any]:
+        """Encoder weights plus their fingerprint, for exact restoration.
+
+        The memory store is only meaningful under the projections that wrote
+        it, so a durable memory needs a way to put those projections back.
+        """
+        return {
+            "fingerprint": self._encoder_fingerprint(),
+            "weights": {
+                name: tensor.detach().cpu().clone()
+                for name, tensor in self.state_dict().items()
+                if name.startswith(("key_encoder", "value_encoder"))
+            },
+        }
+
+    def restore_encoder(self, snapshot: Mapping[str, Any]) -> None:
+        """Restore encoder weights and verify the fingerprint matches.
+
+        Raises if restoration did not reproduce the recorded projections, so
+        a silent partial restore cannot pass as a successful one.
+        """
+        weights = snapshot.get("weights")
+        if not isinstance(weights, Mapping) or not weights:
+            raise ValueError("encoder snapshot carries no weights")
+        current = self.state_dict()
+        for name, tensor in weights.items():
+            if name not in current:
+                raise ValueError(f"encoder snapshot names unknown tensor {name!r}")
+            if tuple(current[name].shape) != tuple(tensor.shape):
+                raise ValueError(
+                    f"encoder snapshot shape mismatch on {name!r}: "
+                    f"{tuple(tensor.shape)} vs {tuple(current[name].shape)}"
+                )
+        with torch.no_grad():
+            for name, tensor in weights.items():
+                current[name].copy_(tensor.to(current[name].device))
+
+        expected = str(snapshot.get("fingerprint", ""))
+        if expected:
+            actual = self._encoder_fingerprint()
+            if actual != expected:
+                raise ValueError(
+                    f"encoder restore did not reproduce the recorded projections: "
+                    f"expected {expected[:16]}..., got {actual[:16]}..."
+                )
+
+    def _encoder_fingerprint(self) -> str:
+        """Digest of the projections that produced the stored key embeddings.
+
+        Keys are stored ENCODED. A snapshot restored into a module whose
+        key_encoder differs encodes the query with one projection and compares
+        it against keys written by another, which does not fail -- it returns
+        plausible, wrong scores. Measured: recall 1.0/1.0/1.0 became
+        -0.007/0.101/0.050 with records restored and encoders left fresh.
+        Binding the fingerprint into the snapshot turns that silent corruption
+        into a loud error.
+        """
+        digest = hashlib.sha256()
+        for name, tensor in sorted(self.state_dict().items()):
+            if not name.startswith(("key_encoder", "value_encoder")):
+                continue
+            data = tensor.detach().to(device="cpu").contiguous()
+            digest.update(name.encode("utf-8"))
+            digest.update(str(data.dtype).encode("ascii"))
+            digest.update(str(tuple(data.shape)).encode("ascii"))
+            digest.update(
+                memoryview(data.reshape(-1).view(torch.uint8).numpy()).cast("B")
+            )
+        return digest.hexdigest()
+
+    def memory_state_dict(self) -> dict[str, Any]:
+        """Serializable snapshot of the memory store."""
+        records_payload = []
+        for r in self._store.values():
+            records_payload.append({
+                "memory_id": r.memory_id,
+                "key_embedding": r.key_embedding.tolist(),
+                "value_embedding": r.value_embedding.tolist(),
+                "event_type": r.event_type,
+                "source_digest": r.source_digest,
+                "provenance": r.provenance,
+                "verification_state": r.verification_state,
+                "surprise": r.surprise,
+                "confidence": r.confidence,
+                "created_step": r.created_step,
+                "last_access_step": r.last_access_step,
+                "access_count": r.access_count,
+                "tags": list(r.tags),
+                "alt_keys": [k.tolist() for k in r.alt_keys],
+            })
+        payload: dict[str, Any] = {
+            "schema": MEMORY_STATE_SCHEMA,
+            "step_counter": self._step_counter,
+            "records": records_payload,
+            "encoder_fingerprint": self._encoder_fingerprint(),
+        }
+        payload["snapshot_sha256"] = canonical_sha256(payload)
+        return payload
+
+    def load_memory_state(
+        self,
+        state: Mapping[str, Any],
+        *,
+        verify: bool = True,
+    ) -> None:
+        """Restore memory store from a snapshot.
+
+        ``verify=True`` checks two things the snapshot already carried but
+        nothing enforced: that the payload matches its own digest, and that
+        the encoders in this module are the ones that wrote the keys. Pass
+        ``verify=False`` only to import a snapshot deliberately, accepting
+        that recall scores will be meaningless until the encoders are
+        restored with ``load_state_dict``.
+        """
+        if state.get("schema") != MEMORY_STATE_SCHEMA:
+            raise ValueError("unsupported memory state schema")
+
+        if verify:
+            declared = str(state.get("snapshot_sha256", ""))
+            recomputed = canonical_sha256(
+                {k: v for k, v in state.items() if k != "snapshot_sha256"}
+            )
+            if not declared:
+                raise ValueError(
+                    "memory snapshot carries no snapshot_sha256; refusing to "
+                    "load unverifiable state"
+                )
+            if declared != recomputed:
+                raise ValueError(
+                    f"memory snapshot digest mismatch: declared {declared[:16]}... "
+                    f"but content hashes to {recomputed[:16]}..."
+                )
+
+            stored_fp = state.get("encoder_fingerprint")
+            if stored_fp is not None:
+                current_fp = self._encoder_fingerprint()
+                if stored_fp != current_fp:
+                    raise ValueError(
+                        "memory snapshot was written by different encoders "
+                        f"({str(stored_fp)[:16]}... vs {current_fp[:16]}...). "
+                        "Restore the module weights with load_state_dict before "
+                        "load_memory_state, or pass verify=False to accept "
+                        "meaningless recall scores."
+                    )
+
+        self._store.clear()
+        self._step_counter = int(state.get("step_counter", 0))
+        for raw in state.get("records", []):
+            rid = str(raw["memory_id"])
+            # O carregamento reconstroi registros sem passar pelo funil de
+            # escrita, entao um snapshot estrangeiro poderia injetar valores
+            # fora da taxonomia e produzir registros invisiveis aos filtros.
+            raw_prov = str(raw.get("provenance", "model_quarantine"))
+            raw_state = str(raw.get("verification_state", "unverified"))
+            if raw_prov not in PROVENANCE_VALUES:
+                raise ValueError(
+                    f"record {rid}: provenance {raw_prov!r} outside "
+                    f"{sorted(PROVENANCE_VALUES)}"
+                )
+            if raw_state not in VERIFICATION_STATES:
+                raise ValueError(
+                    f"record {rid}: verification_state {raw_state!r} outside "
+                    f"{sorted(VERIFICATION_STATES)}"
+                )
+            self._store[rid] = MemoryRecord(
+                memory_id=rid,
+                key_embedding=torch.tensor(raw["key_embedding"], dtype=torch.float32),
+                value_embedding=torch.tensor(raw["value_embedding"], dtype=torch.float32),
+                event_type=str(raw["event_type"]),
+                source_digest=str(raw.get("source_digest", "")),
+                provenance=str(raw.get("provenance", "model_quarantine")),
+                verification_state=str(raw.get("verification_state", "unverified")),
+                surprise=float(raw.get("surprise", 0.0)),
+                confidence=float(raw.get("confidence", 0.0)),
+                created_step=int(raw.get("created_step", 0)),
+                last_access_step=int(raw.get("last_access_step", 0)),
+                access_count=int(raw.get("access_count", 0)),
+                tags=tuple(raw.get("tags", ())),
+                alt_keys=tuple(
+                    torch.tensor(k, dtype=torch.float32)
+                    for k in raw.get("alt_keys", ())
+                ),
+            )
+
+class UniversalMemory(_MemoryPersistenceMixin, nn.Module):
     """Associative memory organ with learned key/value projection and readout.
 
     Writes are gated by three independent triggers (explicit_teaching,
@@ -576,191 +776,6 @@ class UniversalMemory(nn.Module):
         report["total_after"] = len(self._store)
         return report
 
-    # ── persistence ──────────────────────────────────────────────────────
-
-    def encoder_snapshot(self) -> dict[str, Any]:
-        """Encoder weights plus their fingerprint, for exact restoration.
-
-        The memory store is only meaningful under the projections that wrote
-        it, so a durable memory needs a way to put those projections back.
-        """
-        return {
-            "fingerprint": self._encoder_fingerprint(),
-            "weights": {
-                name: tensor.detach().cpu().clone()
-                for name, tensor in self.state_dict().items()
-                if name.startswith(("key_encoder", "value_encoder"))
-            },
-        }
-
-    def restore_encoder(self, snapshot: Mapping[str, Any]) -> None:
-        """Restore encoder weights and verify the fingerprint matches.
-
-        Raises if restoration did not reproduce the recorded projections, so
-        a silent partial restore cannot pass as a successful one.
-        """
-        weights = snapshot.get("weights")
-        if not isinstance(weights, Mapping) or not weights:
-            raise ValueError("encoder snapshot carries no weights")
-        current = self.state_dict()
-        for name, tensor in weights.items():
-            if name not in current:
-                raise ValueError(f"encoder snapshot names unknown tensor {name!r}")
-            if tuple(current[name].shape) != tuple(tensor.shape):
-                raise ValueError(
-                    f"encoder snapshot shape mismatch on {name!r}: "
-                    f"{tuple(tensor.shape)} vs {tuple(current[name].shape)}"
-                )
-        with torch.no_grad():
-            for name, tensor in weights.items():
-                current[name].copy_(tensor.to(current[name].device))
-
-        expected = str(snapshot.get("fingerprint", ""))
-        if expected:
-            actual = self._encoder_fingerprint()
-            if actual != expected:
-                raise ValueError(
-                    f"encoder restore did not reproduce the recorded projections: "
-                    f"expected {expected[:16]}..., got {actual[:16]}..."
-                )
-
-    def _encoder_fingerprint(self) -> str:
-        """Digest of the projections that produced the stored key embeddings.
-
-        Keys are stored ENCODED. A snapshot restored into a module whose
-        key_encoder differs encodes the query with one projection and compares
-        it against keys written by another, which does not fail -- it returns
-        plausible, wrong scores. Measured: recall 1.0/1.0/1.0 became
-        -0.007/0.101/0.050 with records restored and encoders left fresh.
-        Binding the fingerprint into the snapshot turns that silent corruption
-        into a loud error.
-        """
-        digest = hashlib.sha256()
-        for name, tensor in sorted(self.state_dict().items()):
-            if not name.startswith(("key_encoder", "value_encoder")):
-                continue
-            data = tensor.detach().to(device="cpu").contiguous()
-            digest.update(name.encode("utf-8"))
-            digest.update(str(data.dtype).encode("ascii"))
-            digest.update(str(tuple(data.shape)).encode("ascii"))
-            digest.update(
-                memoryview(data.reshape(-1).view(torch.uint8).numpy()).cast("B")
-            )
-        return digest.hexdigest()
-
-    def memory_state_dict(self) -> dict[str, Any]:
-        """Serializable snapshot of the memory store."""
-        records_payload = []
-        for r in self._store.values():
-            records_payload.append({
-                "memory_id": r.memory_id,
-                "key_embedding": r.key_embedding.tolist(),
-                "value_embedding": r.value_embedding.tolist(),
-                "event_type": r.event_type,
-                "source_digest": r.source_digest,
-                "provenance": r.provenance,
-                "verification_state": r.verification_state,
-                "surprise": r.surprise,
-                "confidence": r.confidence,
-                "created_step": r.created_step,
-                "last_access_step": r.last_access_step,
-                "access_count": r.access_count,
-                "tags": list(r.tags),
-                "alt_keys": [k.tolist() for k in r.alt_keys],
-            })
-        payload: dict[str, Any] = {
-            "schema": MEMORY_STATE_SCHEMA,
-            "step_counter": self._step_counter,
-            "records": records_payload,
-            "encoder_fingerprint": self._encoder_fingerprint(),
-        }
-        payload["snapshot_sha256"] = canonical_sha256(payload)
-        return payload
-
-    def load_memory_state(
-        self,
-        state: Mapping[str, Any],
-        *,
-        verify: bool = True,
-    ) -> None:
-        """Restore memory store from a snapshot.
-
-        ``verify=True`` checks two things the snapshot already carried but
-        nothing enforced: that the payload matches its own digest, and that
-        the encoders in this module are the ones that wrote the keys. Pass
-        ``verify=False`` only to import a snapshot deliberately, accepting
-        that recall scores will be meaningless until the encoders are
-        restored with ``load_state_dict``.
-        """
-        if state.get("schema") != MEMORY_STATE_SCHEMA:
-            raise ValueError("unsupported memory state schema")
-
-        if verify:
-            declared = str(state.get("snapshot_sha256", ""))
-            recomputed = canonical_sha256(
-                {k: v for k, v in state.items() if k != "snapshot_sha256"}
-            )
-            if not declared:
-                raise ValueError(
-                    "memory snapshot carries no snapshot_sha256; refusing to "
-                    "load unverifiable state"
-                )
-            if declared != recomputed:
-                raise ValueError(
-                    f"memory snapshot digest mismatch: declared {declared[:16]}... "
-                    f"but content hashes to {recomputed[:16]}..."
-                )
-
-            stored_fp = state.get("encoder_fingerprint")
-            if stored_fp is not None:
-                current_fp = self._encoder_fingerprint()
-                if stored_fp != current_fp:
-                    raise ValueError(
-                        "memory snapshot was written by different encoders "
-                        f"({str(stored_fp)[:16]}... vs {current_fp[:16]}...). "
-                        "Restore the module weights with load_state_dict before "
-                        "load_memory_state, or pass verify=False to accept "
-                        "meaningless recall scores."
-                    )
-
-        self._store.clear()
-        self._step_counter = int(state.get("step_counter", 0))
-        for raw in state.get("records", []):
-            rid = str(raw["memory_id"])
-            # O carregamento reconstroi registros sem passar pelo funil de
-            # escrita, entao um snapshot estrangeiro poderia injetar valores
-            # fora da taxonomia e produzir registros invisiveis aos filtros.
-            raw_prov = str(raw.get("provenance", "model_quarantine"))
-            raw_state = str(raw.get("verification_state", "unverified"))
-            if raw_prov not in PROVENANCE_VALUES:
-                raise ValueError(
-                    f"record {rid}: provenance {raw_prov!r} outside "
-                    f"{sorted(PROVENANCE_VALUES)}"
-                )
-            if raw_state not in VERIFICATION_STATES:
-                raise ValueError(
-                    f"record {rid}: verification_state {raw_state!r} outside "
-                    f"{sorted(VERIFICATION_STATES)}"
-                )
-            self._store[rid] = MemoryRecord(
-                memory_id=rid,
-                key_embedding=torch.tensor(raw["key_embedding"], dtype=torch.float32),
-                value_embedding=torch.tensor(raw["value_embedding"], dtype=torch.float32),
-                event_type=str(raw["event_type"]),
-                source_digest=str(raw.get("source_digest", "")),
-                provenance=str(raw.get("provenance", "model_quarantine")),
-                verification_state=str(raw.get("verification_state", "unverified")),
-                surprise=float(raw.get("surprise", 0.0)),
-                confidence=float(raw.get("confidence", 0.0)),
-                created_step=int(raw.get("created_step", 0)),
-                last_access_step=int(raw.get("last_access_step", 0)),
-                access_count=int(raw.get("access_count", 0)),
-                tags=tuple(raw.get("tags", ())),
-                alt_keys=tuple(
-                    torch.tensor(k, dtype=torch.float32)
-                    for k in raw.get("alt_keys", ())
-                ),
-            )
 
     @property
     def slot_count(self) -> int:

@@ -62,16 +62,42 @@
       "function_lines": 180
     },
     "exceptions": [
-      "src/f51_darwin/organism/bootstrap.py:_DarwinBootstrapMixin",
-      "src/f51_darwin/organism/lifecycle.py:_DarwinLifecycleMixin",
-      "src/f51_darwin/organism/training.py:_DarwinTrainingMixin",
-      "src/f51_darwin/darwin_x_core/moe.py",
+      "research/benchmark_native_ttm_recall.py",
+      "research/benchmark_native_ttm_recall.py:run_benchmark",
+      "research/discover_fact_channels.py:main",
+      "research/full_holdout_eval.py:main",
+      "research/gradient_attribution.py:measure_noise_floor",
+      "research/probe_training_distribution.py:main",
+      "research/rome_identity_edit_instruct.py:main",
+      "research/run_two_donor_canary.py:_run_guarded_stack_canary",
+      "research/run_two_donor_canary.py:main",
+      "research/train_darwin_transfer.py:main",
+      "research/train_memory_real.py:main",
+      "research/transplant_facts.py:main",
+      "scripts",
+      "src/f51_darwin/circuits/ablation.py",
+      "src/f51_darwin/circuits/ablation.py:run_paired_ablation",
+      "src/f51_darwin/circuits/pointer.py:publish_active_pointer",
+      "src/f51_darwin/darwin_x_core/model.py",
+      "src/f51_darwin/darwin_x_core/model.py:_ModelForwardMixin",
       "src/f51_darwin/darwin_x_core/model.py:forward",
+      "src/f51_darwin/darwin_x_core/moe.py",
+      "src/f51_darwin/dashboard/data_layer.py",
+      "src/f51_darwin/organism/bootstrap.py:_DarwinBootstrapMixin",
+      "src/f51_darwin/organism/bootstrap.py:_restore_resume",
       "src/f51_darwin/organism/causal_bus.py:decide",
+      "src/f51_darwin/organism/causal_ledger.py",
       "src/f51_darwin/organism/checkpoint_mixin.py:_save_cycle",
+      "src/f51_darwin/organism/lifecycle.py:_DarwinLifecycleMixin",
       "src/f51_darwin/organism/lifecycle.py:_execute_structural_boundary",
+      "src/f51_darwin/organism/training.py:_DarwinTrainingMixin",
       "src/f51_darwin/organism/training.py:_train_cycle",
+      "src/f51_darwin/transfer/checkpoint.py",
+      "src/f51_darwin/transplant/checkpoint.py",
+      "src/f51_darwin/transplant/recipient.py:forward",
+      "src/f51_darwin/transplant_16b/assembly.py",
       "src/f51_darwin/transplant_16b/assembly.py:build_native_transplant",
+      "src/tools/darwin_dashboard_web.py",
       "src/tools/gradient_diagnostics.py:main"
     ]
   },
@@ -281,6 +307,10 @@
       "classification": "research"
     },
     {
+      "path": "research/graft_cross_family.py",
+      "classification": "research"
+    },
+    {
       "path": "research/grow_model.py",
       "classification": "research"
     },
@@ -374,6 +404,10 @@
     },
     {
       "path": "research/quick_validate_v2.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/reassemble_certified.py",
       "classification": "research"
     },
     {
@@ -529,6 +563,10 @@
       "classification": "research"
     },
     {
+      "path": "research/transplant_facts.py",
+      "classification": "research"
+    },
+    {
       "path": "research/transplant_internal_layer.py",
       "classification": "research"
     },
@@ -585,24 +623,8 @@
       "classification": "research"
     },
     {
-      "path": "src/scripts/analyze_architecture_gap.py",
-      "classification": "maintenance"
-    },
-    {
-      "path": "src/scripts/analyze_spider_contamination.py",
-      "classification": "maintenance"
-    },
-    {
       "path": "src/scripts/bob.ps1",
       "classification": "supported"
-    },
-    {
-      "path": "src/scripts/check_github.py",
-      "classification": "maintenance"
-    },
-    {
-      "path": "src/scripts/check_repo.py",
-      "classification": "maintenance"
     },
     {
       "path": "src/scripts/darwin_inventory.py",
@@ -619,10 +641,6 @@
     {
       "path": "src/scripts/inspect_organism_checkpoint.py",
       "classification": "supported"
-    },
-    {
-      "path": "src/scripts/list_repos.py",
-      "classification": "maintenance"
     },
     {
       "path": "src/scripts/serve_davi.py",
@@ -646,6 +664,14 @@
     },
     {
       "path": "src/tools/adapt_checkpoint_darwin_x.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/analyze_architecture_gap.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/analyze_spider_contamination.py",
       "classification": "maintenance"
     },
     {
@@ -709,6 +735,10 @@
       "classification": "maintenance"
     },
     {
+      "path": "src/tools/check_github.py",
+      "classification": "maintenance"
+    },
+    {
       "path": "src/tools/check_nitro_runtime.py",
       "classification": "maintenance"
     },
@@ -726,6 +756,10 @@
     },
     {
       "path": "src/tools/check_python_compilation.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_repo.py",
       "classification": "maintenance"
     },
     {
@@ -826,6 +860,10 @@
     },
     {
       "path": "src/tools/isolate_100m_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/list_repos.py",
       "classification": "maintenance"
     },
     {

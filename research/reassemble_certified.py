@@ -44,16 +44,18 @@ import torch
 from torch.nn import functional as F
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
 
-from f51_darwin.transplant_16b.ledger import (  # noqa: E402
+# Sem mutacao de sys.path: o pacote e instalado em modo editavel
+# (pyproject: where = ["src"]) e o pytest recebe pythonpath = ["src"], entao
+# f51_darwin importa direto. Inserir src/ no path manualmente e o que
+# check_architecture_boundaries sinaliza como sys_path_mutation, e com razao:
+# mascara um ambiente mal instalado em vez de falhar nele.
+from f51_darwin.transplant_16b.ledger import (
     CoverageLedger,
     CoverageRecord,
     DriftRecord,
 )
-from f51_darwin.transplant_16b.selection import (  # noqa: E402
+from f51_darwin.transplant_16b.selection import (
     Provenance,
     tensor_digest,
     verify_inheritance,
