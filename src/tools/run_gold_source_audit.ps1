@@ -13,6 +13,7 @@ $Root = (Resolve-Path -LiteralPath $Root).Path
 $started = (Get-Date).ToUniversalTime()
 $previousCuda = [Environment]::GetEnvironmentVariable("CUDA_VISIBLE_DEVICES", "Process")
 $previousPycache = [Environment]::GetEnvironmentVariable("PYTHONPYCACHEPREFIX", "Process")
+$previousPythonPath = [Environment]::GetEnvironmentVariable("PYTHONPATH", "Process")
 
 function Get-RedactedTail {
     param([string]$Text)
@@ -116,6 +117,13 @@ try {
         (Join-Path $Root "workspace\runtime\cache\gold-source-$PID"),
         "Process"
     )
+    $sourcePath = Join-Path $Root "src"
+    $auditPythonPath = if ($previousPythonPath) {
+        "$sourcePath$([System.IO.Path]::PathSeparator)$previousPythonPath"
+    } else {
+        $sourcePath
+    }
+    [Environment]::SetEnvironmentVariable("PYTHONPATH", $auditPythonPath, "Process")
     Push-Location $Root
     try {
         $sourceCommit = (& git rev-parse HEAD).Trim()
@@ -237,4 +245,5 @@ try {
 } finally {
     [Environment]::SetEnvironmentVariable("CUDA_VISIBLE_DEVICES", $previousCuda, "Process")
     [Environment]::SetEnvironmentVariable("PYTHONPYCACHEPREFIX", $previousPycache, "Process")
+    [Environment]::SetEnvironmentVariable("PYTHONPATH", $previousPythonPath, "Process")
 }

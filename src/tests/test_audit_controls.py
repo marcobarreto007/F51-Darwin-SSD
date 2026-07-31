@@ -93,6 +93,7 @@ def test_ci_is_windows_pinned_and_runs_all_source_gates() -> None:
         assert token in ci
     for token in (
         "CUDA_VISIBLE_DEVICES",
+        "PYTHONPATH",
         "pytest",
         "py_compile",
         "Parser]::ParseFile",

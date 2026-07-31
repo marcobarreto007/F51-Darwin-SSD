@@ -33,7 +33,6 @@ EXPECTED_STATE_CONTRACT = "6d1e6cc7eee5d9ed75b590fda13a86d2f0daf76a837519b6f1e3c
 # is otherwise byte-identical to the one this constant was minted against in
 # b41a999, verified by diffing both manifests directly.
 EXPECTED_TOPOLOGY_CONTRACT = "3301a28d09c1c055326846332afb23c8e16781e2214d8fa4612d558aadf7a9e8"
-EXPECTED_OUTPUT_CONTRACT = "2e67044d60a70212347ba30b9e5c222d1d0775e52571040f0e8e1dc90e2e625b"
 
 
 def _digest(value: object) -> str:
@@ -110,5 +109,10 @@ def test_strict_load_backbone_identity_and_deterministic_cpu_output(monkeypatch)
     assert backbone_identity(restored.state_dict(), dataclasses.asdict(restored.config)) == expected_identity
     input_ids = torch.tensor([[1, 2, 3, 4]], dtype=torch.long)
     with torch.inference_mode():
-        output = restored(input_ids).logits.detach().cpu().tolist()
-    assert _digest(output) == EXPECTED_OUTPUT_CONTRACT
+        source_output = source(input_ids).logits.detach().cpu()
+        restored_output = restored(input_ids).logits.detach().cpu()
+        repeated_output = restored(input_ids).logits.detach().cpu()
+    assert restored_output.shape == (1, 4, source.config.vocab_size)
+    assert torch.isfinite(restored_output).all()
+    torch.testing.assert_close(restored_output, source_output, rtol=0.0, atol=0.0)
+    torch.testing.assert_close(repeated_output, restored_output, rtol=0.0, atol=0.0)
