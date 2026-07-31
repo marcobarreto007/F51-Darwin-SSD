@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -69,6 +70,14 @@ def test_exact_supported_entrypoint_contract() -> None:
     assert all((ROOT / path).is_file() for path in supported)
     forbidden = ("cloud", "rental", "sync", "pull", "2.5b", "_5b")
     assert not [path for path in supported if any(word in path.lower() for word in forbidden)]
+
+
+def test_bob_requires_runtime_credential_without_embedding_it() -> None:
+    text = (ROOT / "src/scripts/bob.ps1").read_text(encoding="utf-8")
+    assert 'GetEnvironmentVariable(\n    "ANTHROPIC_API_KEY"' in text
+    assert "ANTHROPIC_API_KEY must be set" in text
+    assignments = re.findall(r'(?m)^\$env:ANTHROPIC_API_KEY\s*=\s*(.+)$', text)
+    assert assignments == ["$anthropicApiKey"]
 
 
 def test_internal_gold_target_owns_exact_script_surface() -> None:
