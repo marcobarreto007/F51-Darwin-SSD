@@ -7,6 +7,7 @@ import importlib.util
 
 _TRANSPLANT_TESTS = [
     "test_circuit_ablation_runtime.py",
+    "test_circuit_ablation_tap.py",
     "test_circuit_compatibility.py",
     "test_circuit_ledger_pointer.py",
     "test_circuit_package.py",
