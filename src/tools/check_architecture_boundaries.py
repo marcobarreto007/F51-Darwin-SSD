@@ -191,6 +191,50 @@ def _file_size_findings(
     return findings
 
 
+def _checkpoint_findings(
+    root: Path,
+    boundary: dict[str, object],
+    parsed: dict[Path, ast.AST],
+) -> list[dict[str, object]]:
+    checkpoint = boundary.get("checkpoint_authority", {})
+    if not isinstance(checkpoint, dict):
+        return []
+    findings: list[dict[str, object]] = []
+    authority = str(checkpoint.get("path", ""))
+    delegated_strict_loaders = {
+        str(item) for item in checkpoint.get("delegated_strict_loaders", [])
+    }
+    if not (root / authority).is_file():
+        findings.append(_finding("checkpoint_authority_missing", authority))
+    strict_roots = [
+        str(item) for item in checkpoint.get("strict_false_forbidden_roots", [])
+    ]
+    for path in _python_files(root, strict_roots):
+        tree = parsed.get(path)
+        if tree is None:
+            try:
+                tree = ast.parse(_source(path))
+            except SyntaxError:
+                continue
+        has_load = False
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            function = node.func
+            if not isinstance(function, ast.Attribute) or function.attr != "load_state_dict":
+                continue
+            has_load = True
+            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and node.args[1].value is False:
+                findings.append(_finding("permissive_checkpoint_load", path.relative_to(root).as_posix(), line=node.lineno))
+            for keyword in node.keywords:
+                if keyword.arg == "strict" and isinstance(keyword.value, ast.Constant) and keyword.value.value is False:
+                    findings.append(_finding("permissive_checkpoint_load", path.relative_to(root).as_posix(), line=node.lineno))
+        relative = path.relative_to(root).as_posix()
+        if has_load and "checkpoint" in path.stem and relative != authority and relative not in delegated_strict_loaders:
+            findings.append(_finding("checkpoint_authority_duplicate", relative))
+    return findings
+
+
 def evaluate(root: Path = ROOT) -> dict[str, object]:
     root = root.resolve()
     policy_file = root / POLICY_PATH
@@ -340,34 +384,7 @@ def evaluate(root: Path = ROOT) -> dict[str, object]:
                     )
                 )
 
-    checkpoint = boundary.get("checkpoint_authority", {})
-    if isinstance(checkpoint, dict):
-        authority = str(checkpoint.get("path", ""))
-        if not (root / authority).is_file():
-            findings.append(_finding("checkpoint_authority_missing", authority))
-        strict_roots = [str(item) for item in checkpoint.get("strict_false_forbidden_roots", [])]
-        for path in _python_files(root, strict_roots):
-            tree = parsed.get(path)
-            if tree is None:
-                try:
-                    tree = ast.parse(_source(path))
-                except SyntaxError:
-                    continue
-            has_load = False
-            for node in ast.walk(tree):
-                if not isinstance(node, ast.Call):
-                    continue
-                function = node.func
-                if isinstance(function, ast.Attribute) and function.attr == "load_state_dict":
-                    has_load = True
-                    if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and node.args[1].value is False:
-                        findings.append(_finding("permissive_checkpoint_load", path.relative_to(root).as_posix(), line=node.lineno))
-                    for keyword in node.keywords:
-                        if keyword.arg == "strict" and isinstance(keyword.value, ast.Constant) and keyword.value.value is False:
-                            findings.append(_finding("permissive_checkpoint_load", path.relative_to(root).as_posix(), line=node.lineno))
-            relative = path.relative_to(root).as_posix()
-            if has_load and "checkpoint" in path.stem and relative != authority:
-                findings.append(_finding("checkpoint_authority_duplicate", relative))
+    findings.extend(_checkpoint_findings(root, boundary, parsed))
 
     findings.sort(key=lambda item: (str(item.get("type")), str(item.get("path")), int(item.get("line", 0))))
     return {"status": "pass" if not findings else "fail", "findings": findings}

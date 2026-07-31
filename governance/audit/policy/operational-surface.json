@@ -51,6 +51,10 @@
     },
     "checkpoint_authority": {
       "path": "src/f51_darwin/organism/checkpoint.py",
+      "delegated_strict_loaders": [
+        "src/f51_darwin/transfer/checkpoint.py",
+        "src/f51_darwin/transplant/checkpoint.py"
+      ],
       "strict_false_forbidden_roots": [
         "src/f51_darwin"
       ]
@@ -73,7 +77,6 @@
       "research/run_two_donor_canary.py:main",
       "research/train_darwin_transfer.py:main",
       "research/train_memory_real.py:main",
-      "research/transplant_facts.py:main",
       "scripts",
       "src/f51_darwin/circuits/ablation.py",
       "src/f51_darwin/circuits/ablation.py:run_paired_ablation",
@@ -560,10 +563,6 @@
     },
     {
       "path": "research/transplant_domain.py",
-      "classification": "research"
-    },
-    {
-      "path": "research/transplant_facts.py",
       "classification": "research"
     },
     {

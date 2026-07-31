@@ -149,6 +149,34 @@ def test_canonical_config_and_checkpoint_authority_fail_closed(tmp_path: Path) -
     assert {"canonical_config_mismatch", "permissive_checkpoint_load"} <= _types(root)
 
 
+def test_only_declared_strict_checkpoint_loaders_may_delegate(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    policy_path = root / "governance/audit/policy/operational-surface.json"
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["gold_boundaries"]["checkpoint_authority"]["delegated_strict_loaders"] = [
+        "src/f51_darwin/delegated_checkpoint.py"
+    ]
+    policy_path.write_text(json.dumps(policy), encoding="utf-8")
+    delegated = root / "src/f51_darwin/delegated_checkpoint.py"
+    delegated.write_text(
+        "def load(model, state):\n    return model.load_state_dict(state, strict=True)\n",
+        encoding="utf-8",
+    )
+    undeclared = root / "src/f51_darwin/rogue_checkpoint.py"
+    undeclared.write_text(
+        "def load(model, state):\n    return model.load_state_dict(state, strict=True)\n",
+        encoding="utf-8",
+    )
+    findings = evaluate(root)["findings"]
+    duplicates = {
+        finding["path"]
+        for finding in findings
+        if finding["type"] == "checkpoint_authority_duplicate"
+    }
+    assert "src/f51_darwin/delegated_checkpoint.py" not in duplicates
+    assert "src/f51_darwin/rogue_checkpoint.py" in duplicates
+
+
 def test_entrypoint_config_default_is_canonical(tmp_path: Path) -> None:
     root = _root(tmp_path)
     policy_path = root / "governance/audit/policy/operational-surface.json"

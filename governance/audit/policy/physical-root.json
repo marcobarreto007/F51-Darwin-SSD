@@ -43,11 +43,9 @@
   "required_root_entries": [
     ".git",
     ".github",
-    ".venv_nitro",
     "governance",
     "research",
-    "src",
-    "workspace"
+    "src"
   ],
   "forbidden_root_entries": [
     ".f51",
@@ -85,9 +83,9 @@
     "workspace/"
   ],
   "required_physical_directories": [
-    ".git",
-    ".venv_nitro",
-    "workspace"
+    "governance",
+    "research",
+    "src"
   ],
   "audit_tools": {
     "root": ".audit-tools",

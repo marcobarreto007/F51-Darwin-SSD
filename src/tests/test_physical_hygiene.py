@@ -75,6 +75,18 @@ def test_required_ignore_and_physical_directory_are_fail_closed(tmp_path: Path) 
     assert {"required_ignore_missing", "required_root_entry_missing"} <= _types(root)
 
 
+def test_ignored_runtime_directories_are_optional_in_clean_clone(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    policy_path = root / "governance/audit/policy/physical-root.json"
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["allowed_root_entries"].extend([".venv_nitro"])
+    policy["required_root_entries"].remove("workspace")
+    policy["required_physical_directories"].remove("workspace")
+    policy_path.write_text(json.dumps(policy), encoding="utf-8")
+    (root / "workspace").rmdir()
+    assert evaluate(root) == {"status": "pass", "findings": []}
+
+
 def test_physical_cli_exit_code_matches_json_status(tmp_path: Path) -> None:
     root = _root(tmp_path)
     command = [

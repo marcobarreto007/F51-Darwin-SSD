@@ -56,7 +56,10 @@ def test_live_classical_metadata_matches_physical_artifacts() -> None:
         pytest.skip(str(exc))
 
     corpus_dir = dataset_root / RAW_CLASSICAL_RELATIVE
-    manifest = json.loads((corpus_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest_path = corpus_dir / "manifest.json"
+    if not manifest_path.is_file():
+        pytest.skip(f"classical corpus manifest not present: {manifest_path}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     token_manifest = json.loads(
         (dataset_root / CLASSICAL_TOKEN_MANIFEST_RELATIVE).read_text(encoding="utf-8")
     )
