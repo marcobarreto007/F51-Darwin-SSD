@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://f51labs.local/schemas/supply-chain-index.schema.json",
+  "title": "F51 CPU audit supply-chain evidence index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema",
+    "hash_profile",
+    "generated_utc",
+    "target",
+    "artifacts",
+    "tooling",
+    "statement"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "schema": {"const": "governance/audit/schemas/supply-chain-index.schema.json"},
+    "hash_profile": {"const": "git-blob-text-lf-v1"},
+    "generated_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "target": {"const": "cpu-governance/audit/windows-amd64/cpython-3.12"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "content_mode", "blob_oid", "sha256"],
+        "properties": {
+          "path": {
+            "enum": [
+              ".github/workflows/ci.yml",
+              "governance/audit/policy/dependencies.json",
+              "governance/audit/sbom/cpu-audit-licenses.json",
+              "governance/audit/sbom/cpu-audit-vulnerabilities.json",
+              "governance/audit/sbom/cpu-audit.cyclonedx.json",
+              "governance/audit/schemas/supply-chain-index.schema.json",
+              "pyproject.toml",
+              "requirements-cpu-audit-dev.in",
+              "requirements-cpu-audit-dev.lock",
+              "requirements-cpu-audit.in",
+              "requirements-cpu-audit.lock",
+              "src/tools/check_dependency_policy.py"
+            ]
+          },
+          "content_mode": {"const": "git_blob_text_lf"},
+          "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "tooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pip_audit", "pip_licenses", "cyclonedx"],
+      "properties": {
+        "pip_audit": {
+          "const": {
+            "tool": "pip-audit",
+            "version": "2.10.1",
+            "command": [
+              "pip-audit",
+              "-r",
+              "requirements-cpu-audit-dev.lock",
+              "--require-hashes",
+              "--format",
+              "json"
+            ]
+          }
+        },
+        "pip_licenses": {
+          "const": {
+            "tool": "pip-licenses",
+            "version": "5.5.5",
+            "command": ["pip-licenses", "--format=json", "--with-urls"]
+          }
+        },
+        "cyclonedx": {
+          "const": {
+            "tool": "cyclonedx-py",
+            "version": "7.3.0",
+            "command": [
+              "cyclonedx-py",
+              "environment",
+              "--output-reproducible",
+              "--spec-version",
+              "1.6"
+            ]
+          }
+        }
+      }
+    },
+    "statement": {
+      "const": "Verdict is computed from artifact content and exact hashes; no handwritten pass field is authoritative."
+    }
+  }
+}

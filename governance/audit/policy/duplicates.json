@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "policy_id": "f51-darwin-duplicate-authority-v1",
+  "scope": "tracked_source_tree",
+  "hash_profile": "utf8-text-lf-or-binary-v1",
+  "historical_prefixes": [
+    "governance/archive/",
+    "governance/docs/_historico/"
+  ],
+  "canonical_documents": [
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "governance/docs/CANONICAL_MAP.md",
+    "governance/docs/operacao/STATUS_ATUAL.md",
+    "governance/docs/operacao/OPERACAO_SEGURA.md",
+    "governance/docs/arquitetura/IMPLEMENTACAO_ATUAL.md",
+    "governance/audit/README.md"
+  ],
+  "authority_claims": [
+    {
+      "id": "current_status",
+      "marker": "<!-- authority: current-status -->",
+      "path": "governance/docs/operacao/STATUS_ATUAL.md"
+    }
+  ],
+  "exact_duplicate_exceptions": [
+    {
+      "paths": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "content_mode": "utf8_text_lf",
+      "sha256": "b3e26ca750e9aa5fc64371b119ffd8134144b21b6dbe5805ff73596a3266cc48",
+      "category": "required_authority_mirror",
+      "justification": "Both filenames are required discovery surfaces for different agent runtimes; byte identity after rule-3 relaxation prevents authority drift."
+    }
+  ]
+}

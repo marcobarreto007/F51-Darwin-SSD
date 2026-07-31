@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "policy_id": "f51-darwin-source-distribution-v1",
+  "authority": "local_single_root_only",
+  "project": "f51-darwin-ssd",
+  "python": ">=3.12,<3.13",
+  "build": {
+    "backend": "setuptools.build_meta",
+    "requires": [
+      "setuptools==83.0.0"
+    ],
+    "offline": true,
+    "source": "immutable_git_archive",
+    "wheel_from_sdist": true,
+    "clean_worktree_required": true
+  },
+  "artifacts": {
+    "required": [
+      "sdist",
+      "py3-none-any wheel"
+    ],
+    "hash": "sha256",
+    "record_validation": true,
+    "common_payload_must_match": true,
+    "forbid_local_paths": true,
+    "forbid_runtime_state": true
+  },
+  "smoke": {
+    "fresh_venv": true,
+    "offline_install": true,
+    "dependencies_installed": false,
+    "cuda_visible_devices": "-1",
+    "checks": [
+      "import f51_darwin",
+      "python -m f51_darwin version",
+      "f51-darwin version",
+      "packaged Davi resource",
+      "torch not imported"
+    ]
+  }
+}

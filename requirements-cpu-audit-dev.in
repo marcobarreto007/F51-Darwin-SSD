@@ -1,0 +1,5 @@
+# CPU-safe source audit environment; exact direct pins.
+numpy==2.5.1
+PyYAML==6.0.3
+torch==2.13.0
+pytest==9.1.1

@@ -1,0 +1,687 @@
+﻿diff --git a/scripts/darwin_organism.py b/scripts/darwin_organism.py
+index 5302fdf..bba8943 100644
+--- a/scripts/darwin_organism.py
++++ b/scripts/darwin_organism.py
+@@ -36,7 +36,7 @@ Uso:
+ 
+ from __future__ import annotations
+ 
+-import argparse, json, math, os, sys, time, random, shutil
++import argparse, json, math, os, sys, time, random, shutil, signal, threading
+ from dataclasses import dataclass, field
+ from datetime import datetime, timezone
+ from pathlib import Path
+@@ -244,6 +244,119 @@ def migrate_adamw_state_with_new_baselines(
+     return inserted
+ 
+ 
++def _tensors_to_cpu(obj: Any) -> Any:
++    """Recursively detach+clone every tensor in a nested structure to CPU."""
++    if isinstance(obj, torch.Tensor):
++        return obj.detach().cpu().clone()
++    if isinstance(obj, dict):
++        return {key: _tensors_to_cpu(value) for key, value in obj.items()}
++    if isinstance(obj, list):
++        return [_tensors_to_cpu(value) for value in obj]
++    if isinstance(obj, tuple):
++        return tuple(_tensors_to_cpu(value) for value in obj)
++    return obj
++
++
++def _optimizer_state_to_cpu(optimizer: torch.optim.Optimizer) -> dict[str, Any]:
++    """Snapshot optimizer state_dict with every moment tensor detached on CPU.
++
++    The training loop keeps mutating the live optimizer; the async checkpoint
++    writer (R4) must receive tensors the next optimizer.step() cannot touch.
++    """
++    return _tensors_to_cpu(optimizer.state_dict())
++
++
++def remap_optimizer_state(
++    old_optimizer: torch.optim.Optimizer,
++    old_named_params: dict[str, torch.nn.Parameter],
++    new_optimizer: torch.optim.Optimizer,
++    new_named_params: dict[str, torch.nn.Parameter],
++) -> dict[str, int]:
++    """Carry AdamW moments across a topology change (prune/neurogenesis/expand).
++
++    PyTorch optimizers key per-parameter state by object identity, so a freshly
++    built optimizer starts empty.  The old moments are re-keyed by
++    ``(name, shape)`` and reattached to every parameter that survives unchanged:
++
++    * unchanged parameter -> moments preserved (exp_avg / exp_avg_sq / step)
++    * new parameter      -> left empty, lazily initialised on first step
++                            (neurogenesis / born experts)
++    * missing parameter  -> discarded (prune / apoptosis)
++    * reshaped parameter -> treated as new (expert expansion changes the shape)
++
++    This generalises ``migrate_adamw_state_with_new_baselines`` to arbitrary
++    topology edits, stopping the loss-spike caused by rebuilding AdamW cold
++    after every structural action.
++    """
++    old_state_by_key: dict[tuple[str, tuple[int, ...]], dict[str, Any]] = {}
++    for name, param in old_named_params.items():
++        state = old_optimizer.state.get(param)
++        if state:
++            old_state_by_key[(name, tuple(param.shape))] = dict(state)
++
++    preserved = 0
++    for name, new_param in new_named_params.items():
++        old_state = old_state_by_key.pop((name, tuple(new_param.shape)), None)
++        if old_state is None:
++            continue  # lazily initialised by the first optimizer.step()
++        cloned: dict[str, Any] = {}
++        for slot_name, value in old_state.items():
++            if isinstance(value, torch.Tensor):
++                cloned[slot_name] = value.detach().clone()
++            else:
++                cloned[slot_name] = value
++        new_optimizer.state[new_param] = cloned
++        preserved += 1
++
++    return {
++        "preserved": preserved,
++        "initialised": len(new_named_params) - preserved,
++        "dropped": len(old_state_by_key),
++    }
++
++
++def _write_checkpoint_file(payload: dict[str, Any], path: Path) -> None:
++    """Atomic checkpoint write: torch.save to .tmp, validate, os.replace."""
++    temporary_path = path.with_suffix(path.suffix + ".tmp")
++    torch.save(payload, temporary_path)
++    with temporary_path.open("rb") as stream:
++        checkpoint_magic = stream.read(4)
++    if checkpoint_magic != b"PK\x03\x04":
++        temporary_path.unlink(missing_ok=True)
++        raise RuntimeError("checkpoint validation failed before atomic publish")
++    os.replace(temporary_path, path)
++
++
++def _publish_checkpoint_pointer(
++    ckpt_dir: Path,
++    path: Path,
++    payload: dict[str, Any],
++    cycle: int,
++    step: int,
++    base_checkpoint_id: str,
++) -> None:
++    """Atomically publish organism_latest.json pointing at the saved cycle."""
++    pointer = ckpt_dir / "organism_latest.json"
++    pointer_tmp = pointer.with_suffix(pointer.suffix + ".tmp")
++    pointer_tmp.write_text(
++        json.dumps(
++            {
++                "version": 1,
++                "checkpoint_version": payload["version"],
++                "path": path.name,
++                "cycle": cycle,
++                "step": step,
++                "size_bytes": path.stat().st_size,
++                "base_checkpoint_id": base_checkpoint_id,
++                "saved_at": datetime.now(timezone.utc).isoformat(),
++            },
++            indent=2,
++        ),
++        encoding="utf-8",
++    )
++    os.replace(pointer_tmp, pointer)
++
++
+ def replay_step_due(step: int, ratio: float) -> bool:
+     """Deterministic scheduler with an exact long-run replay fraction."""
+     if step <= 0 or not 0.0 < ratio < 1.0:
+@@ -371,6 +484,14 @@ class DarwinOrganismConfig:
+     jepa_enabled: bool = True
+     curiosity_enabled: bool = True
+     spider_enabled: bool = True
++    # R2: linear LR warmup over N steps (0 disables). Critical right after an
++    # optimizer rebuild or a cold resume so the full LR never hits at once.
++    warmup_steps: int = 0
++    # R3: gradient accumulation micro-batches per optimizer.step().
++    accum_steps: int = 1
++    # R4: write the cycle .pt in a background thread so training is not stalled
++    # for minutes on the ~11 GB checkpoint of the 2.5B lineage.
++    async_checkpoint: bool = True
+ 
+ # ═══════════════════════════════════════════════════════════
+ # MODULE STATE — Now managed by ExpertPool + LegacyLayers + LineageTracker
+@@ -425,10 +546,17 @@ class DarwinOrganism:
+         self.resume_migration: dict[str, Any] | None = None
+         self.online_state_authoritative = False
+         self._last_tok_s: float = 0.0
++        # R4 (async checkpoint) + R5 (emergency save) bookkeeping.
++        self._save_thread: threading.Thread | None = None
++        self._save_error: Exception | None = None
++        self._emergency_save_requested: bool = False
++        self._last_saved_cycle: int | None = None
+ 
+     def bootstrap(self, token_bin: str = None, resume: str = None):
+         """Initialize all organs. Phase 0."""
+         print("🧬 BOOTSTRAP: Inicializando organismo...")
++        # R5: cooperative emergency-save on SIGINT/SIGTERM (main thread only).
++        self._install_signal_handlers()
+ 
+         # Tokenizer
+         tok_path = self.root / self.cfg.tokenizer_dir
+@@ -531,6 +659,11 @@ class DarwinOrganism:
+             self.start_step = int(training_state.get("step", organism_state.get("total_steps", 0)))
+             self.total_steps = self.start_step
+             self.cycle = int(training_state.get("cycle", organism_state.get("cycle", 0)))
++            # R2: honor the saved warmup ramp when the launcher did not pass
++            # --warmup-steps explicitly, so a cold resume still warms up.
++            saved_warmup = int(training_state.get("warmup_steps", 0))
++            if saved_warmup and not int(getattr(self.cfg, "warmup_steps", 0)):
++                self.cfg.warmup_steps = saved_warmup
+             print(
+                 f"   Resumed from cycle {self.cycle}, step {self.start_step} "
+                 f"(missing={len(incompatible.missing_keys)}, unexpected={len(incompatible.unexpected_keys)})"
+@@ -765,22 +898,43 @@ class DarwinOrganism:
+         # STAGE 7.5: Execute structural actions at SAFE boundary
+         # Expert birth/death/expansion MUST happen here — after optimizer.step(),
+         # before next forward. The autograd graph is gone, optimizer intact.
++        # R1: snapshot (name -> param) BEFORE the topology change so AdamW
++        # moments survive neurogenesis/pruning instead of being rebuilt cold.
++        named_params_fn = getattr(self.model, "named_parameters", None)
++        old_named_params = dict(named_params_fn()) if callable(named_params_fn) else {}
+         structural_report = self.model.execute_structural_actions()
+-        if any(r.get('pruned', 0) + r.get('expanded', 0) + r.get('neurogenesis', 0) > 0 for r in structural_report):
+-            # Rebuild optimizer after topology change
+-            old_lr = self.optimizer.param_groups[0]['lr']
+-            self.optimizer = torch.optim.AdamW(
++        topology_changed = any(
++            r.get('pruned', 0) + r.get('expanded', 0) + r.get('neurogenesis', 0) > 0
++            for r in structural_report
++        )
++        total_pruned = sum(r.get('pruned', 0) for r in structural_report)
++        total_expanded = sum(r.get('expanded', 0) for r in structural_report)
++        total_born = sum(r.get('neurogenesis', 0) for r in structural_report)
++        if topology_changed:
++            old_optimizer = self.optimizer
++            old_lr = old_optimizer.param_groups[0]['lr']
++            new_optimizer = torch.optim.AdamW(
+                 self.model.parameters(), lr=old_lr,
+                 weight_decay=self.cfg.weight_decay, fused=True,
+             )
+-            total_pruned = sum(r.get('pruned', 0) for r in structural_report)
+-            total_expanded = sum(r.get('expanded', 0) for r in structural_report)
+-            total_born = sum(r.get('neurogenesis', 0) for r in structural_report)
++            remap_stats = remap_optimizer_state(
++                old_optimizer,
++                old_named_params,
++                new_optimizer,
++                dict(self.model.named_parameters()),
++            )
++            self.optimizer = new_optimizer
++            # R2: a rebuilt optimizer loses its place in the warmup ramp, so
++            # re-apply the schedule from the current step.
++            self._apply_lr_schedule(self.total_steps)
+             if total_pruned: print(f"  ☠️  Apoptose: {total_pruned} experts removidos")
+             if total_expanded: print(f"  📈 Expansão: {total_expanded} experts cresceram")
+             if total_born: print(f"  🆕 Neurogênese: {total_born} experts nasceram")
+-            if total_pruned or total_expanded or total_born:
+-                print(f"  ⚡ Optimizer reconstruído após mudança de topologia")
++            print(
++                f"  ⚡ Topologia: {remap_stats['preserved']} momentos preservados, "
++                f"{remap_stats['initialised']} fresh (neurogênese/expansão), "
++                f"{remap_stats['dropped']} descartados (prune)"
++            )
+ 
+         # STAGE 8: Evolution — read neuroendocrine state instead of old predictors
+         self._evolution_cycle(report)
+@@ -941,8 +1095,24 @@ class DarwinOrganism:
+         fresh_train_count = 0
+         tokens_processed = 0
+         t0 = time.time()
++        # R3: gradient accumulation over N micro-batches (1 = legacy behaviour).
++        accum_steps = max(1, int(getattr(cfg, "accum_steps", 1)))
++        # R6: brainstem homeostasis guard (None when constructed via __new__).
++        brainstem = getattr(self, "brainstem", None)
++        # Start the first accumulation window with a clean grad buffer.
++        self.optimizer.zero_grad(set_to_none=True)
++        # Defaults so the report finalization is safe even when the loop exits
++        # before the first logging step (e.g. an R5 emergency break at step 1).
++        cur_lm = 0.0
++        cur_ppl = 0.0
+ 
+         for local_step in range(1, steps + 1):
++            # R5: honour an emergency-save request within ~1 step instead of
++            # losing up to steps_per_cycle of progress on crash/SIGTERM.
++            if getattr(self, "_emergency_save_requested", False):
++                print("  🧯 Emergency save requested — interrompendo ciclo.")
++                break
++
+             replay_batch = None
+             if (
+                 len(self.replay) >= cfg.replay_warmup_examples
+@@ -962,25 +1132,42 @@ class DarwinOrganism:
+                 self.optimizer.zero_grad(set_to_none=True)
+                 continue
+ 
+-            self.optimizer.zero_grad(set_to_none=True)
+-            loss.backward()
+-            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
+-            self.optimizer.step()
+-            apply_autonomic = getattr(model, "apply_pending_autonomic_actions", None)
+-            if callable(apply_autonomic):
+-                apply_autonomic()
+-
+             loss_val = float(loss.detach().cpu())
++
++            # R6: brainstem refuses to backpropagate pathological loss spikes
++            # (explosion/collapse). Reset the accumulation window and skip.
++            if brainstem is not None:
++                homeo = brainstem.check_loss(loss_val)
++                if not homeo.alive:
++                    for violation in homeo.violations:
++                        print(f"  🧠 BRAINSTEM (skip step): {violation}")
++                    self.optimizer.zero_grad(set_to_none=True)
++                    continue
++
++            # R2: linear LR warmup (no-op when warmup_steps <= 0).
++            self._apply_lr_schedule(self.total_steps)
++
++            # R3: scale loss so accumulated micro-batches average correctly,
++            # then step the optimizer only at the accumulation boundary.
++            (loss / accum_steps).backward()
++            optimizer_due = (local_step % accum_steps == 0) or (local_step == steps)
++            if optimizer_due:
++                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
++                self.optimizer.step()
++                self.optimizer.zero_grad(set_to_none=True)
++                apply_autonomic = getattr(model, "apply_pending_autonomic_actions", None)
++                if callable(apply_autonomic):
++                    apply_autonomic()
++                # A server controller may pause only once the optimizer step is
++                # complete; with accumulation that is every N micro-batches.
++                pause_checkpoint = getattr(self, "_runtime_pause_checkpoint", None)
++                if callable(pause_checkpoint):
++                    pause_checkpoint(model)
++
+             losses.append(loss_val)
+             tokens_processed += batch.numel()
+             self.total_steps += 1
+ 
+-            # A server controller may pause only after this optimizer step is
+-            # complete. The callback blocks until inference mode is released.
+-            pause_checkpoint = getattr(self, "_runtime_pause_checkpoint", None)
+-            if callable(pause_checkpoint):
+-                pause_checkpoint(model)
+-
+             # Track replay loss separately when replay was mixed in
+             if replay_batch is not None and output.lm_loss is not None:
+                 replay_train_losses.append(loss_val)
+@@ -1104,6 +1291,9 @@ class DarwinOrganism:
+ 
+     def _save_cycle(self, report: dict):
+         """Stages 9-10: Save state + checkpoint + legacy + lineage."""
++        # R4: never overlap two writers; surface any failure from the prior
++        # async save before building the next payload.
++        self._join_pending_save()
+         ckpt_dir = self.root / self.cfg.checkpoint_root
+         ckpt_dir.mkdir(parents=True, exist_ok=True)
+ 
+@@ -1151,7 +1341,9 @@ class DarwinOrganism:
+             "model_state_dict": model_state,
+             "topology_manifest": self.model.topology_manifest(),
+             "config": dict(self.model_config.__dict__),
+-            "optimizer_state_dict": self.optimizer.state_dict(),
++            # R4: deep-copy optimizer moments to CPU so the background writer
++            # cannot race the next optimizer.step().
++            "optimizer_state_dict": _optimizer_state_to_cpu(self.optimizer),
+             "optimizer_type": type(self.optimizer).__name__,
+             "heartbeat_state": heartbeat_state,
+             "rng_state": rng_state_dict(),
+@@ -1161,6 +1353,13 @@ class DarwinOrganism:
+             "training_state": {
+                 "step": self.total_steps,
+                 "cycle": self.cycle,
++                # R2: persist the warmup ramp so a resume stays faithful.
++                "warmup_steps": int(getattr(self.cfg, "warmup_steps", 0) or 0),
++                "warmup_remaining": max(
++                    0, int(getattr(self.cfg, "warmup_steps", 0) or 0) - self.total_steps
++                ),
++                # R3: persist accumulation width for reproducible resumes.
++                "accum_steps": int(getattr(self.cfg, "accum_steps", 1) or 1),
+             },
+             "token_source": token_source_state(
+                 getattr(self, "token_path", None), getattr(self, "token_count", 0)
+@@ -1178,45 +1377,39 @@ class DarwinOrganism:
+             },
+             "replay_buffer": self.replay.state_dict(),
+         }
+-        temporary_path = path.with_suffix(path.suffix + ".tmp")
+-        torch.save(payload, temporary_path)
+-        with temporary_path.open("rb") as stream:
+-            checkpoint_magic = stream.read(4)
+-        if checkpoint_magic != b"PK\x03\x04":
+-            temporary_path.unlink(missing_ok=True)
+-            raise RuntimeError("checkpoint validation failed before atomic publish")
+-        os.replace(temporary_path, path)
+         self.base_checkpoint_id = base_checkpoint_id
+ 
+-        pointer = ckpt_dir / "organism_latest.json"
+-        pointer_tmp = pointer.with_suffix(pointer.suffix + ".tmp")
+-        pointer_tmp.write_text(
+-            json.dumps(
+-                {
+-                    "version": 1,
+-                    "checkpoint_version": payload["version"],
+-                    "path": path.name,
+-                    "cycle": self.cycle,
+-                    "step": self.total_steps,
+-                    "size_bytes": path.stat().st_size,
+-                    "base_checkpoint_id": base_checkpoint_id,
+-                    "saved_at": datetime.now(timezone.utc).isoformat(),
+-                },
+-                indent=2,
+-            ),
+-            encoding="utf-8",
+-        )
+-        os.replace(pointer_tmp, pointer)
++        async_save = bool(getattr(self.cfg, "async_checkpoint", False))
++        if async_save:
++            # R4: the heavy torch.save + os.replace runs in a daemon thread so
++            # the next cycle can start training immediately. Captured scalars
++            # freeze cycle/step identity at save time.
++            thread = threading.Thread(
++                target=self._write_checkpoint_async,
++                args=(payload, path, ckpt_dir, base_checkpoint_id, self.cycle, self.total_steps),
++                daemon=True,
++                name=f"ckpt-cycle-{self.cycle}",
++            )
++            self._save_thread = thread
++            self._save_error = None
++            thread.start()
++            print(f"\n  💾 Checkpoint (async): gravando {path.name} em background")
++        else:
++            _write_checkpoint_file(payload, path)
++            _publish_checkpoint_pointer(
++                ckpt_dir, path, payload, self.cycle, self.total_steps, base_checkpoint_id
++            )
++            print(f"\n  💾 Checkpoint: {path.name}")
+ 
+-        # Persiste Legacy Layers e Lineage Report
++        # Persiste Legacy Layers e Lineage Report (fast, read by next cycle).
+         self.legacy.cycle = self.cycle
+         self.legacy.save()
+         self.lineage.save_report()
++        self._last_saved_cycle = self.cycle
+ 
+         # Checkpoints are scientific evidence. Preserve every published cycle;
+         # the pre-save headroom gate above stops the process before disk damage.
+ 
+-        print(f"\n  💾 Checkpoint: {path.name}")
+         print(f"  📊 Lineage: {self.lineage._total_births} nascidos, {self.lineage._total_deaths} mortos")
+         print(f"  🧬 {self.soul.family.mantra()}\n")
+ 
+@@ -1331,6 +1524,75 @@ class DarwinOrganism:
+             json.dumps(self.status(), indent=2) + "\n"
+         )
+ 
++    # ═══════════════════════════════════════════════════════════
++    # TRAINING PIPELINE PATCHES (R2/R4/R5)
++    # ═══════════════════════════════════════════════════════════
++
++    def _apply_lr_schedule(self, step: int) -> None:
++        """R2: linear warmup from ~0 to cfg.learning_rate; no-op if disabled.
++
++        Using ``step+1`` avoids a dead first update at lr=0 and reaches the
++        full LR exactly at the last warmup step. Re-applied after an optimizer
++        rebuild (R1) so a fresh optimizer never fires at the full LR mid-ramp.
++        """
++        warmup_steps = int(getattr(self.cfg, "warmup_steps", 0) or 0)
++        if warmup_steps <= 0:
++            return
++        base_lr = float(getattr(self.cfg, "learning_rate", self.optimizer.param_groups[0]["lr"]))
++        target_lr = base_lr if step >= warmup_steps else base_lr * float(step + 1) / float(warmup_steps)
++        for group in self.optimizer.param_groups:
++            group["lr"] = target_lr
++
++    def _join_pending_save(self) -> None:
++        """R4: block until the previous async checkpoint write finishes and
++        re-raise any error it captured. Safe to call when no write is pending."""
++        thread = getattr(self, "_save_thread", None)
++        if thread is not None and thread.is_alive():
++            thread.join()
++        self._save_thread = None
++        err = getattr(self, "_save_error", None)
++        if err is not None:
++            self._save_error = None
++            raise err
++
++    def _write_checkpoint_async(
++        self,
++        payload: dict[str, Any],
++        path: Path,
++        ckpt_dir: Path,
++        base_checkpoint_id: str,
++        cycle: int,
++        step: int,
++    ) -> None:
++        """R4: background writer target — atomic .pt + pointer publish."""
++        try:
++            _write_checkpoint_file(payload, path)
++            _publish_checkpoint_pointer(ckpt_dir, path, payload, cycle, step, base_checkpoint_id)
++        except Exception as exc:  # surfaced to the main thread on next join
++            self._save_error = exc
++
++    def _install_signal_handlers(self) -> None:
++        """R5: cooperative SIGINT/SIGTERM handling for emergency checkpointing.
++
++        The handler only flips a flag (async-signal safe); the training loop
++        checks it every step and breaks early so run_cycle saves partial state.
++        Falls back to KeyboardInterrupt when the platform rejects the handler.
++        """
++        self._emergency_save_requested = False
++
++        def _handler(signum, frame):
++            self._emergency_save_requested = True
++
++        for sig_name in ("SIGINT", "SIGTERM"):
++            sig = getattr(signal, sig_name, None)
++            if sig is None:
++                continue
++            try:
++                signal.signal(sig, _handler)
++            except (ValueError, OSError):
++                # Not in the main thread or unsupported on this platform.
++                pass
++
+ # ═══════════════════════════════════════════════════════════
+ # 24/7 HELPERS (Ported from organism_247.py)
+ # ═══════════════════════════════════════════════════════════
+@@ -1382,6 +1644,19 @@ def main():
+     )
+     parser.add_argument("--eval-every", type=int, default=500, help="Eval every N steps (run247)")
+     parser.add_argument("--lr", type=float, default=1.5e-4)
++    parser.add_argument(
++        "--warmup-steps",
++        type=int,
++        default=0,
++        help="Linear LR warmup over N steps; critical after a cold resume or "
++        "optimizer rebuild (0 disables).",
++    )
++    parser.add_argument(
++        "--accum-steps",
++        type=int,
++        default=1,
++        help="Gradient accumulation micro-batches per optimizer.step().",
++    )
+     parser.add_argument("--host", default="127.0.0.1", choices=["127.0.0.1", "localhost"])
+     parser.add_argument("--port", type=int, default=5151)
+     args = parser.parse_args()
+@@ -1416,6 +1691,8 @@ def main():
+         jepa_enabled=True,
+         curiosity_enabled=True,
+         spider_enabled=True,
++        warmup_steps=args.warmup_steps,
++        accum_steps=max(1, args.accum_steps),
+     )
+ 
+     org = DarwinOrganism(cfg, args.config)
+@@ -1469,9 +1746,14 @@ def main():
+         steps_since_math = 0
+         steps_since_generate = 0
+         math_discoveries = 0
++        report: dict = {}
+ 
+         try:
+             while True:
++                # R5: a SIGINT/SIGTERM flips this flag cooperatively; stop the
++                # 24/7 loop so the partial progress saved by run_cycle holds.
++                if getattr(org, "_emergency_save_requested", False):
++                    break
+                 # ── GHOST STREAM: Puxar dados novos do HuggingFace a cada 5 ciclos ──
+                 if org.cycle % 5 == 0:
+                     try:
+@@ -1540,14 +1822,29 @@ def main():
+                     f"loss={loss:.4f} active={active}🟢 died={died}☠️",
+                     flush=True,
+                 )
++                # R5: re-check after the cycle so a signal received during
++                # run_cycle still exits the 24/7 loop instead of starting a
++                # new cycle. run_cycle already saved the partial progress.
++                if getattr(org, "_emergency_save_requested", False):
++                    break
+ 
+         except KeyboardInterrupt:
+-            print("\n\n" + "─" * 60)
+-            print("  ORGANISMO PAUSADO")
+-            print(f"  Step final: {org.total_steps}")
+-            print(f"  Cycles: {org.cycle}")
+-            org._save_cycle(report)
+-            print("─" * 60)
++            # Fallback when the platform did not install the signal handler.
++            # run_cycle may have been interrupted mid-flight; ensure a save.
++            print("\n\n  ⚠️  KeyboardInterrupt — finalizando.")
++            try:
++                org._save_cycle(report)
++            except Exception as exc:
++                print(f"  ⚠️  save final falhou: {exc}")
++
++        # R4: guarantee the (possibly async) checkpoint reaches disk before
++        # the process exits, regardless of which path stopped the loop.
++        org._join_pending_save()
++        print("\n" + "─" * 60)
++        print("  ORGANISMO PAUSADO")
++        print(f"  Step final: {org.total_steps}")
++        print(f"  Cycles: {org.cycle}")
++        print("─" * 60)
+ 
+     return 0
+ 
+diff --git a/scripts/start_overnight_25b.ps1 b/scripts/start_overnight_25b.ps1
+index 15e7f34..dbcd444 100644
+--- a/scripts/start_overnight_25b.ps1
++++ b/scripts/start_overnight_25b.ps1
+@@ -7,6 +7,8 @@ param(
+     [int]$BlockSize = 64,
+     [int]$BatchSize = 1,
+     [double]$LearningRate = 0.00015,
++    [int]$WarmupSteps = 0,
++    [int]$AccumSteps = 1,
+     [int64]$MinimumModelParameters = 2400000000,
+     [int64]$MinimumCheckpointBytes = 4294967296,
+     [int]$StabilitySeconds = 15,
+@@ -127,6 +129,8 @@ $readiness = [ordered]@{
+     batch_size = $BatchSize
+     steps_per_cycle = $StepsPerCycle
+     learning_rate = $LearningRate
++    warmup_steps = $WarmupSteps
++    accum_steps = $AccumSteps
+ }
+ 
+ New-Item -ItemType Directory -Force -Path $manifestRoot | Out-Null
+@@ -158,6 +162,8 @@ $arguments = @(
+     "--block-size", [string]$BlockSize,
+     "--batch-size", [string]$BatchSize,
+     "--lr", [string]$LearningRate,
++    "--warmup-steps", [string]$WarmupSteps,
++    "--accum-steps", [string]$AccumSteps,
+     "--device", "cuda",
+     "--eval-every", [string]$StepsPerCycle
+ )
+diff --git a/tests/test_organism_causal_runtime.py b/tests/test_organism_causal_runtime.py
+index 58385e1..ba2b413 100644
+--- a/tests/test_organism_causal_runtime.py
++++ b/tests/test_organism_causal_runtime.py
+@@ -20,6 +20,7 @@ from scripts.darwin_organism import (
+     token_source_state,
+     validate_legacy_v6_resume,
+     migrate_adamw_state_with_new_baselines,
++    remap_optimizer_state,
+ )
+ 
+ 
+@@ -412,3 +413,70 @@ def test_v6_adamw_migration_preserves_old_momenta_and_adds_only_baseline() -> No
+     assert len(current_optimizer.state) == 2
+     baseline = current.block.moe.neuroendocrine.baseline_dopamine
+     assert baseline not in current_optimizer.state
++
++
++def test_remap_optimizer_state_preserves_unchanged_drops_pruned_inits_new() -> None:
++    """R1: topology change keeps AdamW moments for surviving parameters,
++    drops pruned ones, and leaves newborn ones for lazy initialisation."""
++
++    class OldModel(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.keep = nn.Linear(2, 2)
++            self.prune = nn.Linear(2, 2)
++
++    class NewModel(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.keep = nn.Linear(2, 2)
++            self.born = nn.Linear(2, 2)
++
++    old_model = OldModel()
++    old_opt = torch.optim.AdamW(old_model.parameters(), lr=1e-3)
++    # Populate AdamW moments with a real step.
++    (old_model.keep(torch.randn(1, 2)).sum() + old_model.prune(torch.randn(1, 2)).sum()).backward()
++    old_opt.step()
++    old_named = dict(old_model.named_parameters())
++    keep_weight_old = old_model.keep.weight
++    preserved_moment = old_opt.state[keep_weight_old]["exp_avg"].clone()
++
++    new_model = NewModel()
++    new_model.keep.load_state_dict(old_model.keep.state_dict())  # same name + shape
++    new_opt = torch.optim.AdamW(new_model.parameters(), lr=1e-3)
++    new_named = dict(new_model.named_parameters())
++
++    stats = remap_optimizer_state(old_opt, old_named, new_opt, new_named)
++
++    assert stats["preserved"] == 2          # keep.weight + keep.bias
++    assert stats["dropped"] == 2            # prune.weight + prune.bias
++    assert stats["initialised"] == 2        # born.weight + born.bias
++
++    new_keep_weight = new_model.keep.weight
++    assert new_keep_weight in new_opt.state
++    assert torch.equal(new_opt.state[new_keep_weight]["exp_avg"], preserved_moment)
++    # Newborn parameter is left for lazy init on the first step.
++    assert new_model.born.weight not in new_opt.state
++
++
++def test_apply_lr_schedule_linear_warmup_then_plateau() -> None:
++    """R2: LR ramps linearly to cfg.learning_rate over warmup_steps, then flat."""
++    org = DarwinOrganism.__new__(DarwinOrganism)
++    org.cfg = SimpleNamespace(learning_rate=1e-3, warmup_steps=10)
++    org.optimizer = torch.optim.SGD(nn.Linear(2, 2).parameters(), lr=1e-3)
++
++    org._apply_lr_schedule(0)
++    assert org.optimizer.param_groups[0]["lr"] == pytest.approx(1e-3 * 1 / 10)
++    org._apply_lr_schedule(9)
++    assert org.optimizer.param_groups[0]["lr"] == pytest.approx(1e-3)
++    org._apply_lr_schedule(500)
++    assert org.optimizer.param_groups[0]["lr"] == pytest.approx(1e-3)
++
++
++def test_apply_lr_schedule_noop_when_warmup_disabled() -> None:
++    """R2: with warmup_steps <= 0 the schedule must not touch the LR."""
++    org = DarwinOrganism.__new__(DarwinOrganism)
++    org.cfg = SimpleNamespace(learning_rate=1e-3, warmup_steps=0)
++    org.optimizer = torch.optim.SGD(nn.Linear(2, 2).parameters(), lr=7e-4)
++
++    org._apply_lr_schedule(0)
++    assert org.optimizer.param_groups[0]["lr"] == pytest.approx(7e-4)

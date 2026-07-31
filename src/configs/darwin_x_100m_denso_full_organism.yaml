@@ -1,0 +1,107 @@
+# F51 Darwin-X 100M — Transformer DENSO puro + órgãos full organism.
+#
+# Backbone: 100% atenção (GQA), zero SSD, FFN denso (sem MoE).
+# Única diferença vs full_organism: o backbone é um Transformer de mercado.
+#
+# Objetivo: receber pesos destilados de um modelo pré-treinado e
+# verificar se os órgãos Darwin-X conseguem melhorar o que já existe.
+#
+# Diferenças vs full_organism.yaml:
+#   - attention_indices_override: todas as 12 camadas → 0% SSD
+#   - fine_experts=1, experts_per_token=1, shared_experts=0 → FFN denso
+#   - fine_expert_hidden_dim=2048 → 4× d_model (padrão Transformer)
+#   - Órgãos: MESMA configuração do full_organism
+#
+# Diferenças vs dense_transformer_baseline.yaml:
+#   - Todos os órgãos LIGADOS
+#   - checkpoint_root separado
+model_name: F51-Darwin-X-100M-DensoFullOrganism
+init: random
+tokenizer: f51_bpe
+vocab_size: 58162
+context_length: 5120
+inference_context_length: 32768
+d_model: 512
+n_layers: 12
+n_heads: 8
+n_kv_heads: 2
+ssd_attention_ratio: "3:1"
+attention_indices_override: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # 0% SSD — tudo atenção
+dropout: 0.0
+rope_base_train: 10000.0
+rope_base_infer: 100000.0
+residual_scale_multiplier: 1.2
+ssm_expand: 2
+ssm_state: 16
+
+# ── FFN Denso (sem MoE) ──
+fine_experts: 1
+shared_experts: 0
+experts_per_token: 1
+fine_expert_hidden_dim: 2048   # 4× d_model, padrão Transformer
+shared_expert_hidden_dim: 512
+
+# ── Órgãos: MESMA config do full_organism ──
+mtp_depth: 2
+mtp_weight: 0.15
+jepa_weight: 0.05
+jepa_dist_weight: 1.0
+ghost_weight: 0.07
+ghost_mask_ratio: 0.15
+ghost_enabled: true
+curiosity_weight: 0.0
+spider_sense_enabled: true
+spider_calibration_enabled: true
+spider_calibration_weight: 0.02
+aux_loss_scale: 1.0
+aux_loss_adaptive: true
+
+heartbeat_enabled: true
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 2
+
+ttm_residual_enabled: true
+ttm_residual_max_scale: 0.15
+ttm_associative_weight: 0.02
+ttm_entity_addressing: true
+ttm_entity_top_k: 4
+
+nitro_enabled: false
+nitro_gpu_expert_capacity: 8
+gradient_checkpointing: true
+
+dae_enabled: true
+dae_shadow_mode: false
+loss_semantics_version: 2
+scan_chunk_size: 128
+qkv_bias: true
+vertical_routing_scale: 0.1
+
+gaba_enabled: true
+inter_hemispheric_enabled: true
+sleep_enabled: true
+decision_engine_enabled: true
+unified_mesh_enabled: true
+
+legacy_tiers: 7
+checkpoint_root: "workspace/03_CHECKPOINTS_100M_DENSO_FULL_ORGANISM_V1"
+
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead
+
+blockchain_enabled: true
+blockchain_path: workspace/03_CHECKPOINTS_100M_DENSO_FULL_ORGANISM_V1/blocks.jsonl
+senate_enabled: false
+senate_interval: 500
+senate_min_weight: 0.02
+senate_death_threshold: 0.05
+senate_rising_bonus: 0.10
+senate_newborn_period: 3

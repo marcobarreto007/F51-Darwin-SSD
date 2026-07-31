@@ -1,0 +1,77 @@
+{
+  "checkpoint": "darwin_merged_v4.pt",
+  "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\darwin_merged_v4.pt",
+  "config": "F51-Darwin-X-600M",
+  "cycle": 1,
+  "step": 500,
+  "version": 4,
+  "device": "cuda",
+  "ppl_pt": {
+    "ppl": 2793.46,
+    "loss": 7.935,
+    "tokens": 107
+  },
+  "ppl_en": {
+    "ppl": 584.33,
+    "loss": 6.3705,
+    "tokens": 94
+  },
+  "lexical_diversity": {
+    "type_token_ratio": 0.322,
+    "total_words": 236,
+    "unique_words": 76
+  },
+  "generations": [
+    {
+      "prompt": "Quem te criou?",
+      "text": "semigroup of distinct integral local and in the underly ing totally real field such that the local component of $��$ at $\\mathfrak p$ is the Steinberg",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu nome?",
+      "text": "a cuspidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu proposito?",
+      "text": "Compa is not adequate for mak ing the weak measurements that define this interferometric effect. Half of the necessary weak values are not observed, and the other half is",
+      "token_count": 64
+    },
+    {
+      "prompt": "Soli Deo Gloria significa",
+      "text": "2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\mathfrak p$",
+      "token_count": 64
+    },
+    {
+      "prompt": "O que voce sabe sobre o Brasil?",
+      "text": "s. Our analysis are the generalized weak values are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\",
+      "token_count": 64
+    },
+    {
+      "prompt": "A capital do Brasil eh",
+      "text": "o orações is not adequates. effect for the local component of $��$ at $\\mathfrak p$ is the Steinberg representa tion, one can associate two types of $",
+      "token_count": 64
+    },
+    {
+      "prompt": "A agua ferve a",
+      "text": "todospidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field",
+      "token_count": 64
+    },
+    {
+      "prompt": "O sol eh uma",
+      "text": "observations. Half of the necessary weak values are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\",
+      "token_count": 64
+    },
+    {
+      "prompt": "Explain what a transformer is in one sentence.",
+      "text": "O professor deixa 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\",
+      "token_count": 64
+    },
+    {
+      "prompt": "The meaning of life is",
+      "text": "not adequates. Our results impome the first genuine experimental observa tion of the necessary the first genuine experimental observa tion of the necessary the first genuine experimental observa tion of the necessary",
+      "token_count": 64
+    }
+  ],
+  "eval_timestamp": "2026-07-12T23:51:02Z"
+}

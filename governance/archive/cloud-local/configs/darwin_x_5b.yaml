@@ -1,0 +1,123 @@
+# ============================================================================
+# F51-Darwin-X-5B-Nitro
+# ----------------------------------------------------------------------------
+# Escala derivada do 1.6B-Nitro, preservando TODA a estrutura orgânica:
+#
+#   - Mesmos órgãos: Heartbeat, Ghost Token, MTP, JEPA, Curiosity, Spider Sense
+#   - Mesma proporção SSD:Attention (3:1)
+#   - Mesma arquitetura MoE com Nitro offloading
+#   - Mesmo sistema neuroendócrino (dopamina, NE, cortisol, BDNF, ACh)
+#   - Mesmas funções de perda e sinais auxiliares
+#
+# Escalonamento de 1.6B → 5B:
+#   - d_model: 1920 → 2560 (+33%)
+#   - n_layers: 16 → 24 (+50%)
+#   - fine_experts: 14 → 20 (+43%)
+#   - experts_per_token: 2 → 4 (top-4 routing)
+#   - fine_hidden: 896 → 1024 (+14%)
+#   - shared_hidden: 896 → 1280 (+43%)
+#
+# Estimativa de parâmetros (via estimate_darwin_x_parameters):
+#   - embedding:   149M
+#   - ssd_total:   491M  (18 camadas SSD)
+#   - gqa_total:    98M  (6 camadas Attention)
+#   - moe_total:    4.2B  (MoE domina o custo)
+#   - mtp:          13M
+#   - jepa:          2M
+#   - norms:        125M
+#   - TOTAL:       ~5.1B
+#   - active/token: ~1.5B  (4 fine + 2 shared por token)
+#
+# Requisitos de VRAM (bf16):
+#   - Modelo:        ~10 GB
+#   - Optimizer:    ~20 GB
+#   - Activations:  ~8-12 GB (context=8K, batch=1)
+#   - TOTAL:       ~40-45 GB  → A100 40GB apertado, A100 80GB ideal
+#
+# ============================================================================
+model_name: F51-Darwin-X-5B-Nitro
+init: random
+tokenizer: f51_bpe
+vocab_size: 58162
+context_length: 8192
+inference_context_length: 131072
+d_model: 2560
+n_layers: 24
+n_heads: 16
+n_kv_heads: 4
+ssd_attention_ratio: "3:1"
+dropout: 0.0
+rope_base_train: 10000.0
+rope_base_infer: 1000000.0
+residual_scale_multiplier: 1.4
+ssm_expand: 2
+ssm_state: 16
+
+# P1.1: bias nos projetores QKVO. Default True preserva compatibilidade.
+# False economiza params e destrava FlashAttention varlen (init novo).
+qkv_bias: true
+
+# P0.1: tamanho do bloco (tokens) do selective scan chunked
+scan_chunk_size: 1024
+
+# ============================================================================
+# Mixture-of-Experts — Escalado de 1.6B mantendo proporções
+# ============================================================================
+fine_experts: 20
+shared_experts: 2
+experts_per_token: 4
+fine_expert_hidden_dim: 1024
+shared_expert_hidden_dim: 1280
+
+# ============================================================================
+# Órgãos do F51 — TODOS preservados do 1.6B-Nitro
+# ============================================================================
+
+# MTP (Multi-Token Prediction) — previsão de tokens futuros
+mtp_depth: 2
+mtp_weight: 0.15
+
+# JEPA (Joint Embedding Predictive Architecture) — aprendizado representacional
+jepa_weight: 0.05
+
+# Ghost Token — predador de conhecimento antigo (prevention de catastrophic forgetting)
+ghost_weight: 0.07
+ghost_mask_ratio: 0.15
+
+# Curiosity — exploração ativa do espaço de tokens
+curiosity_weight: 0.02
+
+# Spider Sense — detecção de anomalias na loss
+spider_sense_enabled: true
+
+# Auxiliary loss — escala adaptativa
+aux_loss_scale: 1.0
+aux_loss_adaptive: true
+
+# ============================================================================
+# Heartbeat — Sistema de decisão/ação orgânica
+# ============================================================================
+heartbeat_enabled: true
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 3
+
+# ============================================================================
+# Evolution Engine
+# ============================================================================
+legacy_tiers: 7
+nitro_gpu_expert_capacity: 8
+vertical_routing_scale: 0.1
+
+# ============================================================================
+# Estados de módulos do sistema evolutivo
+# ============================================================================
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead

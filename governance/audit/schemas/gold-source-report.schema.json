@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://f51labs.local/schemas/gold-source-report.schema.json",
+  "title": "F51 Darwin GOLD source audit report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audit_kind",
+    "source_commit",
+    "report_source_commit",
+    "observed_end_commit",
+    "started_utc",
+    "ended_utc",
+    "root",
+    "tools",
+    "commands",
+    "counts",
+    "python_compilation",
+    "tracked_worktree_clean",
+    "status",
+    "failures"
+  ],
+  "$defs": {
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "command", "started_utc", "ended_utc", "exit_code", "output_tail"],
+      "properties": {
+        "id": {
+          "enum": [
+            "pytest",
+            "py_compile",
+            "powershell_parse",
+            "check_docs_links",
+            "check_canonical_docs",
+            "check_duplicates",
+            "check_dependency_policy",
+            "check_operational_surface",
+            "check_physical_hygiene",
+            "check_architecture_boundaries",
+            "check_distribution",
+            "secret_scan",
+            "git_diff_check",
+            "tracked_worktree",
+            "source_report_commit"
+          ]
+        },
+        "command": {"type": "string", "minLength": 1},
+        "started_utc": {"type": "string", "format": "date-time"},
+        "ended_utc": {"type": "string", "format": "date-time"},
+        "exit_code": {"type": "integer"},
+        "output_tail": {"type": "string"}
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": 2},
+    "audit_kind": {"const": "gold_source"},
+    "source_commit": {"$ref": "#/$defs/commit"},
+    "report_source_commit": {"$ref": "#/$defs/commit"},
+    "observed_end_commit": {"$ref": "#/$defs/commit"},
+    "started_utc": {"type": "string", "format": "date-time"},
+    "ended_utc": {"type": "string", "format": "date-time"},
+    "root": {"type": "string", "minLength": 1},
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["powershell", "git", "python"],
+      "properties": {
+        "powershell": {"type": "string", "minLength": 1},
+        "git": {"type": "string", "minLength": 1},
+        "python": {"type": "string", "minLength": 1}
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "pytest"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "py_compile"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "powershell_parse"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_docs_links"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_canonical_docs"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_duplicates"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_dependency_policy"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_operational_surface"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_physical_hygiene"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_architecture_boundaries"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "check_distribution"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "secret_scan"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "git_diff_check"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "tracked_worktree"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate"}, {"properties": {"id": {"const": "source_report_commit"}}}]}
+      ],
+      "items": false
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed"],
+      "properties": {
+        "total": {"const": 15},
+        "passed": {"type": "integer", "minimum": 0, "maximum": 15},
+        "failed": {"type": "integer", "minimum": 0, "maximum": 15}
+      }
+    },
+    "python_compilation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tracked", "attempted", "compiled", "skipped_archive", "failed"],
+      "properties": {
+        "tracked": {"type": "integer", "minimum": 0},
+        "attempted": {"type": "integer", "minimum": 0},
+        "compiled": {"type": "integer", "minimum": 0},
+        "skipped_archive": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tracked_worktree_clean": {"type": "boolean"},
+    "status": {"enum": ["pass", "fail"]},
+    "failures": {
+      "type": "array",
+      "maxItems": 15,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "pytest",
+          "py_compile",
+          "powershell_parse",
+          "check_docs_links",
+          "check_canonical_docs",
+          "check_duplicates",
+          "check_dependency_policy",
+          "check_operational_surface",
+          "check_physical_hygiene",
+          "check_architecture_boundaries",
+          "check_distribution",
+          "secret_scan",
+          "git_diff_check",
+          "tracked_worktree",
+          "source_report_commit"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "pass"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "counts": {
+            "properties": {
+              "passed": {"const": 15},
+              "failed": {"const": 0}
+            }
+          },
+          "tracked_worktree_clean": {"const": true},
+          "failures": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "fail"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "counts": {
+            "properties": {
+              "passed": {"maximum": 14},
+              "failed": {"minimum": 1}
+            }
+          },
+          "failures": {"minItems": 1}
+        }
+      }
+    }
+  ]
+}

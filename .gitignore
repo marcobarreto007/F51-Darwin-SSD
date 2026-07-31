@@ -1,0 +1,92 @@
+# === Python ===
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+*.pyo
+*.egg-info/
+
+# === Virtual Environments ===
+.venv/
+.venv_clean/
+.venv_wsl/
+.venv_nitro/
+
+# === Darwin Protegidos (nunca commitar) ===
+F51-Dataset-Organizado/
+workspace/
+checkpoints/
+runs/
+tokenizer/
+data/
+logs/
+
+# === Logs (raiz) ===
+*.log
+
+# === Ferramentas / IDEs ===
+.agent_bus/
+.organism/
+.playwright-mcp/
+.claude/
+.cursor/
+.codex/
+.audit-tools/
+.vs/
+.vscode/
+.idea/
+
+# === Artefatos temporários ===
+tmp/
+tmp_compress/
+project_tree.txt
+pytest-cache-files-*/
+
+# === Binários & Datasets que não pertencem ao repo ===
+*.deb
+*.tar.gz
+*.zip
+*.whl
+corpus_backup.tar.gz
+datacorpus_local_merged/
+rclone-current-linux-amd64.deb
+
+# === Dados sensíveis / pessoais ===
+bible_data.py
+philosophers_data.py
+
+# === Notas temporárias / pessoais ===
+CANADA_GPU_OPTIONS.txt
+DUAL_GPU_SETUP.md
+F51_DARWIN_SSD_ESTADO_ATUAL.txt
+TRAIN_A100_COMMANDS.txt
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Imagens soltas ===
+*.png
+*.jpg
+*.jpeg
+
+# === Gerados ===
+*.jsonl
+evo_report.json
+C:*
+governance/audit/generated/
+!governance/audit/generated/
+governance/audit/generated/*
+!governance/audit/generated/.gitkeep
+
+# === Worktrees locais ===
+.worktrees/
+
+# === Archives pesados (reorganização desktop 2026-07-29) ===
+governance/archive/cloud-releases/
+governance/archive/cloud-local/cloud_pack_legacy/
+governance/archive/cloud-local/comparison-20260726/
+governance/archive/cloud-local/v2-bundle/
+installers/
+_cloud_pack.tar
+F51-JEPA-100M-2.0/

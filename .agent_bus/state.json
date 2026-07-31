@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-20T16:00:00+00:00",
+  "last_cycle_id": 2,
+  "last_wave": "TREINO_EVOLUCAO",
+  "last_agents_dispatched": [
+    "recon-researcher",
+    "security-reviewer",
+    "code-quality-reviewer",
+    "runtime-verifier"
+  ],
+  "last_next_gate": "Treino 100M V9 Cycle 3 em execucao (background). Proximo: verificar checkpoint cycle_003 apos termino dos 500 steps, entao rodar source audit novamente.",
+  "last_risks": [
+    "RISK-01: ghost desabilitado — _ghost_loss (nao-causal) refaz forward completo com dual GPU, provavel OOM na RTX 3060 12GB. _causal_ghost_loss e seguro mas so usado com step_digest.",
+    "RISK-02: 1.6B Gold (10.8GB, SHA-256 239fdcf1...) NAO ESTA NO DISCO. Requer: powershell admin + src/tools/find_gold_in_vss.ps1",
+    "RISK-03: 600M sem checkpoint — necessita fresh start ou heranca de weights 100M",
+    "RISK-04: 134GB disco livre — ~130 checkpoints de 1GB restantes"
+  ],
+  "training_status": {
+    "lineage": "100M",
+    "checkpoint_root": "workspace/03_CHECKPOINTS_100M_FULL_V9",
+    "current_cycle": 3,
+    "resumed_from": "cycle_002",
+    "target_steps": 500,
+    "pid": "22808, 23460",
+    "gpu0": "RTX 5060 Ti 16GB — 12.2GB used",
+    "gpu1": "RTX 3060 12GB — 7.7GB used",
+    "started_at": "2026-07-20 ~16:00 UTC"
+  },
+  "source_audit": {
+    "status": "GREEN",
+    "passed": 691,
+    "failed": 0,
+    "commit": "ed23d99"
+  },
+  "authority_note": "ponteiro de orquestracao apenas; governance/docs/operacao/STATUS_ATUAL.md continua a unica autoridade de status"
+}

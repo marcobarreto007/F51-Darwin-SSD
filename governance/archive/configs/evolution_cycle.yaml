@@ -1,0 +1,18 @@
+cycle_name: darwin_cycle_v0
+growth_rule:
+  new_loss_min: 2.0
+  replay_retention_min: 0.85
+  local_adaptation_failed: true
+  min_evolution_score: 0.15
+pruning_rule:
+  low_score_threshold: -0.10
+  ablation_delta_threshold: 0.01
+  quarantine_before_dead: true
+replay:
+  capacity: 512
+  sample_size: 16
+distillation:
+  temperature: 2.0
+  alpha: 0.5
+report_path: runs/darwin_evolution_cycle_report.json
+

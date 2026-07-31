@@ -1,0 +1,1 @@
+{"last_instance":"ssh5.vast.ai:32554","last_gpu":"RTX PRO 6000 WS 95GB","active_training":{"status":"running","ctx":256,"tok_s":100,"model":"1.6B Nitro","nitro_fixed":true}}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "tool": "gitleaks",
+  "version": "8.30.1",
+  "platform": "windows_x64",
+  "release_url": "https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1",
+  "archive_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip",
+  "checksums_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_checksums.txt",
+  "archive_sha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e",
+  "executable_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+  "operator_supplied_archive_sha256": "061476b86157bc6e10869e5bf06ffad78f6c5666e35ab94990813b73cbf352fae",
+  "operator_supplied_hash_status": "rejected_not_present_in_official_checksum_manifest",
+  "official_checksum_verification": "gitleaks_8.30.1_checksums.txt contains d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e for the Windows x64 archive",
+  "bootstrap_commands": [
+    "Invoke-WebRequest -Uri <archive_url> -OutFile <zip>",
+    "Get-FileHash -LiteralPath <zip> -Algorithm SHA256",
+    "Expand-Archive -LiteralPath <zip> -DestinationPath <tool_dir>",
+    "<tool_dir>/gitleaks.exe version"
+  ],
+  "tracked_binary": false
+}

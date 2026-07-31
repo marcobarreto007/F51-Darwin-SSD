@@ -1,0 +1,32 @@
+factory_name: f51_data_immune_system
+dataset_version: v0
+
+paths:
+  candidates: generated/candidates
+  quarantine: generated/quarantine
+  rejected: generated/rejected
+  approved: approved
+  corpus: approved
+  ledger: ledger
+
+firewall:
+  min_chars: 32
+  ngram_size: 5
+  max_ngram_overlap: 0.85
+  max_ngram_compare_chars: 100000
+  uncertain_score_low: 0.45
+  uncertain_score_high: 0.65
+  quality_pass_score: 0.70
+
+generation:
+  default_source_type: synthetic
+  require_generator_metadata: true
+
+promotion:
+  build_corpus: true
+  corpus_extension: .txt
+
+rules:
+  synthetic_never_training_by_default: true
+  candidates_never_write_corpus: true
+  promotion_requires_approved_status: true

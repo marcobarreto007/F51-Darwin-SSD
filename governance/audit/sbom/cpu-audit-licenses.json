@@ -1,0 +1,116 @@
+[
+  {
+    "License": "BSD License",
+    "Name": "Jinja2",
+    "URL": "https://github.com/pallets/jinja/",
+    "Version": "3.1.6"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "MarkupSafe",
+    "URL": "https://github.com/pallets/markupsafe/",
+    "Version": "3.0.3"
+  },
+  {
+    "License": "MIT License",
+    "Name": "PyYAML",
+    "URL": "https://pyyaml.org/",
+    "Version": "6.0.3"
+  },
+  {
+    "License": "BSD-2-Clause",
+    "Name": "Pygments",
+    "URL": "https://pygments.org",
+    "Version": "2.20.0"
+  },
+  {
+    "License": "BSD License",
+    "Name": "colorama",
+    "URL": "https://github.com/tartley/colorama",
+    "Version": "0.4.6"
+  },
+  {
+    "License": "MIT",
+    "Name": "filelock",
+    "URL": "https://github.com/tox-dev/py-filelock",
+    "Version": "3.30.2"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "fsspec",
+    "URL": "https://github.com/fsspec/filesystem_spec",
+    "Version": "2026.6.0"
+  },
+  {
+    "License": "MIT",
+    "Name": "iniconfig",
+    "URL": "https://github.com/pytest-dev/iniconfig",
+    "Version": "2.3.0"
+  },
+  {
+    "License": "BSD License",
+    "Name": "mpmath",
+    "URL": "http://mpmath.org/",
+    "Version": "1.3.0"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "networkx",
+    "URL": "https://networkx.org/",
+    "Version": "3.6.1"
+  },
+  {
+    "License": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+    "Name": "numpy",
+    "URL": "https://numpy.org",
+    "Version": "2.5.1"
+  },
+  {
+    "License": "Apache-2.0 OR BSD-2-Clause",
+    "Name": "packaging",
+    "URL": "https://github.com/pypa/packaging",
+    "Version": "26.2"
+  },
+  {
+    "License": "MIT License",
+    "Name": "pip",
+    "URL": "https://pip.pypa.io/",
+    "Version": "25.0.1"
+  },
+  {
+    "License": "MIT License",
+    "Name": "pluggy",
+    "URL": "UNKNOWN",
+    "Version": "1.6.0"
+  },
+  {
+    "License": "MIT",
+    "Name": "pytest",
+    "URL": "https://docs.pytest.org/en/latest/",
+    "Version": "9.1.1"
+  },
+  {
+    "License": "MIT",
+    "Name": "setuptools",
+    "URL": "https://github.com/pypa/setuptools",
+    "Version": "83.0.0"
+  },
+  {
+    "License": "BSD License",
+    "Name": "sympy",
+    "URL": "https://sympy.org",
+    "Version": "1.14.0"
+  },
+  {
+    "License": "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT",
+    "Name": "torch",
+    "URL": "https://pytorch.org",
+    "Version": "2.13.0"
+  },
+  {
+    "License": "PSF-2.0",
+    "Name": "typing_extensions",
+    "URL": "https://github.com/python/typing_extensions",
+    "Version": "4.16.0"
+  }
+]

@@ -1,0 +1,64 @@
+model_name: F51-Darwin-X-1.6B-Nitro
+init: random
+tokenizer: f51_bpe
+vocab_size: 58162
+context_length: 4096
+inference_context_length: 32768
+d_model: 1920
+n_layers: 16
+n_heads: 16
+n_kv_heads: 4
+ssd_attention_ratio: "3:1"
+dropout: 0.0
+rope_base_train: 10000.0
+rope_base_infer: 1000000.0
+residual_scale_multiplier: 1.4
+ssm_expand: 2
+ssm_state: 16
+
+fine_experts: 14
+shared_experts: 2
+experts_per_token: 2
+fine_expert_hidden_dim: 896
+shared_expert_hidden_dim: 896
+
+mtp_depth: 2
+mtp_weight: 0.0
+jepa_weight: 0.0
+ghost_weight: 0.0
+ghost_mask_ratio: 0.15
+ghost_enabled: false
+curiosity_weight: 0.0
+spider_sense_enabled: true
+aux_loss_scale: 0.0
+aux_loss_adaptive: false
+
+heartbeat_enabled: true
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 3
+
+legacy_tiers: 7
+nitro_gpu_expert_capacity: 5
+
+# ── Checkpoint isolation ──
+checkpoint_root: "workspace/03_CHECKPOINTS_1.6B"
+
+# ── Órgãos integrados (toggles) ──
+# Default false = compatível com checkpoint v7.
+# True = ativa no forward pass (requer init novo se adicionar parâmetros).
+gaba_enabled: false
+inter_hemispheric_enabled: false
+sleep_enabled: false
+decision_engine_enabled: false
+unified_mesh_enabled: true
+
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead

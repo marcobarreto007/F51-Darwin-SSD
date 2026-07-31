@@ -1,0 +1,77 @@
+{
+  "checkpoint": "organism_cycle_238.pt",
+  "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_238.pt",
+  "config": "F51-Darwin-X-600M",
+  "cycle": 238,
+  "step": 119060,
+  "version": 6,
+  "device": "cuda",
+  "ppl_pt": {
+    "ppl": 1123.18,
+    "loss": 7.0239,
+    "tokens": 107
+  },
+  "ppl_en": {
+    "ppl": 172.97,
+    "loss": 5.1531,
+    "tokens": 94
+  },
+  "lexical_diversity": {
+    "type_token_ratio": 0.3258,
+    "total_words": 221,
+    "unique_words": 72
+  },
+  "generations": [
+    {
+      "prompt": "Quem te criou?",
+      "text": "The atomic weight of \n \n tetrads of the chromatin and the two material is in the spireme (figs. \n \n 84-86). It decreases in size and",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu nome?",
+      "text": "The \n \n spindle of the spermatogonia and odd is anaplve in the odd chromosome of the _m_ in the spindle is in the spindle",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu proposito?",
+      "text": "The \n \n spindle of the spermatogonia and chromatin in the spermatogonia and chromatin _m_ (fig. 207-27 e-16 and the _m_",
+      "token_count": 64
+    },
+    {
+      "prompt": "Soli Deo Gloria significa",
+      "text": "(fig. 241) and the region of the _m_ is a figure (figs. 207) is to show the sphere (fig. \n \n 249).",
+      "token_count": 64
+    },
+    {
+      "prompt": "O que voce sabe sobre o Brasil?",
+      "text": "inted and from \n \n Colorththust and the chromatin of the spermatogonium. \n \n \n \n Figures 253, _a_ and _b_, and A",
+      "token_count": 64
+    },
+    {
+      "prompt": "A capital do Brasil eh",
+      "text": "_m_ \n \n and the spindle is a spindle in odd spindle (_a_ {1} _), which is in the _m_ _b_, and _gamma",
+      "token_count": 64
+    },
+    {
+      "prompt": "A agua ferve a",
+      "text": "naar material of the \n \n kunnen is a new form of the polar spindle is found in the odd chromosome of a small tetrads and the spind",
+      "token_count": 64
+    },
+    {
+      "prompt": "O sol eh uma",
+      "text": "tetrads of the \n \n _Discoan chromosome and as the spindle is found in the spindent plate, a few plates of the spindle in the sp",
+      "token_count": 64
+    },
+    {
+      "prompt": "Explain what a transformer is in one sentence.",
+      "text": "The \n \n unequal pair is not separated in the spindle of the spindle of the spermatogonia and odd is anaples in the odd chromosome of",
+      "token_count": 64
+    },
+    {
+      "prompt": "The meaning of life is",
+      "text": "found in the \n \n odd chromosome is always it was often found in the odd chromosome is as in the first matura tion of the first matura tion chromosomes, and and",
+      "token_count": 64
+    }
+  ],
+  "eval_timestamp": "2026-07-12T23:56:09Z"
+}

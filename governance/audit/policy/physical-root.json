@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "policy_id": "f51-darwin-physical-root-v1",
+  "authority": "local_single_root_only",
+  "allowed_root_entries": [
+    ".audit-tools",
+    ".agent_bus",
+    ".agents",
+    ".claude",
+    ".codex",
+    ".git",
+    ".github",
+    ".gitignore",
+    ".gitleaks.toml",
+    ".superpowers",
+    ".venv_nitro",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LICENSE",
+    "MANIFEST.in",
+    "NOTICE",
+    "README.md",
+    "SECURITY.md",
+    "THIRD_PARTY_NOTICES.md",
+    "DIARIO_DE_BORDO.md",
+    "governance",
+    "pyproject.toml",
+    "requirements-cpu-audit-dev.in",
+    "requirements-cpu-audit-dev.lock",
+    "requirements-cpu-audit.in",
+    "requirements-cpu-audit.lock",
+    "research",
+    "src",
+    ".worktrees",
+    "workspace"
+  ],
+  "optional_tool_owned_entries": [
+    ".agents",
+    ".claude",
+    ".codex",
+    ".superpowers"
+  ],
+  "required_root_entries": [
+    ".git",
+    ".github",
+    ".venv_nitro",
+    "governance",
+    "research",
+    "src",
+    "workspace"
+  ],
+  "forbidden_root_entries": [
+    ".f51",
+    ".organism",
+    ".pytest_cache",
+    ".venv_vast",
+    "__pycache__",
+    "checkpoints",
+    "data",
+    "eval_results",
+    "runs"
+  ],
+  "cache_names": [
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__"
+  ],
+  "cache_excluded_roots": [
+    ".audit-tools",
+    ".agents",
+    ".claude",
+    ".codex",
+    ".git",
+    ".superpowers",
+    ".venv_nitro",
+    ".venv_vast",
+    ".worktrees",
+    "governance/archive",
+    "workspace"
+  ],
+  "required_ignored_paths": [
+    ".audit-tools/",
+    ".venv_nitro/",
+    "workspace/"
+  ],
+  "required_physical_directories": [
+    ".git",
+    ".venv_nitro",
+    "workspace"
+  ],
+  "audit_tools": {
+    "root": ".audit-tools",
+    "allowed_files": [
+      ".audit-tools/gitleaks-8.30.1/gitleaks.exe"
+    ],
+    "max_total_bytes": 26214400
+  }
+}

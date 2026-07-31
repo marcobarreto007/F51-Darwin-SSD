@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "source_commit": "5ee5be74220115dc0b2abc5b937493b883333e93",
+  "created_at_utc": "2026-07-17T02:51:05.22373Z",
+  "applied_at_utc": "2026-07-17T02:52:31.203671Z",
+  "operation": "same_volume_directory_rename",
+  "source_relative": "F51-Dataset-Organizado",
+  "target_relative": "workspace",
+  "source_volume": "C:",
+  "target_volume": "C:",
+  "file_count": 3469,
+  "total_bytes": 240204369385,
+  "pre_apply_disk_free_bytes": 205247066112,
+  "old_source_absent": true,
+  "broken_data_junction_removed": true,
+  "target_present_and_git_ignored": true,
+  "post_migration_hashes_match": true,
+  "destructive_cleanup_executed": false,
+  "real_workspace_rollback_executed": false,
+  "rollback_fixture_tests_passed": true,
+  "manifest_integrity_sha256": "c1b49bf2c8db07ecf896bde1f4f2b8a39e69a621535a23e024cc748f325c21ff",
+  "rollback_command": "src/tools/migrate_single_root_workspace.ps1 -ProjectRoot . -Rollback -Manifest workspace/04_MANIFESTOS/single_root_migration.json",
+  "artifact_hashes": {
+    "01_TOKENIZADOS/00_CORPUS_PRINCIPAL_tokens_feast_v2.bin": {
+      "size_bytes": 74195890756,
+      "sha256": "9677e9f22f4d78efa7b25c77b2da3cbdb5fb2a499926ac641a75c13b65e25cff"
+    },
+    "01_TOKENIZADOS/00_CORPUS_PRINCIPAL_tokens_feast_v2.bin.manifest.json": {
+      "size_bytes": 1169,
+      "sha256": "c536f569c63167828dd88a24b06fe68513ad1f6860cb4987900dfccf7bbb64e5"
+    },
+    "03_CHECKPOINTS/organism_cycle_070.pt": {
+      "size_bytes": 10876800007,
+      "sha256": "bf8118b3bd1bdfcf37fe2e8b3c13f0c89d5745f569fcb587477eac29d80395f5"
+    },
+    "03_CHECKPOINTS/organism_cycle_071.pt": {
+      "size_bytes": 10876850383,
+      "sha256": "239fdcf175ac35d9402d664e2a2b40252ec9c73aea8ee458250d426adde9241b"
+    },
+    "03_CHECKPOINTS/organism_cycle_077.pt": {
+      "size_bytes": 11914584035,
+      "sha256": "13682d9f4bf9cc3b248d941f07ebc856bd312d21d3e5525f2b694c254d6277b5"
+    },
+    "src/configs/darwin_x_1.6b_nitro.yaml": {
+      "size_bytes": 949,
+      "sha256": "93f74d139c8c6e09216ad64efaee8521ca6f54848d0b22b47807a5931dec675e"
+    }
+  },
+  "tracked_evaluation_history": {
+    "runtime_destination": "workspace/runtime/evaluations",
+    "tracked_archive": "governance/archive/historical-evaluations",
+    "git_normalized_blobs_verified_unchanged": true,
+    "files": 8
+  }
+}

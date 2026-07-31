@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Davi — organismo online</title>
+<style>
+:root{--bg:#090b10;--panel:#111520;--border:#293044;--gold:#d6b447;--green:#7ee787;--red:#f87171;--muted:#9aa4b6;--blue:#76a9ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:#e8e8e8;font:14px/1.5 system-ui,segoe ui,sans-serif;display:grid;grid-template-columns:280px 1fr;height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+aside h1{color:var(--gold);font-size:20px;margin-bottom:4px}
+.stat-row{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.stat-row b{color:#e8e8e8;font-weight:600}
+.mode-switch{display:flex;background:#1a1f2e;border-radius:7px;overflow:hidden;border:1px solid var(--border);margin-top:4px}
+.mode-btn{flex:1;padding:9px 0;text-align:center;cursor:pointer;font-weight:700;font-size:13px;transition:.2s;border:0;color:var(--muted);background:transparent}
+.mode-btn.active{cursor:default}
+.mode-btn.train-btn.active{background:#183047;color:#76a9ff}
+.mode-btn.infer-btn.active{background:#1a2e1a;color:var(--green)}
+.gpu-bar{height:6px;border-radius:3px;background:#1a1f2e;margin-top:3px;overflow:hidden}
+.gpu-bar-fill{height:100%;border-radius:3px;transition:width .6s}
+.gpu-bar-fill.ok{background:var(--green)}
+.gpu-bar-fill.warn{background:var(--gold)}
+.gpu-bar-fill.crit{background:var(--red)}
+.train-stats{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
+.mode-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-top:6px;padding:3px 8px;border-radius:4px;display:inline-block;font-weight:700}
+.mode-label.train{background:#183047;color:#76a9ff}
+.mode-label.infer{background:#1a2e1a;color:var(--green)}
+main{display:flex;flex-direction:column;min-width:0}
+header{padding:14px 20px;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+#chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+.msg{white-space:pre-wrap;max-width:85%;padding:11px 14px;border-radius:10px;font-size:13px;line-height:1.5}
+.msg.user{align-self:flex-end;background:#183047}
+.msg.davi{align-self:flex-start;background:#171b27;border-left:3px solid var(--gold)}
+.meta{font-size:11px;color:#8b949e;margin-top:6px}
+.sources a{display:block;color:var(--blue);margin-top:3px;font-size:12px}
+.approve{margin-top:7px;background:#305d35;color:white;border:0;border-radius:5px;padding:6px 10px;cursor:pointer;font-size:12px}
+.approve:hover{background:#3a7540}
+.locked-banner{text-align:center;padding:40px 20px;color:var(--muted);font-size:15px}
+.locked-banner .icon{font-size:48px;display:block;margin-bottom:10px}
+form{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border)}
+form input{flex:1;background:var(--panel);color:white;border:1px solid #30394e;border-radius:7px;padding:11px;font-size:14px}
+form input:disabled{opacity:.4}
+form button{background:var(--gold);border:0;border-radius:7px;padding:0 20px;font-weight:700;cursor:pointer;font-size:14px}
+form button:disabled{opacity:.4;cursor:not-allowed}
+.busy{opacity:.55;pointer-events:none}
+#toast{position:fixed;top:12px;right:12px;background:#305d35;color:white;padding:8px 14px;border-radius:6px;font-size:13px;z-index:9;display:none}
+#toast.err{background:#5d3030}
+</style></head>
+<body>
+
+<aside>
+  <h1>🧬 DAVI</h1>
+  <div class="mode-switch" id="modeSwitch">
+    <button class="mode-btn train-btn active" onclick="setMode('train')">⚡ Treino</button>
+    <button class="mode-btn infer-btn"        onclick="setMode('inference')">💬 Inferência</button>
+  </div>
+  <span class="mode-label train" id="modeLabel">MODO TREINO</span>
+
+  <div class="stat-row"><span>Ciclo</span>      <b id="cycle">—</b></div>
+  <div class="stat-row"><span>Step</span>       <b id="step">—</b></div>
+  <div class="stat-row"><span>Loss</span>       <b id="loss">—</b></div>
+  <div class="stat-row"><span>lm (PPL)</span>  <b id="lmppl">—</b></div>
+  <div class="stat-row"><span>tok/s</span>      <b id="toks">—</b></div>
+  <div class="stat-row"><span>Interações</span> <b id="interactions">0</b></div>
+  <div class="stat-row"><span>Memórias</span>   <b id="memories">0</b></div>
+  <div class="stat-row"><span>Consolidadas</span><b id="learned">0</b></div>
+  <div class="stat-row"><span>Rollbacks</span>  <b id="rollbacks">0</b></div>
+  <div style="margin-top:6px">
+    <div class="stat-row"><span>GPU 0</span><b id="gpu0">—</b></div>
+    <div class="gpu-bar"><div class="gpu-bar-fill ok" id="gpu0bar" style="width:0%"></div></div>
+  </div>
+  <div style="margin-top:4px">
+    <div class="stat-row"><span>GPU 1</span><b id="gpu1">—</b></div>
+    <div class="gpu-bar"><div class="gpu-bar-fill ok" id="gpu1bar" style="width:0%"></div></div>
+  </div>
+  <div class="train-stats" id="trainDetail"></div>
+</aside>
+
+<main>
+  <header>
+    <span id="headerMsg">⚡ Treino em andamento — use o switch para Inferência</span>
+    <span style="font-size:11px" id="clock">—</span>
+  </header>
+  <div id="chat"></div>
+  <div class="locked-banner" id="lockedBanner">
+    <span class="icon">🔒</span>
+    Chat bloqueado durante o treino.<br>Use o switch <b>💬 Inferência</b> no painel para liberar.
+  </div>
+  <form id="form">
+    <input id="prompt" maxlength="2000" autocomplete="off"
+           placeholder="Modo inferência — pergunte ao Davi" disabled>
+    <button type="submit" disabled>Enviar</button>
+  </form>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const TOKEN = __TOKEN__;
+const chat = document.getElementById('chat'),
+      form = document.getElementById('form'),
+      input = document.getElementById('prompt'),
+      locked = document.getElementById('lockedBanner'),
+      modeLabel = document.getElementById('modeLabel'),
+      headerMsg = document.getElementById('headerMsg'),
+      trainDetail = document.getElementById('trainDetail');
+
+let currentMode = 'train';
+let gpu0mem = 0, gpu1mem = 0;
+let maxMem0 = 16000, maxMem1 = 12000;
+
+function msg(kind, text) {
+  const box = document.createElement('div');
+  box.className = 'msg ' + kind;
+  box.appendChild(document.createTextNode(text));
+  chat.appendChild(box);
+  chat.scrollTop = chat.scrollHeight;
+  return box;
+}
+
+async function api(path, payload) {
+  const r = await fetch(path, {
+    method: payload ? 'POST' : 'GET',
+    headers: {'Content-Type': 'application/json', 'X-Davi-Token': TOKEN},
+    body: payload ? JSON.stringify(payload) : undefined
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data;
+}
+
+function toast(text, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.className = isErr ? 'err' : '';
+  t.style.display = 'block';
+  setTimeout(function() { t.style.display = 'none'; }, 2500);
+}
+
+function updateGpuBar(id, pct) {
+  const bar = document.getElementById(id);
+  bar.style.width = Math.min(100, pct) + '%';
+  bar.className = 'gpu-bar-fill ' + (pct > 85 ? 'crit' : pct > 65 ? 'warn' : 'ok');
+}
+
+function applyModeUI(mode) {
+  currentMode = mode;
+  var trainBtn = document.querySelector('.train-btn');
+  var inferBtn = document.querySelector('.infer-btn');
+  trainBtn.classList.toggle('active', mode === 'train');
+  inferBtn.classList.toggle('active', mode === 'inference');
+  modeLabel.textContent = mode === 'train' ? 'MODO TREINO' : 'MODO INFERENCIA';
+  modeLabel.className = 'mode-label ' + (mode === 'train' ? 'train' : 'infer');
+
+  if (mode === 'train') {
+    locked.style.display = 'block';
+    chat.style.display = 'none';
+    input.disabled = true;
+    form.querySelector('button').disabled = true;
+    headerMsg.textContent = '⚡ Treino em andamento — use o switch para Inferência';
+  } else {
+    locked.style.display = 'none';
+    chat.style.display = 'flex';
+    input.disabled = false;
+    form.querySelector('button').disabled = false;
+    headerMsg.textContent = '💬 Modo Inferência — treino pausado';
+    input.focus();
+  }
+}
+
+async function setMode(mode) {
+  if (mode === currentMode) return;
+  try {
+    var r = await api('/api/mode', {mode: mode});
+    applyModeUI(r.mode);
+    toast(r.mode === 'train' ? 'Treino retomado' : 'Treino pausado — VRAM liberada');
+  } catch (e) {
+    toast('Erro: ' + e.message, true);
+  }
+}
+
+async function stats() {
+  try {
+    var s = await api('/api/stats');
+    document.getElementById('cycle').textContent = s.cycle != null ? s.cycle : '—';
+    document.getElementById('step').textContent = s.step != null ? s.step : '—';
+    document.getElementById('loss').textContent = s.loss != null ? Number(s.loss).toFixed(3) : '—';
+    var lmText = '—';
+    if (s.lm_loss != null) {
+      lmText = Number(s.lm_loss).toFixed(3);
+      if (s.ppl != null) lmText += ' (' + Number(s.ppl).toFixed(1) + ')';
+    }
+    document.getElementById('lmppl').textContent = lmText;
+    document.getElementById('toks').textContent = s.tok_s != null ? Math.round(s.tok_s) : '—';
+    document.getElementById('interactions').textContent = s.interactions != null ? s.interactions : 0;
+    document.getElementById('memories').textContent = s.memories != null ? s.memories : 0;
+    document.getElementById('learned').textContent = s.consolidated_updates != null ? s.consolidated_updates : 0;
+    document.getElementById('rollbacks').textContent = s.rollbacks != null ? s.rollbacks : 0;
+
+    // GPU bars
+    var g0 = (s.gpu0 || '').split(',');
+    var g1 = (s.gpu1 || '').split(',');
+    if (g0.length >= 2) {
+      document.getElementById('gpu0').textContent = g0[0].trim() + '% ' + g0[1].trim() + ' MiB';
+      gpu0mem = parseInt(g0[1]) || 0;
+      maxMem0 = Math.max(maxMem0, gpu0mem * 1.2);
+      updateGpuBar('gpu0bar', gpu0mem / maxMem0 * 100);
+    }
+    if (g1.length >= 2) {
+      document.getElementById('gpu1').textContent = g1[0].trim() + '% ' + g1[1].trim() + ' MiB';
+      gpu1mem = parseInt(g1[1]) || 0;
+      maxMem1 = Math.max(maxMem1, gpu1mem * 1.2);
+      updateGpuBar('gpu1bar', gpu1mem / maxMem1 * 100);
+    }
+
+    // Sync mode (server is authoritative)
+    if (s.mode && s.mode !== currentMode) {
+      applyModeUI(s.mode);
+    }
+
+    // Training detail
+    var det = [];
+    if (s.loss != null) det.push('loss ' + Number(s.loss).toFixed(3));
+    if (s.ppl != null) det.push('ppl ' + Number(s.ppl).toFixed(1));
+    if (s.tok_s != null) det.push(Math.round(s.tok_s) + ' tok/s');
+    if (s.active_experts != null) det.push(s.active_experts + ' experts');
+    trainDetail.textContent = det.join(' | ');
+
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+  } catch (e) {}
+}
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  if (currentMode !== 'inference') return;
+  var prompt = input.value.trim();
+  if (!prompt) return;
+  msg('user', prompt);
+  input.value = '';
+  form.classList.add('busy');
+  var wait = msg('davi', '🧠 Buscando evidências e refletindo…');
+  try {
+    var r = await api('/api/interact', {prompt: prompt});
+    wait.remove();
+    var box = msg('davi', r.response.text || '[sem geração]');
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    var elapsed = typeof r.elapsed === 'number' ? r.elapsed.toFixed(1) : r.elapsed;
+    meta.textContent = elapsed + 's · memória: ' + (r.memory_status || 'sem nova memória');
+    box.appendChild(meta);
+    if (r.response.sources && r.response.sources.length) {
+      var sources = document.createElement('div');
+      sources.className = 'sources';
+      for (var i = 0; i < r.response.sources.length; i++) {
+        var src = r.response.sources[i];
+        var a = document.createElement('a');
+        a.href = src.href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.textContent = src.title || src.href;
+        sources.appendChild(a);
+      }
+      box.appendChild(sources);
+    }
+    if (r.memory_id && (r.memory_status === 'quarantine' || r.memory_status === 'approved')) {
+      var b = document.createElement('button');
+      b.className = 'approve';
+      b.textContent = '✓ Aprovar e consolidar';
+      b.onclick = async function() {
+        b.disabled = true;
+        try {
+          var c = await api('/api/approve', {memory_id: r.memory_id});
+          b.textContent = c.accepted ? '✅ Consolidado' : 'Rejeitado: ' + c.reason;
+        } catch (err) {
+          b.textContent = 'Erro: ' + err.message;
+        }
+      };
+      box.appendChild(b);
+    }
+  } catch (err) {
+    wait.textContent = '❌ ' + err.message;
+  } finally {
+    form.classList.remove('busy');
+    input.focus();
+    stats();
+  }
+});
+
+stats();
+setInterval(stats, 4000);
+applyModeUI('train');
+api('/api/mode', {mode: 'train'}).catch(function() {});
+</script>
+</body></html>

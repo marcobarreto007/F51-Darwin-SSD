@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://f51labs.local/schemas/single-root-migration.schema.json",
+  "title": "F51 Darwin-X single-root migration manifest",
+  "type": "object",
+  "required": ["schema_version", "plan", "state", "integrity_sha256"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "integrity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "plan": {
+      "type": "object",
+      "required": [
+        "project_root", "source_root", "target_root", "source_commit",
+        "source_volume", "target_volume", "file_count", "total_bytes",
+        "artifact_hashes", "rollback_command"
+      ],
+      "properties": {
+        "project_root": {"type": "string"},
+        "source_root": {"type": "string"},
+        "target_root": {"type": "string"},
+        "source_commit": {"type": "string"},
+        "source_volume": {"type": "string"},
+        "target_volume": {"type": "string"},
+        "file_count": {"type": "integer", "minimum": 0},
+        "total_bytes": {"type": "integer", "minimum": 0},
+        "artifact_hashes": {"type": "object"},
+        "rollback_command": {"type": "string"}
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["status", "runtime_use_detected", "destructive_cleanup_executed"],
+      "properties": {
+        "status": {"enum": ["planned", "applied", "rolled_back"]},
+        "runtime_use_detected": {"type": "boolean"},
+        "destructive_cleanup_executed": {"const": false}
+      }
+    }
+  }
+}

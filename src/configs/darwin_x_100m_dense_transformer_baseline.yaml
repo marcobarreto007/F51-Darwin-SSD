@@ -1,0 +1,106 @@
+# F51 Darwin-X 100M — Transformer denso "de mercado" pra comparar contra o
+# baseline_puro (SSD/Mamba+MoE, sem orgaos). Isola a UNICA variavel que falta:
+# nosso backbone hibrido vale a pena vs atencao pura + FFN denso comum?
+#
+# - attention_indices_override com TODAS as 12 camadas: sem SSD, so GQA.
+#   ssd_attention_ratio continua "3:1" no campo (contrato do __post_init__
+#   exige essa string), mas attention_layer_indices ignora a proporcao
+#   quando o override esta preenchido (config.py:200-206).
+# - fine_experts=1, experts_per_token=1, shared_experts=0: sem escolha de
+#   roteamento (so 1 expert existe), equivalente a FFN denso por camada.
+#   fine_expert_hidden_dim=2048 (~4x d_model, razao padrao de FFN denso em
+#   transformers) pra nao aleijar capacidade so por remover o MoE.
+# - Todos os orgaos desligados, igual ao baseline_puro, pra isolar so a
+#   variavel do backbone.
+model_name: F51-Darwin-X-100M-DenseBaseline
+init: random
+tokenizer: f51_bpe
+vocab_size: 58162
+context_length: 5120
+inference_context_length: 32768
+d_model: 512
+n_layers: 12
+n_heads: 8
+n_kv_heads: 2
+ssd_attention_ratio: "3:1"
+attention_indices_override: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+dropout: 0.0
+rope_base_train: 10000.0
+rope_base_infer: 100000.0
+residual_scale_multiplier: 1.2
+ssm_expand: 2
+ssm_state: 16
+
+fine_experts: 1
+shared_experts: 0
+experts_per_token: 1
+fine_expert_hidden_dim: 2048
+shared_expert_hidden_dim: 512
+
+# ── Auxiliary loss weights: TODOS OS ORGAOS DESLIGADOS (igual baseline_puro) ──
+mtp_depth: 2
+mtp_weight: 0.0
+jepa_weight: 0.0
+jepa_dist_weight: 0.0
+ghost_weight: 0.0
+ghost_mask_ratio: 0.15
+ghost_enabled: false
+curiosity_weight: 0.0
+spider_sense_enabled: false
+spider_calibration_enabled: false
+spider_calibration_weight: 0.0
+aux_loss_scale: 1.0
+aux_loss_adaptive: true
+
+# ── Heartbeat: DESLIGADO ──
+heartbeat_enabled: false
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 2
+
+# ── TTM Residual: DESLIGADO ──
+ttm_residual_enabled: false
+ttm_residual_max_scale: 0.0
+ttm_associative_weight: 0.0
+
+# ── Performance (Tier 0) ──
+nitro_enabled: false
+nitro_gpu_expert_capacity: 8
+gradient_checkpointing: true
+
+# ── DAE: DESLIGADO ──
+dae_enabled: false
+dae_shadow_mode: false
+loss_semantics_version: 2
+scan_chunk_size: 128
+qkv_bias: true
+vertical_routing_scale: 0.1
+
+# ── Estrutural: TODOS DESLIGADOS ──
+gaba_enabled: false
+inter_hemispheric_enabled: false
+sleep_enabled: false
+decision_engine_enabled: false
+unified_mesh_enabled: false
+
+legacy_tiers: 7
+checkpoint_root: "workspace/03_CHECKPOINTS_100M_DENSE_TRANSFORMER_BASELINE"
+
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead
+
+blockchain_enabled: true
+blockchain_path: workspace/03_CHECKPOINTS_100M_DENSE_TRANSFORMER_BASELINE/blocks.jsonl
+senate_enabled: false
+senate_interval: 500
+senate_min_weight: 0.02
+senate_death_threshold: 0.05
+senate_rising_bonus: 0.10
+senate_newborn_period: 3

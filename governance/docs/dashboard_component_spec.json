@@ -1,0 +1,791 @@
+{
+  "meta": {
+    "document": "F51 Darwin-X Mission Control — Dashboard Component Specification",
+    "version": "1.0.0",
+    "date": "2026-07-24",
+    "wave": "Wave 3 (implementation)",
+    "stack": {
+      "backend": "FastAPI + uvicorn",
+      "templates": "Jinja2",
+      "reactive": "htmx 2.x (14KB, committed)",
+      "charts": "Chart.js 4.x (65KB, committed)",
+      "transport": "Server-Sent Events (SSE) — single persistent connection, auto-reconnect",
+      "storage": "SQLite WAL (metrics, gpu_snapshots, checkpoint_history) + in-memory deques (maxlen=7200) for live charts",
+      "dependencies": "2 new pip deps: fastapi, uvicorn (~25MB). Zero npm, zero node, zero build step."
+    },
+    "theme": {
+      "name": "Dark OLED",
+      "surface": "#0d0d0d",
+      "card_bg": "#1a1a1a",
+      "accent": "#00d4ff",
+      "text_primary": "#e0e0e0",
+      "text_secondary": "#888888",
+      "font_sans": "Inter, system-ui, sans-serif",
+      "font_mono": "Cascadia Code, Consolas, monospace",
+      "css_grid": {
+        "1080p": "3 columns",
+        "1440p_plus": "4 columns",
+        "ultrawide": "5 columns"
+      }
+    },
+    "refresh_tiers": {
+      "tier_fast": {
+        "interval_ms": 2000,
+        "description": "Training metrics, GPU stats, loss/dopamine live values",
+        "components": ["HeroLoss", "CycleStepChip", "GpuCard", "MetricRow", "ChartCanvas"]
+      },
+      "tier_medium": {
+        "interval_ms": 10000,
+        "description": "Blockchain panel, system health",
+        "components": ["BlockchainCard", "SystemHealthBar"]
+      },
+      "tier_slow": {
+        "interval_ms": 60000,
+        "description": "SHA-256 fingerprints, organ status grid, agent timeline",
+        "components": ["OrganChip", "IntegrityRow", "AgentTimelineEntry"]
+      }
+    },
+    "semantic_colors": {
+      "green_improving": "#00e676",
+      "yellow_warning": "#ffc107",
+      "red_critical": "#ff1744",
+      "cyan_accent": "#00d4ff",
+      "purple_special": "#b388ff"
+    }
+  },
+
+  "data_pipeline": {
+    "overview": "Training process writes files to disk. Dashboard backend polls files every 2s via asyncio loop, reads mtime+size to detect changes, parses new data, pushes deltas to browser via SSE. Browser maintains in-memory deques for chart history (client-side buffer, last 1000 points per chart). SQLite WAL stores historical metrics for persistence across dashboard restarts.",
+    "source_files": {
+      "dopamine_status.txt": {
+        "location": "<CKPT_ROOT>/dopamine_status.txt",
+        "format": "space-separated key=value pairs",
+        "keys": ["step", "cycle", "loss", "ppl", "tok_s", "jepa_raw", "dope", "delta", "gmc", "mtp", "ghost", "spider", "lm_loss", "aux_loss"],
+        "written_by": "training loop every step (organism heartbeat)",
+        "update_interval_s": 2
+      },
+      "organism_latest.json": {
+        "location": "<CKPT_ROOT>/organism_latest.json",
+        "format": "JSON object",
+        "keys": ["cycle", "step", "checkpoint_version", "base_checkpoint_id", "saved_at", "path", "ledger_head"],
+        "written_by": "checkpoint save (every 100 steps)",
+        "update_interval_s": "on save (~50s at 2s/step)"
+      },
+      "blocks.jsonl": {
+        "location": "workspace/runtime/organism/blockchain/blocks.jsonl",
+        "format": "JSONL (one JSON object per line)",
+        "keys": ["block_hash", "header.cycle", "header.step", "header.timestamp", "organ_states"],
+        "written_by": "OrganLedger every step (when blockchain_enabled=true)",
+        "update_interval_s": 2
+      },
+      "causal_events.jsonl": {
+        "location": "<CKPT_ROOT>/causal_events.jsonl",
+        "format": "JSONL",
+        "keys": ["event_hash", "event_type", "cycle", "step", "timestamp"],
+        "written_by": "CausalLedger every step",
+        "update_interval_s": 2
+      },
+      "DIARIO_DE_BORDO.md": {
+        "location": "<ROOT>/DIARIO_DE_BORDO.md",
+        "format": "Markdown with structured sections (ESTADO ATUAL table, agent entry/exit blocks)",
+        "written_by": "human and AI agents (manual edits)",
+        "update_interval_s": "irregular (on agent entry/exit)"
+      },
+      "darwin_x_100m.yaml": {
+        "location": "<ROOT>/src/configs/darwin_x_100m.yaml",
+        "format": "YAML",
+        "keys": ["d_model", "n_layers", "n_heads", "checkpoint_root", "blockchain_enabled", "senate_enabled", "...all organ toggles"],
+        "written_by": "manual config edits",
+        "update_interval_s": "rarely"
+      }
+    },
+    "sse_event_types": {
+      "metrics": "Fast-tier payload: loss, ppl, tok_s, jepa, dopamine, delta, gmc, cycle, step, gpu[]",
+      "blockchain": "Medium-tier payload: block_count, head_hash, last_cycle, blockchain_status",
+      "system": "Medium-tier payload: ram_pct, disk_pct, proc_count, uptime, gpu_temp[]",
+      "integrity": "Slow-tier payload: sha256_map (5 files), verified_at",
+      "organs": "Slow-tier payload: organ_states[] (16 entries with name, status, identity_short)",
+      "timeline": "Slow-tier payload: entries[] (timestamp, agent, operation_type, summary)",
+      "heartbeat": "Every 15s: server timestamp — used for staleness detection client-side",
+      "training_status": "Sent on change: 'running' | 'stopped' | 'hung' (no update > 60s)"
+    }
+  },
+
+  "logbook_integration": {
+    "parser": "Regex-based parser in Python backend. Reads DIARIO_DE_BORDO.md on mtime change.",
+    "estado_atual_table": "Parses the markdown table under '## ESTADO ATUAL' section into dict. Provides checkpoint state, git commit, training status, organ count, blockchain status.",
+    "agent_entries": "Parses timestamped blocks with OPERATION, ESTADO ENCONTRADO, AÇÕES, ESTADO DEIXADO. Extracts agent name, operation type (READ/WRITE/EXECUTE/DECIDE/MIXED), and first-line summary.",
+    "bugs_section": "Parses numbered bug list under '## Bugs conhecidos'. Each bug: id, title, status.",
+    "dashboard_writes": "Dashboard APPENDS training start/stop events and periodic snapshots (every 100 steps) to DIARIO_DE_BORDO.md via advisory file lock (msvcrt.locking on Windows) with 2s timeout + pending queue.",
+    "cache": "agent_timeline.json in workspace/runtime/dashboard/ — regenerated on DIARIO_DE_BORDO.md mtime change."
+  },
+
+  "components": {
+    "HeroLoss": {
+      "name": "HeroLoss",
+      "purpose": "Dominant focal element showing the current training loss value with trend direction. The most visually prominent element on the dashboard — loss is the single most important metric for training health.",
+      "data_sources": {
+        "primary": "dopamine_status.txt → key 'loss' (total loss) and 'lm_loss' (language modeling baseline)",
+        "secondary": "SSE event 'metrics' → field 'loss'",
+        "trend_comparison": "Previous value stored in client-side deque (last 2 seconds)"
+      },
+      "update_frequency": "tier_fast (2s)",
+      "states": {
+        "loading": {
+          "visual": "Pulsing placeholder rectangle (CSS animation: opacity 0.3→0.6→0.3, 1.5s cycle). Width: 200px, height: 48px.",
+          "text": "No text, just shimmer bar"
+        },
+        "live": {
+          "visual": "Large numeric value (font: Cascadia Code, 56px, weight 700, color #e0e0e0). Trend arrow to the right (24px). Value formatted to 4 decimal places.",
+          "trend_arrow": {
+            "down_green": "Arrow: ▼ (U+25BC) in #00e676 — loss decreased (good)",
+            "up_red": "Arrow: ▲ (U+25B2) in #ff1744 — loss increased (bad)",
+            "flat_yellow": "Arrow: ◆ (U+25C6) in #ffc107 — change < 0.001 (stable)"
+          },
+          "label": "Small 'LOSS' label above number (font: Inter, 12px, uppercase, letter-spacing 0.15em, color #888888)"
+        },
+        "stale": {
+          "condition": "No SSE 'metrics' event received for > 30 seconds",
+          "visual": "Number remains but opacity drops to 0.4. Yellow warning badge 'STALE' appears top-right of card (font: Inter, 10px, bg #ffc107, text #0d0d0d)."
+        },
+        "error": {
+          "condition": "dopamine_status.txt missing, unparseable, or contains NaN/Inf",
+          "visual": "Red dashed outline on card (2px #ff1744). Text shows '--' in red. Tooltip on hover: 'Data source error: <reason>'."
+        },
+        "training_stopped": {
+          "condition": "SSE event 'training_status' = 'stopped'",
+          "visual": "Gray overlay on card. Number dimmed to #555555. Badge 'STOPPED' (bg #333333, text #888888) replaces trend arrow."
+        }
+      },
+      "edge_cases": {
+        "loss_is_zero": "Display '0.0000' normally — zero loss is valid during very early warmup. Trend arrow shows ◆ (flat) since comparison may also be zero.",
+        "loss_is_negative": "Display the value in red with warning tooltip: 'Negative loss — possible numerical instability'.",
+        "loss_nan_or_inf": "Display 'NaN' or '∞' in red. Card gets error state (red dashed outline). SSE emits 'error' event with detail.",
+        "loss_above_100": "Display the value normally but with yellow warning tint on the number. High loss during warmup steps is expected.",
+        "first_ever_value": "No trend arrow shown (no previous value to compare). Display '--' as trend until second data point arrives.",
+        "rapid_change": "If |delta| > 1.0 between 2s samples, flash the number background briefly (200ms, color based on direction: green flash for decreasing, red flash for increasing) to draw attention."
+      },
+      "visual_behavior": {
+        "transition": "Number updates use CSS transition (color 0.3s ease). No morphing/animation on the number itself — instant numeric update to avoid disorientation.",
+        "color_change": "If loss drops by >0.01, number briefly pulses green (box-shadow: 0 0 20px rgba(0,230,118,0.4), 500ms, then fades). If loss spikes by >0.05, number briefly pulses red.",
+        "tooltip": "Hovering the number shows a tooltip: 'lm_loss: X.XXXX | aux_loss: X.XXXX | total_loss: X.XXXX' (breakdown).",
+        "responsive": "On viewport < 900px, font size drops to 36px. Trend arrow moves below number."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'metrics'. Field: 'loss'. Client extracts loss value, computes trend vs stored previous value, updates DOM element #hero-loss."
+    },
+
+    "CycleStepChip": {
+      "name": "CycleStepChip",
+      "purpose": "Compact badges showing current training cycle and step numbers, with a progress bar indicating step completion within the current cycle (500 steps per cycle for 100M). Also shows the checkpoint-saved cycle/step for comparison.",
+      "data_sources": {
+        "primary": "dopamine_status.txt → keys 'cycle' and 'step'",
+        "checkpoint_ref": "organism_latest.json → keys 'cycle' and 'step' (last saved checkpoint)",
+        "secondary": "SSE event 'metrics' → fields 'cycle', 'step', 'ckpt_cycle', 'ckpt_step'",
+        "cycle_length": "Hardcoded 500 for 100M lineage (configurable via config endpoint)"
+      },
+      "update_frequency": "tier_fast (2s)",
+      "states": {
+        "loading": {
+          "visual": "Two pulsing chips (80x28px each) with shimmer animation. Progress bar hidden."
+        },
+        "live": {
+          "visual": "Two adjacent chips: Cycle badge (bg #1a1a1a, border 1px #00d4ff, text cyan) and Step badge (bg #1a1a1a, border 1px #00d4ff, text cyan). Font: Cascadia Code, 14px.",
+          "cycle_format": "'Cycle 046' (zero-padded to 3 digits)",
+          "step_format": "'Step 14,500' (comma-separated thousands)",
+          "progress_bar": "Horizontal bar below chips (width: 100%, height: 3px, bg #333333). Fill portion = (step % 500) / 500, color #00d4ff. Shows intra-cycle progress.",
+          "checkpoint_indicator": "Green dot (8px) appears left of Cycle chip when step == checkpoint step (synced). Yellow dot when step > checkpoint step (unsaved progress)."
+        },
+        "stale": {
+          "visual": "Chips dim to opacity 0.4. Progress bar freezes at last known position. Yellow 'STALE' text (10px) below."
+        },
+        "error": {
+          "visual": "Both chips show '--'. Red dashed border. Progress bar hidden."
+        }
+      },
+      "edge_cases": {
+        "step_rollover": "When step % 500 == 0, progress bar fills completely (100%), then resets to 0% on next tick when cycle increments. Brief full-bar celebration flash (200ms green).",
+        "step_zero": "Display 'Step 0' normally. Progress bar at 0%.",
+        "negative_values": "Display in red, treat as error state (should never happen — indicates data corruption).",
+        "cycle_gap": "If checkpoint cycle != current cycle (e.g., after resume with ledger rewind), show a small 'rewound' badge between chips: '↺' (U+21BA).",
+        "missing_checkpoint": "If organism_latest.json is missing, checkpoint indicator shows gray '?' dot. No checkpoint comparison."
+      },
+      "visual_behavior": {
+        "progress_animation": "Progress bar fill uses CSS transition width 1.5s ease-out for smooth step-to-step movement.",
+        "chip_hover": "Hovering Cycle chip shows tooltip: 'Cycle boundary every 500 steps. Organ Senate convenes at cycle end.' Hovering Step chip shows: 'Global step counter. Checkpoint saved at step <ckpt_step>.'",
+        "checkpoint_sync_flash": "When step reaches a multiple of 100 (checkpoint save point), both chips briefly flash green (300ms) to indicate sync."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'metrics'. Fields: 'cycle', 'step', 'ckpt_cycle', 'ckpt_step'. Updates #cycle-chip and #step-chip inner text, #cycle-progress-bar width, #checkpoint-dot color."
+    },
+
+    "GpuCard": {
+      "name": "GpuCard",
+      "purpose": "Per-GPU monitoring card showing utilization percentage, memory usage (used/total MiB), and temperature for each installed NVIDIA GPU. The 100M lineage has 2 GPUs (RTX 5060 Ti + RTX 3060).",
+      "data_sources": {
+        "primary": "nvidia-smi query via subprocess in Python backend: --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits",
+        "secondary": "SSE event 'metrics' → array field 'gpus' with objects: {idx, name, util, mem_used, mem_total, temp}",
+        "fallback": "If nvidia-smi unavailable, psutil for basic GPU detection (limited)"
+      },
+      "update_frequency": "tier_fast (2s)",
+      "states": {
+        "loading": {
+          "visual": "Card skeleton: pulsing bars for util bar, mem bar, and temp. Card labeled 'GPU 0' and 'GPU 1' even while loading (labels from prior known state or config)."
+        },
+        "live": {
+          "visual": "Card with dark bg (#1a1a1a), rounded corners (8px), padding 16px. Contains:",
+          "gpu_name": "Top-left: GPU name truncated to 28 chars (font: Inter, 12px, color #888888)",
+          "util_bar": "Horizontal bar (width 100%, height 12px, border-radius 6px, bg #333333). Fill: width = util%, color-coded: <70% = #00e676, 70-85% = #ffc107, >85% = #ff1744. Numeric label right-aligned: 'XX%' (font: Cascadia Code, 13px).",
+          "mem_bar": "Horizontal bar similar to util_bar. Fill = mem_used/mem_total * 100. Label: 'XXXX / XXXX MiB'. Color-coded: <70% = #00e676, 70-90% = #ffc107, >90% = #ff1744.",
+          "temp_indicator": "Right side of card: temperature number (font: Cascadia Code, 18px) with °C suffix. Color-coded: <60°C = #00e676, 60-75°C = #ffc107, >75°C = #ff1744. Small thermometer icon (U+1F321) left of number.",
+          "idle": "When util = 0% for > 10s, card gets subtle dimmed overlay (opacity 0.7). 'IDLE' badge appears top-right (font: 10px, bg #333333, text #888888)."
+        },
+        "stale": {
+          "visual": "All bars freeze at last known position. Card opacity drops to 0.4. Yellow 'STALE' badge."
+        },
+        "error": {
+          "visual": "Card shows red dashed border. Text: 'nvidia-smi unavailable' in red. All bars hidden. This is the normal state when no NVIDIA GPU is present or drivers are missing."
+        },
+        "oom_warning": {
+          "condition": "mem_used >= mem_total * 0.95",
+          "visual": "Memory bar pulses red (CSS animation: border-color #ff1744, 1s pulse). Red badge 'OOM RISK' appears below memory bar."
+        }
+      },
+      "edge_cases": {
+        "no_gpus": "Show single card with message: 'No NVIDIA GPUs detected' (gray text, icon: 🖥️). This is expected on CPU-only machines.",
+        "single_gpu": "Show only one card. Layout adapts: card spans wider.",
+        "three_or_more_gpus": "Cards wrap to next row. Grid auto-fits.",
+        "nvidia_smi_timeout": "nvidia-smi can hang (e.g., driver issues). Backend uses subprocess timeout=5. On timeout, show previous values with yellow 'SLOW' badge. Do not block SSE loop.",
+        "memory_zero": "mem_total=0 or mem_used=0: display '-- / -- MiB'. Bar at 0% width. This can happen during driver reset.",
+        "util_over_100": "nvidia-smi can report >100% briefly (accounting artifact). Clamp bar to 100% width, show exact value in label with yellow tint.",
+        "temp_zero_or_null": "Display '--°C' in gray. Some GPUs don't report temperature (e.g., certain Quadro models).",
+        "gpu_name_unknown": "Display 'GPU <idx>' using the index from nvidia-smi."
+      },
+      "visual_behavior": {
+        "bar_transition": "Util and mem bars use CSS transition width 0.8s ease-out.",
+        "temp_color_morph": "Temperature color uses CSS transition color 1s ease.",
+        "oom_pulse": "CSS keyframe animation: @keyframes oom-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,23,68,0.4); } 50% { box-shadow: 0 0 0 6px rgba(255,23,68,0); } }. Runs on loop while OOM condition persists.",
+        "click_expand": "Clicking a GPU card expands it to show a small 2-minute utilization sparkline (last 60 data points). Click again to collapse.",
+        "tooltip": "Hovering util_bar shows exact timestamp of last nvidia-smi reading."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'metrics'. Field 'gpus' is an array. Each GpuCard (id='gpu-card-0', 'gpu-card-1') updates its util-bar width, mem-bar width, mem-label text, and temp color independently."
+    },
+
+    "MetricRow": {
+      "name": "MetricRow",
+      "purpose": "A row in the training metrics panel showing a single scalar metric with its label, current value, delta from the previous reading, and a mini inline sparkline (last 20 values). Collectively, MetricRows form the metrics panel.",
+      "metrics_defined": [
+        {"key": "loss", "label": "Total Loss", "unit": "", "digits": 4, "lower_is_better": true},
+        {"key": "ppl", "label": "Perplexity", "unit": "", "digits": 2, "lower_is_better": true},
+        {"key": "tok_s", "label": "Tokens/s", "unit": "", "digits": 1, "lower_is_better": false},
+        {"key": "jepa", "label": "JEPA", "unit": "", "digits": 4, "lower_is_better": true},
+        {"key": "dope", "label": "Dopamine", "unit": "", "digits": 4, "lower_is_better": false},
+        {"key": "delta", "label": "Delta Loss", "unit": "", "digits": 4, "lower_is_better": true},
+        {"key": "gmc", "label": "GMC", "unit": "", "digits": 4, "lower_is_better": true}
+      ],
+      "data_sources": {
+        "primary": "dopamine_status.txt → respective key for each metric",
+        "secondary": "SSE event 'metrics' → all metric fields in a flat object"
+      },
+      "update_frequency": "tier_fast (2s)",
+      "states": {
+        "loading": {
+          "visual": "Row with label text visible, value as pulsing bar (60x16px), sparkline area empty with shimmer."
+        },
+        "live": {
+          "visual": "Horizontal row layout: [label 120px] [sparkline 80px] [value 90px right-aligned] [delta 60px].",
+          "label": "Metric name (font: Inter, 11px, uppercase, letter-spacing 0.1em, color #888888). Full name on hover tooltip.",
+          "value": "Numeric value (font: Cascadia Code, 18px, color #e0e0e0). Formatted to configured digit count.",
+          "delta": "Change from previous value (font: Cascadia Code, 12px). Arrow prefix: ▲ increase, ▼ decrease. Color: green if moving in 'good' direction, red if 'bad', gray if |delta| < 0.0001.",
+          "sparkline": "Inline SVG sparkline (80x20px) showing last 20 values. Polyline with stroke #00d4ff, stroke-width 1.5, no fill. Y-axis auto-scaled to [min,max] of visible window. X-axis: last 20 points only.",
+          "perplexity_note": "For 'ppl' metric, if loss changes, ppl recomputes as exp(loss). Show both current and previous ppl in delta."
+        },
+        "stale": {
+          "visual": "Entire row dims to opacity 0.4. Values frozen. Yellow dot (6px) appears after label."
+        },
+        "error": {
+          "visual": "Value shows '--' in red. Sparkline disappears. Label stays visible."
+        }
+      },
+      "edge_cases": {
+        "metric_missing": "If a key is absent from dopamine_status.txt (e.g., 'gmc' not yet computed), display '--' in gray. Do not show delta. Sparkline shows last available data points (may be shorter than 20).",
+        "metric_zero": "Display '0.0000' normally. Zero is valid for early training metrics.",
+        "metric_negative": "Some metrics can legitimately be negative (e.g., delta after loss spike). Display with sign prefix.",
+        "delta_overflow": "If delta magnitude > 1.0, display delta in yellow with '!' suffix (e.g., '▲ 2.341!') to flag anomalous change.",
+        "sparkline_single_point": "If only 1 data point available, sparkline shows a single dot (radius 2px) instead of a line.",
+        "sparkline_flat": "If all values in window are identical (within 0.001), sparkline draws a flat horizontal line at mid-height."
+      },
+      "visual_behavior": {
+        "value_transition": "Value text uses CSS transition color 0.3s. No numeric animation (instant update for precision).",
+        "delta_flash": "When delta crosses threshold (>0.01 for loss, >0.1 for ppl), delta text briefly scales up (transform: scale(1.2), 300ms) to draw attention.",
+        "sparkline_push": "New data point is appended to the right; oldest point drops off the left. The SVG polyline is rebuilt on each update (20 points, negligible cost).",
+        "row_hover": "Hovering a row highlights it (bg #222222) and extends the sparkline to show last 60 values via CSS width transition from 80px to 240px on hover."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'metrics'. Each MetricRow (id='metric-loss', 'metric-ppl', etc.) reads its specific field from the flat metrics object, computes delta client-side, and updates DOM."
+    },
+
+    "ChartCanvas": {
+      "name": "ChartCanvas",
+      "purpose": "Four individual Chart.js line charts arranged in a 2x2 grid showing historical training metrics over the last 4 hours (7200 data points at 2s intervals). Charts: Loss, Perplexity, Tokens/s, Dopamine.",
+      "charts": [
+        {"id": "chart-loss", "title": "Loss", "y_label": "Loss", "metric_key": "loss", "color": "#00d4ff", "y_min": null, "y_max": null},
+        {"id": "chart-ppl", "title": "Perplexity", "y_label": "PPL", "metric_key": "ppl", "color": "#b388ff", "y_min": 0, "y_max": null},
+        {"id": "chart-tok-s", "title": "Tokens/s", "y_label": "tok/s", "metric_key": "tok_s", "color": "#00e676", "y_min": 0, "y_max": null},
+        {"id": "chart-dopamine", "title": "Dopamine", "y_label": "Dopamine", "metric_key": "dope", "color": "#ffc107", "y_min": 0, "y_max": 1}
+      ],
+      "data_sources": {
+        "primary": "Client-side deques (maxlen=7200) per metric, populated from SSE 'metrics' events",
+        "seed_data": "On page load, fetch last 1000 points from SQLite metrics table via GET /api/metrics/history?metric=<key>&limit=1000"
+      },
+      "update_frequency": "tier_fast (2s) — data pushed via SSE on each tick. Chart redraw throttled to requestAnimationFrame (~16ms). Chart.update() called with mode 'none' (skip layout/scale recalculation, only redraw data).",
+      "states": {
+        "loading": {
+          "visual": "Chart area shows skeleton: empty axes with grid lines, title visible, pulsing placeholder in plot area (semitransparent band 30-70% height, opacity animation)."
+        },
+        "live": {
+          "visual": "Full Chart.js line chart with dark theme.",
+          "chart_config": {
+            "type": "line",
+            "data": {"datasets": [{"borderColor": "<chart.color>", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.1, "fill": false}]},
+            "options": {
+              "responsive": true,
+              "maintainAspectRatio": false,
+              "animation": {"duration": 0},
+              "scales": {
+                "x": {"type": "time", "time": {"unit": "minute", "stepSize": 10}, "grid": {"color": "#222222"}, "ticks": {"color": "#888888", "font": {"size": 10}}},
+                "y": {"grid": {"color": "#222222"}, "ticks": {"color": "#888888", "font": {"size": 10}}, "beginAtZero": false}
+              },
+              "plugins": {
+                "legend": {"display": false},
+                "tooltip": {"mode": "index", "intersect": false, "backgroundColor": "#1a1a1a", "titleColor": "#e0e0e0", "bodyColor": "#888888", "borderColor": "#00d4ff", "borderWidth": 1}
+              }
+            }
+          },
+          "y_auto_scale": "Y-axis auto-scales to [min-5%, max+5%] of visible data, clamped to configured y_min/y_max if set."
+        },
+        "stale": {
+          "visual": "Last data point shows as a red dot (radius 3px) indicating 'last known value > 30s ago'. Chart area gets subtle red border-left (2px)."
+        },
+        "error": {
+          "visual": "Chart area shows 'No data available' centered in gray text. Axes visible but empty."
+        }
+      },
+      "edge_cases": {
+        "empty_deque": "On fresh page load before first SSE event, chart shows seeded data from SQLite. If SQLite also empty, chart shows 'Waiting for training data...' in gray.",
+        "single_point": "Chart shows a single dot. Line is not drawn (needs >= 2 points). Tooltip still works.",
+        "gap_in_data": "If no data arrives for > 10s (network blip), chart draws a gap in the line (segment: {borderColor: 'transparent'} for the gap duration). This visually distinguishes 'no data' from 'zero value'.",
+        "value_spike": "If a value is > 5 standard deviations from the rolling mean, the tooltip marks it with yellow '⚠ anomalous' prefix. Chart still draws the point (no censoring).",
+        "browser_tab_background": "When tab is hidden (visibilitychange), requestAnimationFrame throttles. On tab focus, chart replays accumulated data points quickly (no animation, instant update to current state).",
+        "resize": "Chart.js responsive resize is enabled. On container resize, chart redraws. Debounced to 200ms."
+      },
+      "visual_behavior": {
+        "no_flash_morphing": "Critical: update chart data arrays in-place (push + shift), then call chart.update('none'). Never destroy/recreate the chart instance. This prevents white-flash on update.",
+        "transition_mode": "chart.update() uses transition mode 'default' (0ms duration). For slow-tier data (60s), use 'active' mode (200ms smooth transition) since data rate is lower.",
+        "zoom_hover": "Mousing over a chart temporarily expands it (CSS transform: scale(1.05), z-index bump) on hover for 500ms, then returns. Gives a 'focus' effect.",
+        "night_mode_sync": "Chart grid/axis colors use CSS custom properties (var(--surface), var(--text-secondary)) so they auto-adapt if theme toggle is added later."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'metrics'. For each chart, client extracts the relevant metric field, appends {x: timestamp, y: value} to the deque, and schedules a throttled chart update. No DOM replacement — Chart.js handles rendering."
+    },
+
+    "BlockchainCard": {
+      "name": "BlockchainCard",
+      "purpose": "Panel showing the status of the causal blockchain: total block count, head hash (truncated), last recorded cycle, and file size. Acts as the integrity anchor for the causal ledger.",
+      "data_sources": {
+        "primary": "blocks.jsonl — parsed by Python backend: line count, last line JSON parse for head_hash and cycle, file stat for size_kb",
+        "secondary": "SSE event 'blockchain' → fields: blocks, head_hash, last_cycle, size_kb, status"
+      },
+      "update_frequency": "tier_medium (10s)",
+      "states": {
+        "loading": {
+          "visual": "Card with title 'BLOCKCHAIN' visible. Three rows of pulsing bars. Hash truncated placeholder: '0000...' pulsing."
+        },
+        "live": {
+          "visual": "Compact card (matching other panel cards).",
+          "block_count": "Large number (font: Cascadia Code, 32px, color #00d4ff) with label 'BLOCKS' below.",
+          "head_hash": "'Head: 3a7f2e1b...' (font: Cascadia Code, 12px, color #888888, first 8 chars of SHA-256).",
+          "last_cycle": "'Cycle: XX' (font: Inter, 12px, color #888888).",
+          "file_size": "'XX.X KB' (font: Inter, 11px, color #666666)."
+        },
+        "no_file": {
+          "condition": "blocks.jsonl does not exist",
+          "visual": "Block count shows '0' in gray (#555555). Status line: 'Not recording' (font: Inter, 11px, color #ffc107). Warning icon: ⚠️ (U+26A0). Title dimmed.",
+          "tooltip": "'Blockchain file does not exist. Ensure --blockchain-enabled flag is passed and OrganLedger is initialized.'"
+        },
+        "empty": {
+          "condition": "blocks.jsonl exists but has 0 lines",
+          "visual": "Block count shows '0' in gray. Status: 'Empty (awaiting first block)' in yellow."
+        },
+        "stale": {
+          "visual": "Card dims to opacity 0.4. Yellow 'STALE' badge. This is expected if training is stopped (no new blocks being written)."
+        },
+        "error": {
+          "condition": "blocks.jsonl exists but is unparseable (corrupt JSONL)",
+          "visual": "Red dashed border. Status text: 'Parse error' in red. Block count shows last known value or '?'."
+        }
+      },
+      "edge_cases": {
+        "blockchain_not_enabled": "If config shows blockchain_enabled=false, card shows 'Disabled' with gray icon and tooltip explaining the config toggle. This is the expected state if the flag was not passed.",
+        "very_large_file": "If blocks.jsonl > 100MB, display size in MB instead of KB. Add yellow note: 'Large file — consider archiving.'",
+        "head_hash_mismatch": "Backend verifies: last line block_hash should match SHA-256(reconstruct(block)). If mismatch, display red warning: 'Chain integrity check FAILED' with red border. This indicates file corruption or partial write.",
+        "rapid_growth": "If block count increases by >100 between 10s polls, display block rate: '+XX blocks/s' in green. Normal rate is ~0.5 blocks/s (1 block per step at 2s/step)."
+      },
+      "visual_behavior": {
+        "new_block_flash": "When block_count increments, the block number briefly pulses (box-shadow cyan, 500ms).",
+        "hash_copy": "Clicking the truncated head_hash copies the full SHA-256 to clipboard. Brief 'Copied!' tooltip appears (2000ms).",
+        "expand_detail": "Clicking the card expands it to show a mini table of last 5 blocks: [block #, cycle, step, hash truncated]. Collapse on second click."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'blockchain'. Updates #blockchain-card inner content via htmx morph (idiomorph extension for seamless DOM merging). Fields: #block-count, #block-head-hash, #block-cycle, #block-size, #block-status."
+    },
+
+    "OrganChip": {
+      "name": "OrganChip",
+      "purpose": "A 4x4 grid (16 chips) showing each Darwin-X organ's name and current status. Provides at-a-glance visibility into which biological subsystems are active, dormant, or dead.",
+      "organs_list": [
+        {"name": "Core", "description": "Backbone SSD-MoE transformer"},
+        {"name": "MoE Router", "description": "Expert routing with load balancing"},
+        {"name": "Ghost", "description": "Masked autoencoder auxiliary head"},
+        {"name": "JEPA", "description": "Joint embedding predictive architecture"},
+        {"name": "MTP", "description": "Multi-token prediction head"},
+        {"name": "Spider", "description": "Gradient anomaly detection"},
+        {"name": "TTM", "description": "Test-time memory (heartbeat)"},
+        {"name": "GABA", "description": "Inhibitory gating modulation"},
+        {"name": "Inter-Hemi", "description": "Corpus callosum inter-hemisphere"},
+        {"name": "DAE", "description": "Denoising autoencoder regularizer"},
+        {"name": "Heartbeat", "description": "Dopamine-driven exploration"},
+        {"name": "Curiosity", "description": "Intrinsic reward exploration"},
+        {"name": "Decision Eng.", "description": "Autonomous weight proposals"},
+        {"name": "Nitro", "description": "GPU expert capacity optimizer"},
+        {"name": "Unified Mesh", "description": "Cross-organ communication fabric"},
+        {"name": "Sleep", "description": "Weight consolidation cycle"}
+      ],
+      "data_sources": {
+        "primary": "organism_latest.json → checkpoint file → organ_identity_report.identities (SHA-256 per organ) + organ status from bootstrap.py runtime state",
+        "secondary": "SSE event 'organs' → array of {name, status, identity_short, weight_norm, grad_norm_avg}",
+        "status_determination": "Backend checks: (1) organ identity SHA-256 exists in checkpoint → 'active'. (2) organ config toggle disabled → 'disabled'. (3) organ identity missing from checkpoint → 'dormant'. (4) organ known-dead (Curiosity never implemented, Decision Engine writes but nobody reads) → 'dead'. (5) organ recently reanimated by resume hook (e.g., GABA, TTM gates were zero) → 'reanimated'."
+      },
+      "update_frequency": "tier_slow (60s) — organ status changes rarely (only on checkpoint save or config change)",
+      "states": {
+        "loading": {
+          "visual": "Grid of 16 chips, each with shimmer animation. Labels visible (from hardcoded list). Status dot hidden."
+        },
+        "live": {
+          "visual": "Each chip is a rounded rectangle (bg #1a1a1a, border 1px #333333, padding 8px 12px, min-width 100px).",
+          "layout": "CSS Grid: grid-template-columns: repeat(4, 1fr) on 1080p+. Responsive: repeat(3, 1fr) on tablet, repeat(2, 1fr) on mobile.",
+          "content": "Organ name (font: Inter, 11px, color #e0e0e0) + status dot (10px circle, left of name).",
+          "status_colors": {
+            "active": "#00e676 (green), dot has subtle glow (box-shadow: 0 0 6px rgba(0,230,118,0.5))",
+            "disabled": "#555555 (gray), dot flat (no glow)",
+            "dormant": "#ffc107 (yellow), dot flat",
+            "dead": "#ff1744 (red), dot flat, chip border-color becomes red (1px)",
+            "reanimated": "#b388ff (purple), dot with slow pulse animation (2s cycle, opacity 1.0→0.5→1.0)"
+          }
+        },
+        "stale": {
+          "visual": "All chips dim to opacity 0.4. Status dots freeze at last known color. Yellow 'STALE' badge on grid header."
+        },
+        "error": {
+          "visual": "Chips show labels but all dots are gray with '?' inside. Grid header shows 'Organ status unavailable' in red."
+        }
+      },
+      "edge_cases": {
+        "organ_not_in_checkpoint": "Display as 'dormant' with yellow dot. Tooltip: 'No organ identity found in checkpoint — may not be initialized yet.'",
+        "config_toggle_off": "Display as 'disabled' with gray dot. Tooltip: '<organ>_enabled: false in config.'",
+        "curiosity_permanently_dead": "Curiosity chip always shows 'dead' (red) regardless — Curiosity was never implemented in the codebase. Tooltip: 'Curiosity module never implemented. curiosity_enabled key does not exist in DarwinXConfig.'",
+        "decision_engine_fantasma": "Decision Engine chip shows 'dead' (red) with special tooltip: 'Computes _last_decision_confidence but nobody consumes it. Code exists but output is discarded.'",
+        "new_organ_added": "If a 17th organ is added to bootstrap.py, the grid auto-adds a new chip. Layout recalculates: 17 mod 4 = 1 extra in last row, centered.",
+        "identity_sha256_mismatch": "If organ identity SHA-256 in runtime differs from checkpoint, chip border flashes yellow/red alternating (1s cycle). Tooltip: 'Organ weights changed since last checkpoint — unsaved modifications.'"
+      },
+      "visual_behavior": {
+        "dot_glow": "Active organs have CSS box-shadow glow on their status dot. Dormant/dead do not.",
+        "reanimated_pulse": "Reanimated organs use @keyframes reanimated-pulse for subtle pulse to distinguish from normal active.",
+        "chip_hover": "Hovering a chip shows a tooltip with: organ full description, status reason, identity SHA-256 truncated (last 16 chars), and last weight/gradient norm if available.",
+        "click_expand": "Clicking a chip could (future) show a mini detail panel with full organ metrics. For Wave 3, clicking copies organ name to clipboard.",
+        "grid_loading": "On first load, chips appear with staggered fade-in (each chip delayed by 50ms from previous) for visual polish."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'organs'. The organ grid (#organ-grid) receives an array. Client iterates, updates each chip's status dot color and tooltip text by matching data-name attribute. No full grid replacement — individual chip updates via CSS class toggles."
+    },
+
+    "IntegrityRow": {
+      "name": "IntegrityRow",
+      "purpose": "A row in the integrity panel showing a file's label, its SHA-256 fingerprint (truncated to 16 chars + '...'), and a copy button. Verifies that critical operational files have not been tampered with or corrupted. Five rows total.",
+      "files_tracked": [
+        {"label": "checkpoint.pt", "path": "<CKPT_ROOT>/<filename from organism_latest.json.path>", "description": "Active model checkpoint"},
+        {"label": "organism_latest.json", "path": "<CKPT_ROOT>/organism_latest.json", "description": "Checkpoint pointer manifest"},
+        {"label": "blocks.jsonl", "path": "workspace/runtime/organism/blockchain/blocks.jsonl", "description": "Blockchain ledger"},
+        {"label": "causal_events.jsonl", "path": "<CKPT_ROOT>/causal_events.jsonl", "description": "Causal event ledger"},
+        {"label": "config.yaml", "path": "src/configs/darwin_x_100m.yaml", "description": "Model configuration"}
+      ],
+      "data_sources": {
+        "primary": "Python backend computes SHA-256 of each file via hashlib.sha256() with 64KB chunked reading. Results cached for 55s (just under the 60s poll interval).",
+        "secondary": "SSE event 'integrity' → object mapping label → {hash_short, hash_full, exists, size_mb, verified_at}"
+      },
+      "update_frequency": "tier_slow (60s) — hashing large checkpoint files (~938MB) on every 2s cycle would be I/O expensive",
+      "states": {
+        "loading": {
+          "visual": "Five rows, each with label visible, hash placeholder as pulsing bar (16 chars wide), copy button dimmed (cursor: wait)."
+        },
+        "live": {
+          "visual": "Each row: [status icon 16px] [label 180px] [hash truncated 180px] [copy button 24px].",
+          "status_icons": {
+            "verified": "Green checkmark (U+2705) — file exists and hash computed successfully",
+            "not_found": "Gray dash (U+2014) — file does not exist at expected path",
+            "error": "Red X (U+274C) — file exists but hash computation failed (I/O error, permissions)"
+          },
+          "hash_format": "Font: Cascadia Code, 12px, color #00d4ff. Format: '3a7f2e1b9c4d5f6a...' (first 16 hex chars + '...').",
+          "copy_button": "Small button (24x24px) with clipboard icon (U+1F4CB). On click: copies full SHA-256 (64 hex chars) to clipboard via navigator.clipboard.writeText().",
+          "size_hint": "After hash: file size in parentheses (font: Inter, 10px, color #666666). E.g., '(938.2 MB)'.",
+          "verified_at": "Rightmost: small timestamp 'Verified 12s ago' (font: Inter, 9px, color #555555) showing time since last hash computation."
+        },
+        "stale": {
+          "visual": "Rows dim to opacity 0.4. 'Verified at' timestamp increments (e.g., 'Verified 95s ago'). When > 120s, yellow 'STALE' badge appears."
+        },
+        "error": {
+          "visual": "Affected row(s) show red X icon, hash replaced with 'ERROR' in red. Copy button hidden. Tooltip explains error reason."
+        }
+      },
+      "edge_cases": {
+        "checkpoint_path_relative": "organism_latest.json.path is often a bare filename (e.g., 'organism_cycle_046_step_014500.pt'). Backend resolves relative to CKPT_ROOT. If path is absolute or contains '..', reject and show error.",
+        "checkpoint_missing": "If checkpoint .pt file does not exist at resolved path, show 'not_found' with tooltip: 'Checkpoint file missing — may have been moved or deleted.'",
+        "blocks_jsonl_missing": "Expected state when blockchain not recording. Show 'not_found' but with blue info icon (U+2139) instead of red X. Tooltip: 'Blockchain not recording — blocks.jsonl will be created on first block.'",
+        "causal_events_missing": "Show 'not_found' with yellow warning. Tooltip: 'Causal events file not found — ledger may not have been initialized or was archived.'",
+        "hash_mismatch_from_prior": "Backend compares current hash with hash from previous poll. If different (file was modified), row border flashes yellow for 2 seconds. Tooltip: 'File modified since last check — previous hash: <old_hash>'.",
+        "very_large_file": "Checkpoint .pt files can be > 1GB. Hashing takes ~2-3 seconds. Backend uses asyncio.to_thread() to avoid blocking the event loop. During hash, status shows spinner icon (U+23F3) with 'Computing...'.",
+        "hash_collision_prefix": "Truncated 16-char hash is sufficient for display. Full hash available via copy button. No collision risk in 5 files."
+      },
+      "visual_behavior": {
+        "copy_feedback": "On copy button click, button icon changes to checkmark (U+2705) for 1500ms, then reverts to clipboard. Tooltip: 'Copied!' appears briefly.",
+        "hash_change_flash": "When a file's hash changes, that row's hash text briefly scales up (transform: scale(1.05), 300ms) and border-left goes yellow (3px).",
+        "row_hover": "Hovering a row highlights it (bg #222222) and shows the full hash as a tooltip (64 chars, word-break: break-all).",
+        "section_status": "Section header shows aggregate: '5/5 verified' or '4/5 verified, 1 missing' in green/yellow."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'integrity'. Object maps label→data. Client iterates rows (data-integrity-label attribute), updates each row's hash text, status icon, and timestamp. Copy button behavior is purely client-side (no SSE involvement)."
+    },
+
+    "AgentTimelineEntry": {
+      "name": "AgentTimelineEntry",
+      "purpose": "A chronological entry in the agent activity timeline showing when a human or AI agent entered or exited the project (from DIARIO_DE_BORDO.md). Provides operational audit trail visibility directly in the dashboard.",
+      "data_sources": {
+        "primary": "DIARIO_DE_BORDO.md — parsed by Python backend regex: extracts timestamped blocks with OPERATION, ESTADO ENCONTRADO, AÇÕES, ESTADO DEIXADO",
+        "cache": "workspace/runtime/dashboard/agent_timeline.json — regenerated when DIARIO_DE_BORDO.md mtime changes",
+        "secondary": "SSE event 'timeline' → array of {timestamp, agent, operation_type, summary, entry_type}",
+        "entry_types": {"ENTRADA": "Agent entered", "SAÍDA": "Agent exited", "ENTRADA + SAÍDA": "Combined entry/exit"}
+      },
+      "update_frequency": "tier_slow (60s) — DIARIO_DE_BORDO.md changes infrequently (only when an agent works)",
+      "states": {
+        "loading": {
+          "visual": "Timeline container with 3 skeleton entries: each has pulsing bar for timestamp, pulsing bar for agent name, pulsing bar for summary."
+        },
+        "live": {
+          "visual": "Vertical timeline with entries ordered by timestamp (newest at top). Each entry:",
+          "timeline_line": "Vertical line (2px, color #333333) connecting entries. A dot (12px) marks each entry on the line.",
+          "timestamp": "Left of dot: timestamp in UTC (font: Cascadia Code, 10px, color #666666). Format: '07-24 18:30'.",
+          "agent_name": "Right of dot: agent name (font: Inter, 13px, weight 600, color #e0e0e0). E.g., 'Claude (F51 Darwin session)'.",
+          "operation_dot": "Colored dot (8px) left of agent name indicating operation type:",
+          "operation_colors": {
+            "READ": "#42a5f5 (blue)",
+            "WRITE": "#ff9800 (orange)",
+            "EXECUTE": "#00e676 (green)",
+            "DECIDE": "#b388ff (purple)",
+            "MIXED": "CSS linear-gradient(135deg, #42a5f5, #ff9800) (blue-to-orange gradient)"
+          },
+          "summary": "Below agent name: one-line summary (font: Inter, 11px, color #888888). First line of the AÇÕES or OBJETIVO field, truncated to 80 chars.",
+          "expandable": "Clicking an entry expands it to show full details: OPERATION, ESTADO ENCONTRADO, AÇÕES, ESTADO DEIXADO, COMMIT, WARNINGS (parsed from the markdown block). Collapse on second click.",
+          "entry_type_badge": "Small badge top-right of entry: 'IN' (green) for ENTRADA, 'OUT' (blue) for SAÍDA, 'IN+OUT' (purple) for combined."
+        },
+        "stale": {
+          "visual": "Timeline dims to opacity 0.4. Yellow 'STALE' on header."
+        },
+        "error": {
+          "visual": "Timeline shows 'Unable to parse DIARIO_DE_BORDO.md' in red. Last known entries (from cache) still visible but dimmed."
+        },
+        "empty": {
+          "visual": "Timeline area shows 'No agent entries yet' in gray italic. This is the state before any agents have worked on the project."
+        }
+      },
+      "edge_cases": {
+        "malformed_entry": "If a markdown block has missing fields (e.g., no timestamp), show entry with 'Unknown' for missing field in gray italic. Do not skip the entry.",
+        "future_timestamp": "If timestamp is in the future (clock skew), show with yellow warning icon (U+26A0) and tooltip: 'Timestamp appears to be in the future — possible clock skew.'",
+        "duplicate_entry": "If two entries have the same timestamp, show both (don't deduplicate — they may be different operations).",
+        "very_long_summary": "Truncate to 80 chars with '...' suffix. Full text available in expanded view.",
+        "no_entries": "If DIARIO_DE_BORDO.md has no registered entries (beyond the template), show the template instructions as a gray italic hint: 'No agent entries recorded yet. Agents must register in DIARIO_DE_BORDO.md before working.'",
+        "special_characters": "Agent names or summaries may contain emoji, Unicode. Display as-is. Font stack (Inter, Cascadia Code) supports Unicode.",
+        "cache_stale": "If agent_timeline.json cache is older than DIARIO_DE_BORDO.md mtime, backend regenerates cache before sending SSE event."
+      },
+      "visual_behavior": {
+        "new_entry_animation": "When a new entry appears (was not in previous poll), it slides in from the top (CSS animation: slideDown 0.4s ease-out, starting from max-height: 0).",
+        "expand_collapse": "Expanded detail section uses CSS transition max-height 0.3s ease. Detail content: OPERATION (full text), ESTADO ENCONTRADO (key-value pairs), AÇÕES (numbered list), COMMIT (mono), WARNINGS (yellow-bordered box).",
+        "scroll_position": "Timeline container has max-height: 400px with overflow-y: auto. On new entry, if user is scrolled to top, auto-scroll to show new entry. If user has scrolled down to read history, do not auto-scroll (preserve reading position).",
+        "timeline_dot_hover": "Hovering the timeline dot enlarges it (12px → 16px) and shows the full UTC timestamp as tooltip."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'timeline'. Array of entries. If the number of entries changed, the entire timeline (#agent-timeline) is rebuilt server-side via Jinja2 template snippet and swapped in via htmx. This is simpler than client-side diffing. The snippet is small (~2KB for 20 entries)."
+    },
+
+    "SystemHealthBar": {
+      "name": "SystemHealthBar",
+      "purpose": "Compact system resource monitor showing RAM usage, disk free space, Python process count, and dashboard uptime. Provides operational awareness of the machine running the training.",
+      "data_sources": {
+        "primary": "psutil via Python backend: virtual_memory() for RAM, disk_usage('/') for disk, process_iter() for Python processes, monotonic timer for uptime",
+        "secondary": "SSE event 'system' → fields: ram_pct, ram_used_gb, ram_total_gb, disk_pct, disk_free_gb, proc_count, proc_total_mem_gb, uptime_s, dashboard_uptime_s"
+      },
+      "update_frequency": "tier_medium (10s)",
+      "health_indicators": [
+        {"id": "ram", "label": "RAM", "value_key": "ram_pct", "unit": "%", "thresholds": {"green": 80, "yellow": 95, "red": 100}},
+        {"id": "disk", "label": "Disk", "value_key": "disk_pct", "unit": "%", "thresholds": {"green": 80, "yellow": 95, "red": 100}},
+        {"id": "procs", "label": "Python", "value_key": "proc_count", "unit": " procs", "thresholds": {"green": 5, "yellow": 10, "red": 20}},
+        {"id": "uptime", "label": "Uptime", "value_key": "uptime_s", "unit": "", "thresholds": null}
+      ],
+      "states": {
+        "loading": {
+          "visual": "Four compact bars/labels with pulsing placeholder fills."
+        },
+        "live": {
+          "visual": "Horizontal row of 4 compact indicators, each with: label (font: Inter, 9px, uppercase, color #888888), value (font: Cascadia Code, 14px), and a thin progress bar (height: 3px, width: 100%, bg #333333).",
+          "ram_bar": "Fill = ram_pct%. Color: <80% = #00e676, 80-95% = #ffc107, >95% = #ff1744. Label shows 'XX.X / YY.Y GB'.",
+          "disk_bar": "Fill = disk_pct%. Same color thresholds. Label shows 'XXX GB free'.",
+          "proc_bar": "Count of Python processes (font: Cascadia Code, 16px). Color: <2 (dead) = #ff1744, 2-4 (normal) = #00e676, >4 (possible duplicate) = #ffc107. Below: total Python memory in GB.",
+          "uptime_display": "Dashboard uptime in human-readable format: '4h 32m'. Training uptime from training process start time."
+        },
+        "stale": {
+          "visual": "All indicators dim. Values freeze. Yellow 'STALE' badge."
+        },
+        "error": {
+          "visual": "If psutil unavailable, show 'psutil not installed' in gray with tooltip: 'Install psutil for system health monitoring.'"
+        }
+      },
+      "edge_cases": {
+        "ram_near_full": "When ram_pct > 95%, RAM bar pulses red (same OOM animation as GPU memory). This is critical — OOM killer may terminate the training process.",
+        "disk_near_full": "When disk_pct > 95%, disk bar pulses red. Checkpoints may fail to save. Warning tooltip: 'Disk nearly full — checkpoint saves may fail.'",
+        "python_process_zero": "Process count = 0 means training is not running. Display '0' in red with tooltip: 'No Python processes detected — training is stopped.' This should correlate with training_status=stopped.",
+        "python_process_many": "Process count > 10 may indicate zombie processes from crashed runs. Display count in red with tooltip: 'High process count — possible zombie processes from previous runs.'",
+        "uptime_negative": "Should never happen (monotonic clock). If it does, display '--' and log error.",
+        "uptime_very_long": "If uptime > 7 days, display in days: '12d 4h'. Dashboard uptime shown separately in smaller font below."
+      },
+      "visual_behavior": {
+        "bar_transition": "Progress bars use CSS transition width 0.8s ease-out.",
+        "critical_pulse": "RAM and disk bars use @keyframes critical-pulse when above 95% (same animation as OOM).",
+        "process_count_color": "Process count text color uses CSS transition color 1s ease.",
+        "section_compact": "This section is intentionally compact (height: ~60px) — it's supportive info, not primary. Sits in the footer or sidebar."
+      },
+      "htmx_sse_routing": "Listens to SSE event 'system'. Updates #sys-ram-bar width, #sys-ram-text, #sys-disk-bar width, #sys-disk-text, #sys-proc-count, #sys-uptime."
+    },
+
+    "ConnectionStatus": {
+      "name": "ConnectionStatus",
+      "purpose": "Small persistent indicator in the dashboard header showing whether the SSE connection to the backend is active. Critical for trust in the displayed data — if disconnected, all values are stale.",
+      "data_sources": {
+        "primary": "Browser EventSource API events: 'open', 'message', 'error'",
+        "heartbeat": "SSE event 'heartbeat' every 15s from server with {server_time: ISO8601}. Client tracks last heartbeat received.",
+        "secondary": "SSE event 'training_status' → field 'status' for running/stopped state"
+      },
+      "update_frequency": "Reactive (no polling — EventSource events drive state)",
+      "states": {
+        "connecting": {
+          "condition": "EventSource created, connection not yet established",
+          "visual": "Yellow pulsing dot (10px, CSS animation: opacity 0.5→1.0→0.5, 1s cycle). Text: 'Connecting...' (font: Inter, 10px, color #ffc107)."
+        },
+        "connected": {
+          "condition": "EventSource 'open' event fired, heartbeat received within last 20s",
+          "visual": "Green pulsing dot (10px, CSS glow animation: box-shadow 0 0 8px rgba(0,230,118,0.6), 2s pulse). Text: 'Live' (font: Inter, 10px, color #00e676). On hover: 'SSE connected — data streaming every 2s'.",
+          "latency_ms": "If heartbeat includes server_time, client computes latency: Date.now() - server_time. Display: 'Live (XXms)' where XX is the round-trip latency."
+        },
+        "disconnected": {
+          "condition": "EventSource 'error' event fired, or no heartbeat for > 25 seconds",
+          "visual": "Red solid dot (10px, no glow). Text: 'Disconnected' (font: Inter, 10px, color #ff1744). Below: 'Reconnecting in Xs...' countdown (font: Inter, 9px, color #888888).",
+          "reconnect_countdown": "EventSource auto-reconnects with browser-default backoff (~3s). Client shows countdown to next reconnect attempt based on time since last error.",
+          "manual_reconnect": "Clicking the indicator forces a reconnect: EventSource.close() + new EventSource(url). Useful if browser backoff is too slow."
+        },
+        "training_status_indicator": {
+          "running": "Adjacent to connection dot: small green badge 'TRAINING' (bg rgba(0,230,118,0.15), text #00e676).",
+          "stopped": "Gray badge 'STOPPED' (bg #333333, text #888888).",
+          "hung": "Yellow badge 'HUNG' (bg rgba(255,193,7,0.15), text #ffc107) when training_status=hung. Tooltip: 'No training updates for > 60s — process may be hung.'"
+        }
+      },
+      "edge_cases": {
+        "initial_connection_fail": "If the very first EventSource connection fails (server not running), show 'Server unreachable' in red. Offer a 'Retry' button. Don't show the full dashboard (it would be all stale/error states).",
+        "server_restart": "If server restarts (SSE reconnects with new connection), all components should re-seed from SQLite history and reset their deques. ConnectionStatus briefly shows 'Reconnected — seeding data...' in yellow.",
+        "network_flap": "If connection rapidly toggles (connected → disconnected → connected within 5s), suppress the 'Disconnected' text to avoid flicker. Only show 'Disconnected' after 3 consecutive seconds in error state (debounce).",
+        "heartbeat_miss": "A single missed heartbeat (15s interval) does not trigger disconnect — must miss 2 consecutive heartbeats (30s) before showing disconnected. This tolerates GC pauses or brief network blips.",
+        "browser_background": "When browser tab is backgrounded, EventSource may buffer events. On tab focus, check last heartbeat timestamp — if > 30s old, show 'Disconnected' briefly then reconnect."
+      },
+      "visual_behavior": {
+        "dot_pulse_connected": "@keyframes connected-pulse { 0%,100% { box-shadow: 0 0 4px rgba(0,230,118,0.4); } 50% { box-shadow: 0 0 12px rgba(0,230,118,0.8); } }",
+        "dot_pulse_connecting": "@keyframes connecting-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1.0; } }",
+        "state_transition": "Dot color and text change with CSS transition 0.3s ease.",
+        "training_status_transition": "Training status badge morphs with CSS transition background-color 0.5s ease.",
+        "position": "Fixed position in the top-right corner of the dashboard header bar (z-index: 100). Always visible regardless of scroll position."
+      },
+      "htmx_sse_routing": "This component manages the SSE connection itself. It listens to native EventSource events (not SSE event types). It emits connection state changes to a small client-side event bus that other components can subscribe to (e.g., ChartCanvas pauses updates when disconnected). Training status is received via SSE event 'training_status'."
+    }
+  },
+
+  "layout_structure": {
+    "description": "CSS Grid layout with named areas. Components are placed into a responsive grid that reflows from 3 columns (1080p) to 4 (1440p+) to 5 (ultrawide).",
+    "grid_areas_1080p": [
+      ["ConnectionStatus", "ConnectionStatus", "ConnectionStatus"],
+      ["HeroLoss", "CycleStepChip", "SystemHealthBar"],
+      ["GpuCard-0", "GpuCard-1", "BlockchainCard"],
+      ["MetricRow-panel", "MetricRow-panel", "MetricRow-panel"],
+      ["chart-loss", "chart-ppl", "chart-tok-s"],
+      ["chart-dopamine", "chart-dopamine", "chart-dopamine"],
+      ["OrganChip-grid", "OrganChip-grid", "OrganChip-grid"],
+      ["IntegrityRow-panel", "IntegrityRow-panel", "IntegrityRow-panel"],
+      ["AgentTimelineEntry", "AgentTimelineEntry", "AgentTimelineEntry"]
+    ],
+    "grid_areas_1440p": [
+      ["ConnectionStatus", "ConnectionStatus", "ConnectionStatus", "ConnectionStatus"],
+      ["HeroLoss", "CycleStepChip", "SystemHealthBar", "BlockchainCard"],
+      ["GpuCard-0", "GpuCard-1", "MetricRow-panel", "MetricRow-panel"],
+      ["chart-loss", "chart-ppl", "chart-tok-s", "chart-dopamine"],
+      ["OrganChip-grid", "OrganChip-grid", "IntegrityRow-panel", "IntegrityRow-panel"],
+      ["AgentTimelineEntry", "AgentTimelineEntry", "AgentTimelineEntry", "AgentTimelineEntry"]
+    ],
+    "card_spacing": "16px gap between grid items. Cards have padding: 16px, border-radius: 8px.",
+    "responsive_breakpoints": {
+      "mobile_small": {"max_width": "600px", "columns": 1, "stack": "vertical"},
+      "tablet": {"max_width": "1080px", "columns": 2},
+      "laptop": {"max_width": "1440px", "columns": 3},
+      "desktop": {"min_width": "1441px", "columns": 4},
+      "ultrawide": {"min_width": "2560px", "columns": 5}
+    }
+  },
+
+  "implementation_notes": {
+    "file_plan": {
+      "src/tools/darwin_dashboard_web.py": "FastAPI app, SSE endpoint, data collectors (asyncio polling loop), logbook parser, SQLite WAL manager. Main entry point.",
+      "src/tools/templates/dashboard.html": "Single Jinja2 template. Full HTML document with CSS Grid layout, embedded <style> for critical CSS, links to external static files.",
+      "src/tools/static/htmx.min.js": "htmx 2.x (14KB). Committed to repo for offline capability. Loaded via <script src> without integrity hash (local file).",
+      "src/tools/static/chart.min.js": "Chart.js 4.x (65KB). Committed to repo.",
+      "src/tools/static/dashboard.css": "Dark theme CSS custom properties, component styles, responsive grid, animations. Non-critical CSS loaded via <link>.",
+      "workspace/runtime/dashboard/metrics.db": "SQLite WAL database (auto-created on first run). Tables: metrics, gpu_snapshots, checkpoint_history.",
+      "workspace/runtime/dashboard/runs.jsonl": "Training run log (start/stop events appended by dashboard).",
+      "workspace/runtime/dashboard/agent_timeline.json": "Cached parsed timeline from DIARIO_DE_BORDO.md."
+    },
+    "python_backend_modules": {
+      "DataCollector": "Async class polling source files every 2s. Reads mtime+size, parses deltas, pushes to asyncio.Queue. Three queues: fast_queue (2s), medium_queue (10s), slow_queue (60s).",
+      "SSEManager": "Manages connected SSE clients. On new data in queue, broadcasts SSE event to all clients. Handles client disconnect cleanup.",
+      "LogbookParser": "Regex parser for DIARIO_DE_BORDO.md. Extracts ESTADO ATUAL table, agent entries, bugs section. Caches parsed result. File lock (msvcrt.locking on Windows) for writes.",
+      "DatabaseManager": "SQLite WAL manager. Inserts metrics and GPU snapshots on each poll. Provides history queries for chart seeding. Auto-vacuums on dashboard startup.",
+      "HashCache": "Computes SHA-256 of 5 integrity files with TTL caching. Uses asyncio.to_thread() for hashing to avoid event loop blocking."
+    },
+    "client_side_state": {
+      "deques": "Four Float64Arrays (ring buffers, maxlen=7200) for loss, ppl, tok_s, dopamine. Paired with timestamp Int32Arrays.",
+      "previous_metrics": "Object storing last received metrics for delta computation (MetricRow, HeroLoss trend).",
+      "connection_state": "Enum: connecting | connected | disconnected. Updated by ConnectionStatus component.",
+      "organ_states": "Array of 16 {name, status, identity_short} objects. Updated on 'organs' SSE event.",
+      "training_status": "Enum: running | stopped | hung | unknown. Updated on 'training_status' SSE event."
+    }
+  },
+
+  "ssr_initial_load": {
+    "description": "On first page load (HTTP GET /), the Jinja2 template renders with server-side data seeded from the latest poll. This prevents a 'flash of loading skeletons' and ensures the dashboard is immediately useful.",
+    "seeded_data": [
+      "Current loss, cycle, step from latest dopamine_status.txt",
+      "Last 1000 data points per chart from SQLite metrics table",
+      "Latest GPU stats from nvidia-smi",
+      "Blockchain status from blocks.jsonl",
+      "Organ statuses from checkpoint + config",
+      "SHA-256 hashes (cached from last computation)",
+      "Agent timeline from cached agent_timeline.json",
+      "System health from psutil"
+    ],
+    "after_load": "Browser establishes SSE connection. First SSE event triggers differential update (only changed values replace DOM). Charts receive incremental data points beyond the seeded 1000."
+  }
+}

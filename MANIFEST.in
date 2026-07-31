@@ -1,0 +1,12 @@
+include LICENSE
+include README.md
+include pyproject.toml
+recursive-include f51_darwin *.py *.html *.ps1
+prune archive
+prune audit
+prune research
+prune scripts
+prune tests
+prune tools
+prune workspace
+global-exclude __pycache__ *.py[cod]

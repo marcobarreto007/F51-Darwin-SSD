@@ -1,0 +1,77 @@
+{
+  "checkpoint": "organism_cycle_235.pt",
+  "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_235.pt",
+  "config": "F51-Darwin-X-600M",
+  "cycle": 235,
+  "step": 117560,
+  "version": 6,
+  "device": "cuda",
+  "ppl_pt": {
+    "ppl": 2903.07,
+    "loss": 7.9735,
+    "tokens": 107
+  },
+  "ppl_en": {
+    "ppl": 223.95,
+    "loss": 5.4114,
+    "tokens": 94
+  },
+  "lexical_diversity": {
+    "type_token_ratio": 0.1534,
+    "total_words": 176,
+    "unique_words": 27
+  },
+  "generations": [
+    {
+      "prompt": "Quem te criou?",
+      "text": "Wanneer wetten wet de de wetten wetten wetten zijke die de wetten de de wetten in de wetten wetten wetten z",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu nome?",
+      "text": "Die wet harmonie de wetten in de wetten wetten de wet van erfelijkheid de wetten de nadoen de de gewoo",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu proposito?",
+      "text": "* * * * * \n \n \n \n Wanneer wet in de wetten in de wetten, die harmonie de wetten zijke die",
+      "token_count": 64
+    },
+    {
+      "prompt": "Soli Deo Gloria significa",
+      "text": "gewust \n \n wetten zijn de wetten wetten zijke die de wetten zij wetten wetten zijke die de wetten zijke",
+      "token_count": 64
+    },
+    {
+      "prompt": "O que voce sabe sobre o Brasil?",
+      "text": "doel wetten in wetten wetten wetten in de wetten in de wetten in de wetten in de wetten wetten wetten zijke die de",
+      "token_count": 64
+    },
+    {
+      "prompt": "A capital do Brasil eh",
+      "text": "wetten van de wetten wetten zelde zij zijn, die wetten en de de gewoonte en oefen ing in het gewoonte",
+      "token_count": 64
+    },
+    {
+      "prompt": "A agua ferve a",
+      "text": "an de wetten, die wetten \n \n gewij de wetten wetten de wet van gewoonte en oefen ing in het gewoonte en oefen ing",
+      "token_count": 64
+    },
+    {
+      "prompt": "O sol eh uma",
+      "text": "wetten \n \n van gewoonte en oefen ing in het gewoonte en oefen ing in het gewoonte en oefen ing in het gewoo",
+      "token_count": 64
+    },
+    {
+      "prompt": "Explain what a transformer is in one sentence.",
+      "text": "",
+      "token_count": 64
+    },
+    {
+      "prompt": "The meaning of life is",
+      "text": "a \n \n gehogt gewendig. Weniger zijn, die de wetten in de wetten wetten de wet van erfelijkheid de wetten de",
+      "token_count": 64
+    }
+  ],
+  "eval_timestamp": "2026-07-12T23:52:20Z"
+}

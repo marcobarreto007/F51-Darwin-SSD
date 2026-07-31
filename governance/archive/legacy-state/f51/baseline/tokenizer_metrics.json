@@ -1,0 +1,22 @@
+{
+  "fertility": {
+    "fertility": 2.2857,
+    "tokens": 840668,
+    "words": 367794
+  },
+  "measured_at": "2026-07-15T14:09:53+00:00",
+  "sample_documents": 84,
+  "space_prefix": false,
+  "strr": {
+    "space_prefix_enabled": false,
+    "strr_bare": 1.0,
+    "strr_bare_en": 1.0,
+    "strr_bare_pt": 1.0,
+    "strr_space_prefixed": 0.0,
+    "strr_space_prefixed_en": 0.0,
+    "strr_space_prefixed_pt": 0.0
+  },
+  "tokenizer_name": "F51-Darwin-80K",
+  "tokenizer_version": "v1",
+  "vocab_size": 58162
+}

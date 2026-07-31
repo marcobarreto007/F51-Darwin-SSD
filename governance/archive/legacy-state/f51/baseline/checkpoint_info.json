@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-07-15T10:16:22-0400",
+  "repo": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+  "workspace": "C:\\Users\\marco\\Desktop\\F51-Dataset-Organizado",
+  "checkpoints_on_disk": [
+    {
+      "name": "organism_cycle_066.pt",
+      "size_gb": 10.876,
+      "mtime": "2026-07-13 23:53:43"
+    },
+    {
+      "name": "organism_cycle_077.pt",
+      "size_gb": 11.915,
+      "mtime": "2026-07-14 08:05:31"
+    }
+  ],
+  "organism_latest_pointer": {
+    "version": 1,
+    "checkpoint_version": 7,
+    "saved_at": "2026-07-15T12:51:54.0904812Z",
+    "cycle": 66,
+    "step": 32501,
+    "path": "organism_cycle_066.pt",
+    "size_bytes": 10876174001,
+    "base_checkpoint_id": "darwin-model-core-v1:165c056485235c8417c1b328c74ffa9bfd587547d96481ceaa6991d612fac3c9"
+  },
+  "canonical_config": {
+    "path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\configs\\darwin_x_1.6b_nitro.yaml",
+    "model_name": "F51-Darwin-X-1.6B-Nitro",
+    "ssm_state": 16,
+    "n_layers": 16,
+    "d_model": 1920
+  },
+  "config_param_estimate": {
+    "total_params_estimate": 1669901024,
+    "total_params_estimate_human": "1.670B",
+    "breakdown": {
+      "embedding": 111671040,
+      "ssd_total": 184919040,
+      "gqa_total": 36864000,
+      "moe_total": 1321636064,
+      "mtp": 7372800,
+      "jepa": 7374720,
+      "norms": 63360,
+      "total": 1669901024,
+      "active_per_token": 678566400
+    },
+    "config_model_name": "F51-Darwin-X-1.6B-Nitro",
+    "config_ssm_state": 16,
+    "config_n_layers": 16,
+    "config_d_model": 1920
+  },
+  "status_claims": {
+    "_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\docs\\operacao\\STATUS_ATUAL.md",
+    "parsed": true,
+    "snapshot_date": "2026-07-15 09:00 EDT",
+    "status_params_claim": 1764019648,
+    "status_model_real": "1.764.019.648 parametros, BF16",
+    "status_last_checkpoint": {
+      "cycle": 77,
+      "version": 7,
+      "cycle_field": 77,
+      "step": 54501,
+      "path": "organism_cycle_077.pt"
+    }
+  },
+  "checkpoint_inspected": {
+    "path": "C:\\Users\\marco\\Desktop\\F51-Dataset-Organizado\\03_CHECKPOINTS\\organism_cycle_066.pt",
+    "size_bytes": 10876174001,
+    "size_gb": 10.876,
+    "load_secs": 3.09,
+    "top_keys": [
+      "base_checkpoint_id",
+      "checkpoint_migration",
+      "config",
+      "heartbeat_state",
+      "model_state_dict",
+      "online_learning_artifact",
+      "online_learning_state",
+      "optimizer_state_dict",
+      "optimizer_type",
+      "organism",
+      "replay_buffer",
+      "rng_state",
+      "token_source",
+      "tokenizer_id",
+      "topology_manifest",
+      "training_state",
+      "version"
+    ],
+    "training_state_keys": [
+      "cycle",
+      "step"
+    ],
+    "model": {
+      "total_params": 1883072800,
+      "total_params_human": "1.883B",
+      "n_tensors": 1307,
+      "by_prefix_top": {
+        "blocks": 1637598880,
+        "token_embedding": 111671040,
+        "lm_head": 111671040,
+        "jepa_predictor": 7378560,
+        "jepa_ref": 7378560,
+        "mtp_heads": 7372800,
+        "norm": 1920
+      },
+      "sample_keys": [
+        "token_embedding.weight: (58162, 1920)",
+        "blocks.0.norm1.weight: (1920,)",
+        "blocks.0.norm2.weight: (1920,)",
+        "blocks.0.ssd.ssm.a_log: (3840, 16)",
+        "blocks.0.ssd.ssm.d_skip: (3840,)",
+        "blocks.0.ssd.ssm.in_proj.weight: (7680, 1920)",
+        "blocks.0.ssd.ssm.conv1d.weight: (3840, 1, 4)",
+        "blocks.0.ssd.ssm.conv1d.bias: (3840,)",
+        "blocks.0.ssd.ssm.x_proj.weight: (152, 3840)",
+        "blocks.0.ssd.ssm.dt_proj.weight: (3840, 120)",
+        "blocks.0.ssd.ssm.dt_proj.bias: (3840,)",
+        "blocks.0.ssd.ssm.out_proj.weight: (1920, 3840)"
+      ]
+    },
+    "init": {
+      "has_optimizer": true,
+      "step": 32501,
+      "cycle": 66,
+      "has_loss_metrics": false,
+      "checkpoint_version": 7,
+      "base_checkpoint_id": "darwin-model-core-v1:165c056485235c8417c1b328c74ffa9bfd587547d96481ceaa6991d612fac3c9",
+      "trained_score": 4,
+      "init_kind": "trained"
+    },
+    "metrics": {
+      "step": 32501,
+      "cycle": 66,
+      "version": 7,
+      "base_checkpoint_id": "darwin-model-core-v1:165c056485235c8417c1b328c74ffa9bfd587547d96481ceaa6991d612fac3c9"
+    }
+  },
+  "discrepancies": [
+    "params reais (1,883,072,800) != STATUS_ATUAL.md (1,764,019,648). Delta = +119,053,152",
+    "params reais (1,883,072,800) divergem da estimativa da config (1,669,901,024). Delta = +213,171,776",
+    "organism_latest.json aponta para 'organism_cycle_066.pt' mas o .pt mais recente no disco e 'organism_cycle_077.pt'. Resume pode pegar linha errada."
+  ]
+}

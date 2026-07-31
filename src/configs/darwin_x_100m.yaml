@@ -1,0 +1,90 @@
+model_name: F51-Darwin-X-100M
+init: random
+tokenizer: f51_bpe
+vocab_size: 58162
+context_length: 5120
+inference_context_length: 32768
+d_model: 512
+n_layers: 12
+n_heads: 8
+n_kv_heads: 2
+ssd_attention_ratio: "3:1"
+dropout: 0.0
+rope_base_train: 10000.0
+rope_base_infer: 100000.0
+residual_scale_multiplier: 1.2
+ssm_expand: 2
+ssm_state: 16
+
+fine_experts: 32
+shared_experts: 2
+experts_per_token: 8
+fine_expert_hidden_dim: 128
+shared_expert_hidden_dim: 512
+
+mtp_depth: 2
+mtp_weight: 0.15
+jepa_weight: 0.6  # 0.2→0.4→0.6 — cosine~0.9, backbone needs stronger signal (weight audit 2026-07-24)
+ghost_weight: 0.12
+ghost_mask_ratio: 0.15
+ghost_enabled: false  # dual-GPU causal shadow still hangs with Ghost enabled
+curiosity_weight: 0.06
+spider_sense_enabled: true
+aux_loss_scale: 1.0
+aux_loss_adaptive: true
+
+# ── Heartbeat ──
+heartbeat_enabled: true
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 2
+
+# ── Nitro ──
+nitro_enabled: true
+nitro_gpu_expert_capacity: 8  # was 4 — reduced eviction sawtooth, +19MB VRAM
+
+# ── DAE / Evolution ──
+dae_enabled: true
+dae_shadow_mode: false
+loss_semantics_version: 2
+scan_chunk_size: 128
+gradient_checkpointing: true
+qkv_bias: true
+vertical_routing_scale: 0.1
+spider_calibration_enabled: true
+spider_calibration_weight: 0.10
+ttm_residual_enabled: true
+ttm_residual_max_scale: 0.15
+ttm_associative_weight: 0.08  # was 0.02 — 4x signal for proj_value 262K params (weight audit 2026-07-24)
+
+# ── Órgãos integrados (toggles) ──
+gaba_enabled: true
+inter_hemispheric_enabled: true
+sleep_enabled: true
+decision_engine_enabled: true
+unified_mesh_enabled: true
+
+legacy_tiers: 7
+
+# ── Checkpoint isolation ──
+checkpoint_root: "workspace/03_CHECKPOINTS_100M_FULL_V9"
+
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead
+
+# ── Blockchain & Senate ──
+blockchain_enabled: true
+blockchain_path: workspace/runtime/organism/blockchain/blocks.jsonl
+senate_enabled: true           # enabled for overnight run 2026-07-23
+senate_interval: 500
+senate_min_weight: 0.02
+senate_death_threshold: 0.05
+senate_rising_bonus: 0.10
+senate_newborn_period: 3

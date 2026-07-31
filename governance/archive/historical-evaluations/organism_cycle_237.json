@@ -1,0 +1,77 @@
+{
+  "checkpoint": "organism_cycle_237.pt",
+  "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_237.pt",
+  "config": "F51-Darwin-X-600M",
+  "cycle": 237,
+  "step": 118560,
+  "version": 6,
+  "device": "cuda",
+  "ppl_pt": {
+    "ppl": 838.17,
+    "loss": 6.7312,
+    "tokens": 107
+  },
+  "ppl_en": {
+    "ppl": 172.92,
+    "loss": 5.1528,
+    "tokens": 94
+  },
+  "lexical_diversity": {
+    "type_token_ratio": 0.3765,
+    "total_words": 170,
+    "unique_words": 64
+  },
+  "generations": [
+    {
+      "prompt": "Quem te criou?",
+      "text": "(_Contribu tion were \n \n in the spermatogonial spermatids of (_1, _b___ (fig. 99), but it like",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu nome?",
+      "text": "The \n \n spermatids of spermatogonial spermatogonial of githms (_a_) (fig. 102, (fig. 99), but it like page (figs. 8",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu proposito?",
+      "text": "In \n \n the spermatogonial plates in figure 16. The spermatogonial but spermatids of the spermatogonial and spermatocyte spermatids of spermatogon",
+      "token_count": 64
+    },
+    {
+      "prompt": "Soli Deo Gloria significa",
+      "text": "(fig. 107) (fig. 67) (fig. 67) (_] \n \n \n \n \n \n _The _speristn_ (fig. 99), \n \n (fig",
+      "token_count": 64
+    },
+    {
+      "prompt": "O que voce sabe sobre o Brasil?",
+      "text": "A large chromosome and the spermatogonial spermatogonial of _Discoat (fig. 81) in the spermatogonial spermatogonial of _Discoat (fig.",
+      "token_count": 64
+    },
+    {
+      "prompt": "A capital do Brasil eh",
+      "text": "the chromatin of the figure 40 _fig. 2016° (fig. 99). The spermatogonial and spermatocyte spermatids of _giv ing spermatids",
+      "token_count": 64
+    },
+    {
+      "prompt": "A agua ferve a",
+      "text": "bivalent plates of the first mitosis. The \n \n unequal pair is shown in figure 186, and that the spermatogonial spermatogonial of _Discoat (",
+      "token_count": 64
+    },
+    {
+      "prompt": "O sol eh uma",
+      "text": "spermatids of \n \n _p�� (fig. 97) (_g_) +geg_ (fig. 107) (fig. 97) (_g_) | (_0, ) (_a_",
+      "token_count": 64
+    },
+    {
+      "prompt": "Explain what a transformer is in one sentence.",
+      "text": "The spermatogonial spermatocyte spermatids of spermatogonial spermatogonial of _Discoat (fig. 81) (_giv ing and are small",
+      "token_count": 64
+    },
+    {
+      "prompt": "The meaning of life is",
+      "text": "the same chromosomes were _found_ (fig. 103) (_g_), and to be possible to show the small of the spermatogonial spermatids of",
+      "token_count": 64
+    }
+  ],
+  "eval_timestamp": "2026-07-12T23:54:53Z"
+}

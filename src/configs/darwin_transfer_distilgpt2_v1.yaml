@@ -1,0 +1,34 @@
+lineage_id: darwin-transfer-distilgpt2-v1
+donor:
+  model_id: distilbert/distilgpt2
+  root: workspace/00_DONORS/distilgpt2
+architecture:
+  family: discrete-ssd
+  progressive_schedule:
+    - [5]
+    - [4, 5]
+    - [3, 4, 5]
+    - [2, 3, 4, 5]
+    - [1, 2, 3, 4, 5]
+    - [0, 1, 2, 3, 4, 5]
+  final_attention_layers_remaining: 0
+  experience_prior:
+    capacity: 4096
+    top_k: 64
+    confidence_threshold: 0.995
+    min_observations: 2
+training:
+  stages: [orientation, alignment, distillation]
+  sequence_length: 128
+  corpus_root: workspace/02_CORPUS/corpus
+  monitor_holdout_chunks: 256
+  promotion_holdout_tokens: 5000000
+  promotion_holdout_batches: 256
+  orientation_steps: 250
+  alignment_steps: 250
+  distillation_steps: 500
+  checkpoint_every: 25
+  learning_rate: 0.00003
+  device: cuda:0
+checkpoint_root: workspace/03_CHECKPOINTS_DARWIN_TRANSFER_DISTILGPT2_V1
+runtime_root: workspace/runtime/darwin_transfer_distilgpt2_v1

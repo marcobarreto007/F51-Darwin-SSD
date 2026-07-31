@@ -1,0 +1,1370 @@
+{
+  "schema_version": 2,
+  "policy_id": "f51-darwin-operational-surface-v2",
+  "authority": "local_single_root_only",
+  "gold_boundaries": {
+    "active_python_roots": [
+      "src/f51_darwin",
+      "src/scripts",
+      "src/tools",
+      "research"
+    ],
+    "script_allowed_files": [
+      "src/scripts/README.md",
+      "src/scripts/__init__.py",
+      "src/scripts/bob.ps1",
+      "src/scripts/darwin_inventory.py",
+      "src/scripts/darwin_organism.py",
+      "src/scripts/ingest_pipeline.py",
+      "src/scripts/inspect_organism_checkpoint.py",
+      "src/scripts/serve_davi.py",
+      "src/scripts/start_100m_65b.ps1",
+      "src/scripts/start_100m_auto.ps1",
+      "src/scripts/start_overnight_16b.ps1",
+      "src/scripts/start_smol_darwin_transplant.ps1"
+    ],
+    "package_root": "src/f51_darwin",
+    "forbidden_package_import_roots": [
+      "research",
+      "scripts",
+      "tools"
+    ],
+    "canonical_config": {
+      "path": "src/configs/darwin_x_100m.yaml",
+      "model_name": "F51-Darwin-X-100M",
+      "forbidden_default_labels": [
+        "F51-Darwin-X-4B",
+        "F51-Darwin-X-1.2B"
+      ],
+      "entrypoint_config_defaults": {
+        "src/scripts/darwin_organism.py": "src/configs/darwin_x_100m.yaml",
+        "src/scripts/serve_davi.py": "src/configs/darwin_x_100m.yaml"
+      }
+    },
+    "model_family": {
+      "100m": "src/configs/darwin_x_100m.yaml",
+      "600m": "src/configs/darwin_x_600m.yaml",
+      "1.6b": "src/configs/darwin_x_1.6b_nitro.yaml",
+      "1.6b-smol-transplant": "src/configs/darwin_x_1.6b_smol_transplant.yaml",
+      "1.7b-smol-exact": "src/configs/darwin_x_1.7b_smol_exact.yaml",
+      "1.7b-smol-dense": "src/configs/darwin_x_1.7b_smol_dense.yaml"
+    },
+    "checkpoint_authority": {
+      "path": "src/f51_darwin/organism/checkpoint.py",
+      "strict_false_forbidden_roots": [
+        "src/f51_darwin"
+      ]
+    },
+    "size_budgets": {
+      "supported_file_lines": 1200,
+      "entrypoint_adapter_lines": 250,
+      "class_lines": 500,
+      "function_lines": 180
+    },
+    "exceptions": [
+      "src/f51_darwin/organism/bootstrap.py:_DarwinBootstrapMixin",
+      "src/f51_darwin/organism/lifecycle.py:_DarwinLifecycleMixin",
+      "src/f51_darwin/organism/training.py:_DarwinTrainingMixin",
+      "src/f51_darwin/darwin_x_core/moe.py",
+      "src/f51_darwin/darwin_x_core/model.py:forward",
+      "src/f51_darwin/organism/causal_bus.py:decide",
+      "src/f51_darwin/organism/checkpoint_mixin.py:_save_cycle",
+      "src/f51_darwin/organism/lifecycle.py:_execute_structural_boundary",
+      "src/f51_darwin/organism/training.py:_train_cycle",
+      "src/f51_darwin/transplant_16b/assembly.py:build_native_transplant",
+      "src/tools/gradient_diagnostics.py:main"
+    ]
+  },
+  "supported_entrypoints": [
+    "src/scripts/bob.ps1",
+    "src/scripts/start_100m_auto.ps1",
+    "src/scripts/start_overnight_16b.ps1",
+    "src/scripts/start_100m_65b.ps1",
+    "src/scripts/darwin_organism.py",
+    "src/scripts/serve_davi.py",
+    "src/scripts/inspect_organism_checkpoint.py",
+    "src/scripts/darwin_inventory.py",
+    "src/scripts/ingest_pipeline.py",
+    "src/scripts/start_smol_darwin_transplant.ps1"
+  ],
+  "classifications": [
+    {
+      "path": "research/ablation_memory_bridge.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/analyze_margins.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/bench_expert_cache.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/bench_ssd.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_darwin.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_darwin_organs_qa.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_darwin_vs_baseline.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_native_ttm_recall.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_smol_dense_qa.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/benchmark_universal_memory_recall.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/build_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/calibrate_smol_darwin_transplant.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/causal_domain_ablation.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/circuit_ablate.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/compare_memory_adapters.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/darwin_school.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/diagnose_native_ttm_recall.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/direction_vs_neuron_domain.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/discover_best_direction.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/discover_fact_channels.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/discover_identity_layer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/download_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/download_olavo_sources.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/eval_darwin_transfer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/evaluate_smol_darwin_transplant.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/evaluate_smol_dense_candidate.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/evaluate_smol_exact_candidate.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/evolve_darwin.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/experiment_runner.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/experiment_runner_v2.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/full_holdout_eval.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/gen_status_report.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_bible.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_dataset_candidates.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_generic_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_mass_math.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_math_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_math_monster.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_philosophers.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_python_50m.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_synthetic_pt_20k.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/generate_timeline_pdf.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/ghost_feeder.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/ghost_stream.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/ghost_stream_runner.ps1",
+      "classification": "research"
+    },
+    {
+      "path": "research/gradient_alignment.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/graft_cross_family.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/gradient_attribution.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/grow_model.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/reassemble_certified.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/inference_test.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/inspect_ffn.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/install_ghost_stream_task.ps1",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/evaluator.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/inference_demo.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/policies.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/runner.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/scenarios.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/learning_gain/state.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/maquinista.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/massive_identity_swap.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/math_overdrive.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/memit_identity.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/memory_entity_sim.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/mine_corpus_agents.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/native_smol_darwin_smoke.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/prepare_base_training.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/probe_donor_basis_alignment.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/probe_three_organ_shadow.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/probe_training_distribution.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/quick_ppl.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/quick_validate_v2.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/reingest_olavo.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/rome_aggressive.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/rome_identity_edit.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/rome_identity_edit_instruct.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/rome_instruct_identity.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/rome_proper_identity.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/router_dual_path_sim.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/run_evolution_cycle.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/run_learning_gain_sim.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/run_two_donor_canary.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/scan_ffn_neurons.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/scan_model_circuits.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/semantic_probe.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/serve_f51.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/serve_model.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/simulate_ghost_recurrence.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/simulate_organ_combinatorics.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/split_ghost_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/stream_all.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/suck_wolfram.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/test_10_cenarios.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/test_identity_circuit_real.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/test_identity_contrast.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/test_live_generate.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/test_sae_domain.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/tokenize_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_base.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_curriculum.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_darwin_transfer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_darwin_x.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_memory_adapters.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_memory_real.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_paraphrase_invariance.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_seed_toy.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_tiny_sae.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/train_tokenizer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_circuit_atomic.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_domain.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_internal_layer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_layer_direct.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_layer_svd.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_smol_dense_brain.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/transplant_smol_exact_brain.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/turbo_train.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/uninstall_ghost_stream_task.ps1",
+      "classification": "research"
+    },
+    {
+      "path": "research/use_darwin_transfer.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/use_darwin_transfer_v2.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/validate_memory_full_cycle.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/validate_memory_training.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/validate_v2_paraphrases.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/weight_heist.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/weight_sim.py",
+      "classification": "research"
+    },
+    {
+      "path": "src/scripts/analyze_architecture_gap.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/scripts/analyze_spider_contamination.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/scripts/bob.ps1",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/check_github.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/scripts/check_repo.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/scripts/darwin_inventory.py",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/darwin_organism.py",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/ingest_pipeline.py",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/inspect_organism_checkpoint.py",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/list_repos.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/scripts/serve_davi.py",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/start_100m_65b.ps1",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/start_100m_auto.ps1",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/start_overnight_16b.ps1",
+      "classification": "supported"
+    },
+    {
+      "path": "src/scripts/start_smol_darwin_transplant.ps1",
+      "classification": "supported"
+    },
+    {
+      "path": "src/tools/adapt_checkpoint_darwin_x.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/audit_dataset_candidates.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/auto_ingest.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/auto_pipeline.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/balance_corpus.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/build_circuit_registry.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/build_corpus_pack.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/build_distribution.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/build_paper_pdf.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_architecture_boundaries.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_canonical_docs.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_ckpt.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_dependency_policy.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_distribution.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_docs_links.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_duplicates.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_nitro_runtime.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_nucleo_ready.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_operational_surface.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_physical_hygiene.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_python_compilation.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/check_source_secrets.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/checkpoint_repath_source.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/commit_loop_fechado.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/compare_checkpoints.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/consolidate_corpus.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/convert_legacy_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/corpus_compress_for_transfer.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/corpus_decompress_on_receive.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/corpus_verify_roundtrip.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/create_admin_shortcut.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/darwin_dashboard.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/darwin_dashboard_web.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/eval_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/evaluate_darwin.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/extract_darwin_organs.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/find_gold_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/find_gold_in_vss.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/gen_organ_ablation_configs.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/gradient_diagnostics.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/inspect_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/inspect_darwin_x.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/inspect_seed.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/install_nucleo_dataset_watchdog_startup.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/install_nucleo_dataset_watchdog_task.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/isolate_100m_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/measure_tokenizer_metrics.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/migrate_repo_runtime_data.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/migrate_single_root_workspace.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/nucleo_dataset_organism.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/promote_approved_data.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/realtime_ingest.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/regenerate_evidence_index.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/regenerate_nitro_sbom.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/run_causal_ablation.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/run_gold_source_audit.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/start_darwin_transfer.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/start_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/start_nucleo_dataset_watchdog.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/start_nucleo_ready_watcher.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/start_two_donor_transplant.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/status_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/transplant_smol_to_darwin_1_6b.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/verify_corpus_pack.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/verify_gold_lineage.py",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/watch_nucleo_ready.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/watch_training.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/watch_training_v2.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "path": "src/tools/watchdog_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    }
+  ],
+  "archived_executables": [
+    {
+      "path": "governance/archive/cloud-local/root/deploy_montreal.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/root/setup_cloud.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/auto_deploy_gpu.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/auto_deploy_gpu.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/auto_deploy.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/auto_train_1h.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/build_remote_token_index.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/cloud_train_automated.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/cloud_train_darwin_x_fixed.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/deploy_dae_cloud.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/deploy_math_cloud.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/evaluate_dae_cloud_canary.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/final_push.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/ingest_remote_corpus_pack.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/launch_1.2b_cloud.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/launch_600m_cloud.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/nucleo_inventory.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/prepare_training_pack.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/prepare_training_pack.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/pull_cloud_checkpoint.bat",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/pull_cloud_checkpoint.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/pull_from_hub.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/rent_gpu_math.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/rent_safe.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/run_organism_a100.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/run_vast_test.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/start_overnight_25b.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/sync_cloud_daemon.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/sync_code_to_hub.sh",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/tokenize_local_batch_to_hub.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/tokenize_remote_corpus_batch.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/train_cloud.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/upload_corpus_pack.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/verify_5b_instantiation.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/verify_5b_params.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/verify_checkpoint_25b.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/verify_remote_token_batch.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/worker_c4.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/worker_fineweb.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/worker_gutenberg.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/scripts/worker_pubmed.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/tests/test_dae_cloud_canary.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/cloud-local/tests/test_train_cloud_tokens.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/evolution_loop.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/evolution_sandbox.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/expert_weight_router.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/ghost_token.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/jepa.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/organ_pipeline.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/sleep_consolidation.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/dead_code/test_organ_pipeline.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/clean_checkpoints.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/auto_train.bat",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/monitor_nucleo.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/relaunch_training.bat",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/start_ghost_stream.bat",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/test_correcoes.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/tokenize_fast.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/trainlord.bat",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/root/unified_train.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_bigctx.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_check_credit.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_check.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_clean.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_cleanup_disk.ps1",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_combo.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_combo2.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_ctx512.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_deploy_all.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_deploy.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_deploy2.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_fused.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_nitro.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_nitro2.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_root.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_sed.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fix_soul2.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_force_cuda.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_fresh.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_launch_final.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_launch_moe.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_rent.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_rent2.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_s1_code.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_s2_corpus.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_s2b.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_s2c.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/_s3_launch.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/run_neural_organism.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/legacy-scratch/scripts/run_organism_local.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/scripts/_fast_gpus.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/scripts/_micro_infer.py",
+      "classification": "historical_non_operational"
+    },
+    {
+      "path": "governance/archive/scripts/_parse_gpus.py",
+      "classification": "historical_non_operational"
+    }
+  ],
+  "root_artifacts": [
+    {
+      "path": ".gitignore",
+      "classification": "governance"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "classification": "governance"
+    },
+    {
+      "path": "AGENTS.md",
+      "classification": "governance"
+    },
+    {
+      "path": "CLAUDE.md",
+      "classification": "governance"
+    },
+    {
+      "path": "DIARIO_DE_BORDO.md",
+      "classification": "documentation"
+    },
+    {
+      "path": "LICENSE",
+      "classification": "governance"
+    },
+    {
+      "path": "MANIFEST.in",
+      "classification": "metadata"
+    },
+    {
+      "path": "NOTICE",
+      "classification": "governance"
+    },
+    {
+      "path": "pyproject.toml",
+      "classification": "metadata"
+    },
+    {
+      "path": "README.md",
+      "classification": "documentation"
+    },
+    {
+      "path": "requirements-cpu-audit-dev.in",
+      "classification": "metadata"
+    },
+    {
+      "path": "requirements-cpu-audit-dev.lock",
+      "classification": "metadata"
+    },
+    {
+      "path": "requirements-cpu-audit.in",
+      "classification": "metadata"
+    },
+    {
+      "path": "requirements-cpu-audit.lock",
+      "classification": "metadata"
+    },
+    {
+      "path": "SECURITY.md",
+      "classification": "governance"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "classification": "governance"
+    }
+  ],
+  "invariants": {
+    "cloud_material_is_operational": false,
+    "archived_material_may_be_executed": false,
+    "unclassified_executables_allowed": false,
+    "continuous_training_auto_launch_allowed": false
+  }
+}

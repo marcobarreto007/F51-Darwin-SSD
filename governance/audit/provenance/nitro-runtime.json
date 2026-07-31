@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "scope": "nitro_cuda_local_runtime",
+  "captured_utc": "2026-07-17T05:00:00Z",
+  "host_scope": "local Windows workstation only",
+  "canary_interpreter_relative": ".venv_nitro/Scripts/python.exe",
+  "python": {
+    "implementation": "CPython",
+    "version": "3.12.13",
+    "build": "3.12.13 (main, Apr 14 2026, 14:31:26) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "executable_sha256": "9e8cd2c384b3958a65d49df6a6093642171dedc1b20726dd73bdfad89e448ac7"
+  },
+  "torch": {
+    "version": "2.12.0.dev20260408+cu128",
+    "git_revision": "6b1da8db53541ea06a7d5d6ca508938485bf1660",
+    "cuda_runtime": "12.8",
+    "cudnn_version": 92000,
+    "cuda_required": true,
+    "acquisition": {
+      "index_url": "https://download.pytorch.org/whl/nightly/cu128",
+      "wheel_url": "https://download-r2.pytorch.org/whl/nightly/cu128/torch-2.12.0.dev20260408%2Bcu128-cp312-cp312-win_amd64.whl",
+      "wheel_filename": "torch-2.12.0.dev20260408+cu128-cp312-cp312-win_amd64.whl",
+      "wheel_sha256": "74387a554c90785c4ffa74bebd9fc97d8dc868476ca99637675a542783f7a847",
+      "wheel_size_bytes": 2761338915,
+      "wheel_uploaded_utc": "2026-04-08T10:16:09Z",
+      "metadata_sha256_from_index": "e894a2604e371711367075dce70ae1957dd887b51f3582af31d8652598df9a91",
+      "wheel_hash_status": "downloaded_from_official_index_and_verified_locally",
+      "direct_url_metadata_present": false,
+      "local_wheel_cache_tracked": false,
+      "reinstall_template": "python -m pip install --no-deps https://download-r2.pytorch.org/whl/nightly/cu128/torch-2.12.0.dev20260408%2Bcu128-cp312-cp312-win_amd64.whl",
+      "availability_caveat": "Nightly retention is external; the immutable artifact identity and installed-file identities are recorded here."
+    },
+    "installed_file_identities": [
+      {
+        "path": ".venv_nitro/Lib/site-packages/torch-2.12.0.dev20260408+cu128.dist-info/METADATA",
+        "size_bytes": 31974,
+        "sha256": "e894a2604e371711367075dce70ae1957dd887b51f3582af31d8652598df9a91"
+      },
+      {
+        "path": ".venv_nitro/Lib/site-packages/torch-2.12.0.dev20260408+cu128.dist-info/RECORD",
+        "size_bytes": 1260034,
+        "sha256": "7ff82b7e55bb59a39cf8275506b254b4f26d39152a05aa2189a3c2501fa6e9be"
+      },
+      {
+        "path": ".venv_nitro/Lib/site-packages/torch/__init__.py",
+        "size_bytes": 112622,
+        "sha256": "2797c8a16bf70bbe888302ea7765eb35d2ef8b8172ae899f0b91bfd50be6141a"
+      },
+      {
+        "path": ".venv_nitro/Lib/site-packages/torch/lib/torch_cuda.dll",
+        "size_bytes": 821416448,
+        "sha256": "1803ba67c7879fd3aadc50bde3812bcde6d6d508314c86f97c3ec5594b84b44c"
+      },
+      {
+        "path": ".venv_nitro/Lib/site-packages/torch/lib/c10_cuda.dll",
+        "size_bytes": 415232,
+        "sha256": "5cccc3cc6d95a19ce7416dd3b342f5a0db696acdd76f720b88f943e5c7b19d1f"
+      }
+    ]
+  },
+  "gpu_binding": {
+    "driver_observed": "595.97",
+    "device_count": 2,
+    "devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 5060 Ti",
+        "uuid": "GPU-93ca5cd2-3424-c883-e11d-52d76eb0445a",
+        "compute_capability": [
+          12,
+          0
+        ],
+        "total_memory_bytes": 17102864384
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA GeForce RTX 3060",
+        "uuid": "GPU-c3ec9cf7-a21a-02a1-03fa-5d1fa1dfe1db",
+        "compute_capability": [
+          8,
+          6
+        ],
+        "total_memory_bytes": 12884377600
+      }
+    ]
+  },
+  "launcher_binding": {
+    "path": "src/scripts/start_overnight_16b.ps1",
+    "interpreter_expression": "Join-Path $Root .venv_nitro/Scripts/python.exe",
+    "checker": "src/tools/check_nitro_runtime.py"
+  },
+  "sbom": {
+    "path": "governance/audit/sbom/nitro-runtime.cyclonedx.json",
+    "sha256": "92244bdc953c0b7eead5aeacf1f238130aea104fd3da24c6272a0493345c915f",
+    "components": 78,
+    "dependency_graph_entries": 50
+  },
+  "redistribution": {
+    "torch_wheel_tracked": false,
+    "cuda_binaries_tracked": false,
+    "redistribution_authorized": false,
+    "statement": "This manifest records local identity and does not grant or claim redistribution rights for PyTorch, CUDA, cuDNN, drivers or bundled binaries."
+  },
+  "reproducibility": {
+    "status": "pass",
+    "blockers": []
+  }
+}

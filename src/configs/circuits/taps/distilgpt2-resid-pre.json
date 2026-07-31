@@ -1,0 +1,9 @@
+{
+  "minimum_sequence_length": 2,
+  "module_path": "transformer.h.1",
+  "output_selector": "tensor",
+  "position": "pre",
+  "provider": "module_path_v1",
+  "rank": 3,
+  "width": 768
+}

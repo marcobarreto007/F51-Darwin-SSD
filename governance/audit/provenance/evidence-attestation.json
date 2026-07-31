@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "post_evidence_commit_attestation",
+  "attested_utc": "2026-07-17T14:56:53.4558236Z",
+  "gold_source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+  "gold_source_tree": "9ece38a0b833c65f5f05255017400778bea8c1f1",
+  "gold_evidence_commit": "0d6949edf585a2146a8b3d305e131d4a00b91dd3",
+  "gold_evidence_tree": "9b7de476aa9b2753d19bcc7bdc36b7954751950b",
+  "attestation_commit_resolution": "git log -1 --format=%H -- governance/audit/provenance/evidence-attestation.json",
+  "hash_profile": "git_blob_bytes_v1",
+  "verify_command": "git cat-file blob 0d6949edf585a2146a8b3d305e131d4a00b91dd3:<path>",
+  "artifacts": [
+    {
+      "path": "governance/audit/GOLD_REPORT_2026-07-17.md",
+      "git_blob_oid": "211c0f38d8ec0f747d59359cc6af75504d1e9c66",
+      "sha256_git_blob": "a1680fbb370dec8093079d2f204b5c0a982334e27fc7c98fcf124bfd680239f6"
+    },
+    {
+      "path": "governance/audit/provenance/source-manifest.json",
+      "git_blob_oid": "65cdd0422af09d80ee12bccf0bb12ccf2078013e",
+      "sha256_git_blob": "5fbe9966582fa57e539ed2f324225ddf80cd1e4a76330e78e47ca1902235a546"
+    },
+    {
+      "path": "governance/audit/test-reports/gold-source-f54a579.json",
+      "git_blob_oid": "b5b3e0f438d807902a5e294900a3bc19c5fb6ef2",
+      "sha256_git_blob": "a54d5955b2693820c1159d7ca1331207030e5810074dc5bdfca1c985dcb50225"
+    }
+  ],
+  "post_evidence_checks": {
+    "check_docs_links": 0,
+    "check_canonical_docs": 0,
+    "check_duplicates": 0,
+    "check_dependency_policy": 0,
+    "check_operational_surface": 0,
+    "current_tree_secret_scan": 0,
+    "current_tree_tracked_files": 471,
+    "current_tree_secret_findings": 0,
+    "git_diff_tree_check": 0,
+    "tracked_worktree_clean": true
+  },
+  "verdict": {
+    "status": "NOT_GOLD",
+    "reason": "reachable_history_secret_findings_without_revocation_or_rewrite"
+  }
+}

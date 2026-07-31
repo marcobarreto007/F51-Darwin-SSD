@@ -1,0 +1,4 @@
+F51 Darwin-SSD grows only when necessary.
+The model must learn today without destroying yesterday.
+Bad modules are quarantined before deletion.
+Replay protects ancestral capability from the beginning.

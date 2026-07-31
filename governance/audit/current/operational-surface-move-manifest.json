@@ -1,0 +1,548 @@
+{
+  "schema_version": 1,
+  "operation_id": "f51-operational-surface-separation-2026-07-17",
+  "source_commit": "b14605a",
+  "moves": [
+    {
+      "old": "src/scripts/adapt_checkpoint_darwin_x.py",
+      "new": "src/tools/adapt_checkpoint_darwin_x.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/agent_applied_math.py",
+      "new": "research/agent_applied_math.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/agent_history.py",
+      "new": "research/agent_history.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/agent_problems.py",
+      "new": "research/agent_problems.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/agent_pure_math.py",
+      "new": "research/agent_pure_math.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/agents_bio_quantum.py",
+      "new": "research/agents_bio_quantum.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/audit_dataset_candidates.py",
+      "new": "src/tools/audit_dataset_candidates.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/auto_ingest.py",
+      "new": "src/tools/auto_ingest.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/auto_pipeline.py",
+      "new": "src/tools/auto_pipeline.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/balance_corpus.py",
+      "new": "src/tools/balance_corpus.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/bench_expert_cache.py",
+      "new": "research/bench_expert_cache.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/bench_ssd.py",
+      "new": "research/bench_ssd.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/benchmark_darwin.py",
+      "new": "research/benchmark_darwin.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/build_classical_corpus.py",
+      "new": "research/build_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/build_corpus_pack.py",
+      "new": "src/tools/build_corpus_pack.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/captains_log.py",
+      "new": "research/captains_log.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/check_ckpt.py",
+      "new": "src/tools/check_ckpt.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_canonical_docs.py",
+      "new": "src/tools/check_canonical_docs.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_dependency_policy.py",
+      "new": "src/tools/check_dependency_policy.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_duplicates.py",
+      "new": "src/tools/check_duplicates.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_docs_links.py",
+      "new": "src/tools/check_docs_links.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_nucleo_ready.ps1",
+      "new": "src/tools/check_nucleo_ready.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_nitro_runtime.py",
+      "new": "src/tools/check_nitro_runtime.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_source_secrets.py",
+      "new": "src/tools/check_source_secrets.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/check_operational_surface.py",
+      "new": "src/tools/check_operational_surface.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/compare_checkpoints.py",
+      "new": "src/tools/compare_checkpoints.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/consolidate_corpus.py",
+      "new": "src/tools/consolidate_corpus.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/convert_legacy_checkpoint.py",
+      "new": "src/tools/convert_legacy_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/darwin_school.py",
+      "new": "research/darwin_school.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/demo_legacy_layers.py",
+      "new": "research/demo_legacy_layers.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/download_classical_corpus.py",
+      "new": "research/download_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/download_olavo_sources.py",
+      "new": "research/download_olavo_sources.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/eval_checkpoint.py",
+      "new": "src/tools/eval_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/evaluate_darwin.py",
+      "new": "src/tools/evaluate_darwin.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/evolution_sandbox_compare.py",
+      "new": "research/evolution_sandbox_compare.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/evolve_darwin.py",
+      "new": "research/evolve_darwin.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/experiment_runner_v2.py",
+      "new": "research/experiment_runner_v2.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/experiment_runner.py",
+      "new": "research/experiment_runner.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_10_agents.py",
+      "new": "research/gen_10_agents.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_agent_tools.py",
+      "new": "research/gen_agent_tools.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_alma_massive.py",
+      "new": "research/gen_alma_massive.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_fraud_canada.py",
+      "new": "research/gen_fraud_canada.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_gutenberg_mass.py",
+      "new": "research/gen_gutenberg_mass.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/gen_status_report.py",
+      "new": "research/gen_status_report.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_bible.py",
+      "new": "research/generate_bible.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_conservative_corpus.py",
+      "new": "research/generate_conservative_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_dataset_candidates.py",
+      "new": "research/generate_dataset_candidates.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_finance_top10.py",
+      "new": "research/generate_finance_top10.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_generic_corpus.py",
+      "new": "research/generate_generic_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_mass_math.py",
+      "new": "research/generate_mass_math.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_math_corpus.py",
+      "new": "research/generate_math_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_math_monster.py",
+      "new": "research/generate_math_monster.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_philosophers.py",
+      "new": "research/generate_philosophers.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_python_50m.py",
+      "new": "research/generate_python_50m.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_synthetic_pt_20k.py",
+      "new": "research/generate_synthetic_pt_20k.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/generate_timeline_pdf.py",
+      "new": "research/generate_timeline_pdf.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/ghost_feeder.py",
+      "new": "research/ghost_feeder.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/ghost_stream_runner.ps1",
+      "new": "research/ghost_stream_runner.ps1",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/ghost_stream.py",
+      "new": "research/ghost_stream.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/grow_model.py",
+      "new": "research/grow_model.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/inspect_checkpoint.py",
+      "new": "src/tools/inspect_checkpoint.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/inspect_darwin_x.py",
+      "new": "src/tools/inspect_darwin_x.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/inspect_seed.py",
+      "new": "src/tools/inspect_seed.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/install_ghost_stream_task.ps1",
+      "new": "research/install_ghost_stream_task.ps1",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/install_nucleo_dataset_watchdog_startup.ps1",
+      "new": "src/tools/install_nucleo_dataset_watchdog_startup.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/install_nucleo_dataset_watchdog_task.ps1",
+      "new": "src/tools/install_nucleo_dataset_watchdog_task.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/maquinista.py",
+      "new": "research/maquinista.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/math_overdrive.py",
+      "new": "research/math_overdrive.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/measure_tokenizer_metrics.py",
+      "new": "src/tools/measure_tokenizer_metrics.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/migrate_repo_runtime_data.py",
+      "new": "src/tools/migrate_repo_runtime_data.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/migrate_single_root_workspace.ps1",
+      "new": "src/tools/migrate_single_root_workspace.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/mine_corpus_agents.py",
+      "new": "research/mine_corpus_agents.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/nucleo_dataset_organism.py",
+      "new": "src/tools/nucleo_dataset_organism.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/prepare_base_training.py",
+      "new": "research/prepare_base_training.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/promote_approved_data.py",
+      "new": "src/tools/promote_approved_data.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/quick_ppl.py",
+      "new": "research/quick_ppl.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/realtime_ingest.py",
+      "new": "src/tools/realtime_ingest.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/reingest_olavo.py",
+      "new": "research/reingest_olavo.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/run_evolution_cycle.py",
+      "new": "research/run_evolution_cycle.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/run_gold_source_audit.ps1",
+      "new": "src/tools/run_gold_source_audit.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/semantic_probe.py",
+      "new": "research/semantic_probe.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/serve_f51.py",
+      "new": "research/serve_f51.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/serve_model.py",
+      "new": "research/serve_model.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/simulate_ghost_recurrence.py",
+      "new": "research/simulate_ghost_recurrence.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/split_ghost_corpus.py",
+      "new": "research/split_ghost_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/start_nucleo_dataset_organism.ps1",
+      "new": "src/tools/start_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/start_nucleo_dataset_watchdog.ps1",
+      "new": "src/tools/start_nucleo_dataset_watchdog.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/start_nucleo_ready_watcher.ps1",
+      "new": "src/tools/start_nucleo_ready_watcher.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/status_nucleo_dataset_organism.ps1",
+      "new": "src/tools/status_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/stream_all.py",
+      "new": "research/stream_all.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/suck_wolfram.py",
+      "new": "research/suck_wolfram.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/test_10_cenarios.py",
+      "new": "research/test_10_cenarios.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/test_live_generate.py",
+      "new": "research/test_live_generate.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/tokenize_classical_corpus.py",
+      "new": "research/tokenize_classical_corpus.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/train_base.py",
+      "new": "research/train_base.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/train_curriculum.py",
+      "new": "research/train_curriculum.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/train_darwin_x.py",
+      "new": "research/train_darwin_x.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/train_seed_toy.py",
+      "new": "research/train_seed_toy.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/train_tokenizer.py",
+      "new": "research/train_tokenizer.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/turbo_train.py",
+      "new": "research/turbo_train.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/uninstall_ghost_stream_task.ps1",
+      "new": "research/uninstall_ghost_stream_task.ps1",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/verify_corpus_pack.py",
+      "new": "src/tools/verify_corpus_pack.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/verify_gold_lineage.py",
+      "new": "src/tools/verify_gold_lineage.py",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/watch_and_train_local.py",
+      "new": "research/watch_and_train_local.py",
+      "classification": "research"
+    },
+    {
+      "old": "src/scripts/watch_nucleo_ready.ps1",
+      "new": "src/tools/watch_nucleo_ready.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/watchdog_nucleo_dataset_organism.ps1",
+      "new": "src/tools/watchdog_nucleo_dataset_organism.ps1",
+      "classification": "maintenance"
+    },
+    {
+      "old": "src/scripts/weight_heist.py",
+      "new": "research/weight_heist.py",
+      "classification": "research"
+    }
+  ],
+  "counts": {
+    "supported": 6,
+    "maintenance": 40,
+    "research": 67
+  },
+  "collision_count": 0
+}

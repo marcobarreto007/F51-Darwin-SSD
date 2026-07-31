@@ -1,0 +1,116 @@
+{
+  "artifacts": [
+    {
+      "blob_oid": "a001765b7e2566a1ceddcebc9f8eb4b97e0656c5",
+      "content_mode": "git_blob_text_lf",
+      "path": ".github/workflows/ci.yml",
+      "sha256": "a4ca9a42b846b15b2363d9c520718f64e34aadaf670081f217893ec6b48e7e8d"
+    },
+    {
+      "blob_oid": "34e6c1eafeef8dd5584ace7b6b6deb7589422469",
+      "content_mode": "git_blob_text_lf",
+      "path": "governance/audit/policy/dependencies.json",
+      "sha256": "8b11582db9c70a8d43162e3ef4a46e28d35f21e36527099b9955ac37bc435e80"
+    },
+    {
+      "blob_oid": "f91812c75322006590b2f60726088e919fbc3e40",
+      "content_mode": "git_blob_text_lf",
+      "path": "governance/audit/sbom/cpu-audit-licenses.json",
+      "sha256": "8107da45cf77f7c4186b4e486bf7c6ce011905e0e779488f1fcc0d7bd0cfbed3"
+    },
+    {
+      "blob_oid": "7c1537ee3151651836f021216816adfba4bc0928",
+      "content_mode": "git_blob_text_lf",
+      "path": "governance/audit/sbom/cpu-audit-vulnerabilities.json",
+      "sha256": "2996735c8b33f53570a570d1a4c94acccd747d733e5f35bc5ba7b8c6f19f287d"
+    },
+    {
+      "blob_oid": "75aeefa53439517e9bc42e3d91c31e15963e8ac3",
+      "content_mode": "git_blob_text_lf",
+      "path": "governance/audit/sbom/cpu-audit.cyclonedx.json",
+      "sha256": "c9a9bff6fb8af61bff8ca6505aa990876da4ed8e86c1cce710db0cb0286f20d7"
+    },
+    {
+      "blob_oid": "40ba8fa2137219ad52150ee2a0340ced0fd516f0",
+      "content_mode": "git_blob_text_lf",
+      "path": "governance/audit/schemas/supply-chain-index.schema.json",
+      "sha256": "d6311e4b0155c4407cfabc53eef7edc5075b93f9b5351139d20650f6179eddde"
+    },
+    {
+      "blob_oid": "12f76f5118ab2c4f98eb7c04bbef57abde34aff9",
+      "content_mode": "git_blob_text_lf",
+      "path": "pyproject.toml",
+      "sha256": "f996ab105224b90a7e7fe5077bcd140562a4cacc2f1e0440ce3aa430fe6eb274"
+    },
+    {
+      "blob_oid": "ad32572507b9d8c04dca0a3362bc7e35be18d8d3",
+      "content_mode": "git_blob_text_lf",
+      "path": "requirements-cpu-audit-dev.in",
+      "sha256": "0ae4cb1a501d9f0047572cbf63a66a235d253e65c41fbdbe4c805899f7e1316b"
+    },
+    {
+      "blob_oid": "3d36d282e497ea2f74ade2960ef2de025747bc3d",
+      "content_mode": "git_blob_text_lf",
+      "path": "requirements-cpu-audit-dev.lock",
+      "sha256": "e200ebf33b0c353f5d71850c6a7db0d61d9792e4c11c75a4f0a9577243eaf2ba"
+    },
+    {
+      "blob_oid": "30acce8561bcb0f54e9899f2ae781d53df07586e",
+      "content_mode": "git_blob_text_lf",
+      "path": "requirements-cpu-audit.in",
+      "sha256": "ee7745b2fa5618da55cf83c39c3adae2dee3b6f092275ff7f50af5a4e5e16e40"
+    },
+    {
+      "blob_oid": "b7afead7223e59caf2914c31fe4a5a06e0f1a77b",
+      "content_mode": "git_blob_text_lf",
+      "path": "requirements-cpu-audit.lock",
+      "sha256": "7818a17d4f1ed4a78244abafb877d9ea79db9b9afacab3f17fc197ee606c66f7"
+    },
+    {
+      "blob_oid": "c990b5eb40a2a12ea6366eab5043ec0812fc05ac",
+      "content_mode": "git_blob_text_lf",
+      "path": "src/tools/check_dependency_policy.py",
+      "sha256": "6236ca467b25cb8c29e5c8a306a61be34290d8a7898bbade3fc8e5cd132b4b66"
+    }
+  ],
+  "generated_utc": "2026-07-31T01:46:39Z",
+  "hash_profile": "git-blob-text-lf-v1",
+  "schema": "governance/audit/schemas/supply-chain-index.schema.json",
+  "schema_version": 2,
+  "statement": "Verdict is computed from artifact content and exact hashes; no handwritten pass field is authoritative.",
+  "target": "cpu-governance/audit/windows-amd64/cpython-3.12",
+  "tooling": {
+    "cyclonedx": {
+      "command": [
+        "cyclonedx-py",
+        "environment",
+        "--output-reproducible",
+        "--spec-version",
+        "1.6"
+      ],
+      "tool": "cyclonedx-py",
+      "version": "7.3.0"
+    },
+    "pip_audit": {
+      "command": [
+        "pip-audit",
+        "-r",
+        "requirements-cpu-audit-dev.lock",
+        "--require-hashes",
+        "--format",
+        "json"
+      ],
+      "tool": "pip-audit",
+      "version": "2.10.1"
+    },
+    "pip_licenses": {
+      "command": [
+        "pip-licenses",
+        "--format=json",
+        "--with-urls"
+      ],
+      "tool": "pip-licenses",
+      "version": "5.5.5"
+    }
+  }
+}

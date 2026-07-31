@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "retired_utc": "2026-07-17T00:00:00Z",
+  "history_rewritten": false,
+  "git_objects_pruned": false,
+  "reason": "Opaque installers are not source dependencies and are reacquired from signed official releases.",
+  "verification": {
+    "commands": [
+      "Get-FileHash -Algorithm SHA256 -LiteralPath <installer>",
+      "Get-AuthenticodeSignature -LiteralPath <installer>",
+      "(Get-Item -LiteralPath <installer>).VersionInfo",
+      "git hash-object -- <installer>"
+    ],
+    "tools": {
+      "powershell": "7.6.3",
+      "git": "2.53.0.windows.3",
+      "os": "Microsoft Windows NT 10.0.26200.0"
+    },
+    "recorded_utc": "2026-07-17T04:00:00Z",
+    "secret_values_recorded": false
+  },
+  "installers": [
+    {
+      "path": "installers/Git-2.55.0.2-64-bit.exe",
+      "size_bytes": 65449488,
+      "git_blob_sha1": "711253d572283c9998dfdf7a0e88be20ec3d73d4",
+      "sha256": "74300da8dfe0d844c5449ffb809662f8eeac47916f83730c879c4084890c6c0e",
+      "version": "2.55.0.2",
+      "signature_status": "Valid",
+      "signer_subject": "CN=Johannes Schindelin, O=Johannes Schindelin, L=Bruehl, C=DE",
+      "official_reacquisition": "https://github.com/git-for-windows/git/releases/tag/v2.55.0.windows.2",
+      "verification_commands": [
+        "Get-FileHash -Algorithm SHA256 -LiteralPath installers/Git-2.55.0.2-64-bit.exe",
+        "Get-AuthenticodeSignature -LiteralPath installers/Git-2.55.0.2-64-bit.exe",
+        "(Get-Item -LiteralPath installers/Git-2.55.0.2-64-bit.exe).VersionInfo",
+        "git hash-object -- installers/Git-2.55.0.2-64-bit.exe"
+      ]
+    },
+    {
+      "path": "installers/PowerShell-7.6.3-win-x64.msi",
+      "size_bytes": 115384320,
+      "git_blob_sha1": "09db35d30dbbd4b8b5272125589de3d55d38b4e1",
+      "sha256": "4f574fddb567f4d0756094424a1e4e2b2bbdde21de9f0965c0f988d24dc658e4",
+      "version": "7.6.3",
+      "signature_status": "Valid",
+      "signer_subject": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+      "official_reacquisition": "https://github.com/PowerShell/PowerShell/releases/tag/v7.6.3",
+      "verification_commands": [
+        "Get-FileHash -Algorithm SHA256 -LiteralPath installers/PowerShell-7.6.3-win-x64.msi",
+        "Get-AuthenticodeSignature -LiteralPath installers/PowerShell-7.6.3-win-x64.msi",
+        "(Get-Item -LiteralPath installers/PowerShell-7.6.3-win-x64.msi).VersionInfo",
+        "git hash-object -- installers/PowerShell-7.6.3-win-x64.msi"
+      ]
+    }
+  ]
+}

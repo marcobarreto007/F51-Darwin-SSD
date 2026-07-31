@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "source_commit": "141703ac8862e61dd51aec0036a3aa3c05db8b61",
+  "branch": "master",
+  "recorded_at_utc": "2026-07-17T02:42:10.4377400Z",
+  "disk_free_bytes": 202873290752,
+  "root_file_count": 36139,
+  "workspace_source_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\F51-Dataset-Organizado",
+  "workspace_file_count": 3469,
+  "workspace_bytes": 240204369385,
+  "corpus_paths": [
+    "F51-Dataset-Organizado/01_TOKENIZADOS/00_CORPUS_PRINCIPAL_tokens_feast_v2.bin",
+    "F51-Dataset-Organizado/01_TOKENIZADOS/00_CORPUS_PRINCIPAL_tokens_feast_v2.bin.manifest.json"
+  ],
+  "checkpoint_paths": [
+    "F51-Dataset-Organizado/03_CHECKPOINTS/organism_cycle_069.pt",
+    "F51-Dataset-Organizado/03_CHECKPOINTS/organism_cycle_070.pt",
+    "F51-Dataset-Organizado/03_CHECKPOINTS/organism_cycle_071.pt",
+    "F51-Dataset-Organizado/03_CHECKPOINTS/organism_cycle_077.pt"
+  ],
+  "reparse_points": [
+    {
+      "path": "data",
+      "type": "Junction",
+      "target": "C:\\Users\\marco\\Desktop\\F51-Dataset-Organizado\\02_CORPUS",
+      "target_exists": false
+    }
+  ],
+  "conflicting_processes": [],
+  "destructive_cleanup_executed": false
+}

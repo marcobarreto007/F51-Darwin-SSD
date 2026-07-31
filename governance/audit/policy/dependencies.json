@@ -1,0 +1,90 @@
+{
+  "schema_version": 3,
+  "supported_python": "3.12",
+  "scopes": {
+    "cpu_audit": {
+      "authority": "source_ci_only_not_nitro_runtime",
+      "input": "requirements-cpu-audit.in",
+      "dev_input": "requirements-cpu-audit-dev.in",
+      "lock": "requirements-cpu-audit.lock",
+      "dev_lock": "requirements-cpu-audit-dev.lock",
+      "pyproject_extra": "cpu-audit",
+      "pyproject_dev_extra": "cpu-audit-dev",
+      "sbom": "governance/audit/sbom/cpu-audit.cyclonedx.json",
+      "vulnerability_report": "governance/audit/sbom/cpu-audit-vulnerabilities.json",
+      "license_report": "governance/audit/sbom/cpu-audit-licenses.json",
+      "evidence_index": {
+        "path": "governance/audit/evidence/supply-chain-index.json",
+        "schema": "governance/audit/schemas/supply-chain-index.schema.json",
+        "hash_profile": "git-blob-text-lf-v1",
+        "target": "cpu-governance/audit/windows-amd64/cpython-3.12",
+        "configuration_artifacts": [
+          ".github/workflows/ci.yml",
+          "governance/audit/policy/dependencies.json",
+          "governance/audit/schemas/supply-chain-index.schema.json",
+          "pyproject.toml",
+          "src/tools/check_dependency_policy.py"
+        ],
+        "tooling": {
+          "pip_audit": {
+            "tool": "pip-audit",
+            "version": "2.10.1",
+            "command": ["pip-audit", "-r", "requirements-cpu-audit-dev.lock", "--require-hashes", "--format", "json"]
+          },
+          "pip_licenses": {
+            "tool": "pip-licenses",
+            "version": "5.5.5",
+            "command": ["pip-licenses", "--format=json", "--with-urls"]
+          },
+          "cyclonedx": {
+            "tool": "cyclonedx-py",
+            "version": "7.3.0",
+            "command": ["cyclonedx-py", "environment", "--output-reproducible", "--spec-version", "1.6"]
+          }
+        },
+        "statement": "Verdict is computed from artifact content and exact hashes; no handwritten pass field is authoritative."
+      },
+      "direct_runtime_requirements": [
+        "numpy==2.5.1",
+        "pyyaml==6.0.3",
+        "torch==2.13.0"
+      ],
+      "direct_dev_requirements": [
+        "numpy==2.5.1",
+        "pyyaml==6.0.3",
+        "pytest==9.1.1",
+        "torch==2.13.0"
+      ],
+      "reconciliations": [
+        {
+          "component": "pip==25.0.1",
+          "present_in": ["sbom", "license"],
+          "absent_from": ["dev_lock", "vulnerability"],
+          "classification": "bootstrap",
+          "reason": "venv bootstrap package, outside the pip-compile application lock"
+        },
+        {
+          "component": "packaging==26.2",
+          "present_in": ["dev_lock", "sbom", "license"],
+          "absent_from": ["vulnerability"],
+          "classification": "pip_audit_report_omission",
+          "reason": "pip-audit 2.10.1 requirements-mode output omitted this resolved component; it is not claimed as audited"
+        },
+        {
+          "component": "setuptools==83.0.0",
+          "present_in": ["dev_lock", "sbom", "license"],
+          "absent_from": ["vulnerability"],
+          "classification": "pip_audit_report_omission",
+          "reason": "pip-audit 2.10.1 requirements-mode output omitted this unsafe/bootstrap component; it is not claimed as audited"
+        }
+      ]
+    },
+    "nitro_runtime": {
+      "authority": "supported_local_gpu_runtime",
+      "manifest": "governance/audit/provenance/nitro-runtime.json",
+      "sbom": "governance/audit/sbom/nitro-runtime.cyclonedx.json",
+      "checker": "src/tools/check_nitro_runtime.py"
+    }
+  },
+  "exceptions": []
+}

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "operation_id": "f51-internal-gold-physical-migration-2026-07-17",
+  "executed_at": "2026-07-17T12:46:25.2529005-04:00",
+  "source_commit": "b41a999",
+  "authority": "local_single_root_only",
+  "volume": {
+    "drive": "C:",
+    "filesystem": "NTFS",
+    "device": "ORICO",
+    "same_volume_renames": true
+  },
+  "safety": {
+    "reparse_points_rejected": true,
+    "live_process_consumers": 0,
+    "scheduled_task_consumers": 0,
+    "service_consumers": 0,
+    "agent_bus_secret_scan": "pass"
+  },
+  "manifest_profile": "sorted-relative-path-tab-size-tab-sha256-lf-v1",
+  "moves": [
+    {
+      "source": ".organism",
+      "destination": "workspace/runtime/quarantine/legacy-organism",
+      "classification": "mixed_legacy_state_quarantine_not_current_lineage",
+      "files": 29,
+      "bytes": 50873,
+      "pre_manifest_sha256": "2763726c9d36791dc5f4911d948e06fe3de1378e02f5b761f8a1b4ff51df6f5a",
+      "post_manifest_sha256": "2763726c9d36791dc5f4911d948e06fe3de1378e02f5b761f8a1b4ff51df6f5a",
+      "verified": true
+    },
+    {
+      "source": ".f51",
+      "destination": "governance/archive/legacy-state/f51",
+      "classification": "tracked_stale_historical_evidence",
+      "files": 8,
+      "bytes": 103701,
+      "pre_manifest_sha256": "73b644c7a5732995236c61e878168adbb189248cbfe3abbb9f51ad25062b3e00",
+      "post_manifest_sha256": "73b644c7a5732995236c61e878168adbb189248cbfe3abbb9f51ad25062b3e00",
+      "verified": true
+    },
+    {
+      "source": ".agent_bus",
+      "destination": "governance/archive/agent-bus",
+      "classification": "historical_agent_notes",
+      "files": 14,
+      "bytes": 29409,
+      "pre_manifest_sha256": "8430389e25c574f18c6bb63201270e2b7ec08d652a5058095c32ee5bafbad7ba",
+      "post_manifest_sha256": "8430389e25c574f18c6bb63201270e2b7ec08d652a5058095c32ee5bafbad7ba",
+      "verified": true
+    }
+  ],
+  "created_runtime_directories": [
+    "workspace/runtime/organism",
+    "workspace/runtime/history/agent_bus",
+    "workspace/runtime/evaluations",
+    "workspace/runtime/baselines"
+  ],
+  "removed_reproducible_content": [
+    {
+      "path": "eval_results",
+      "classification": "empty_legacy_output_directory",
+      "files": 0,
+      "bytes": 0
+    },
+    {
+      "path": ".venv_vast",
+      "classification": "unused_reproducible_cloud_cli_environment",
+      "files": 7518,
+      "bytes": 142996822
+    },
+    {
+      "path": ".audit-tools",
+      "classification": "reproducible_cache_pruned",
+      "files_before": 28601,
+      "bytes_before": 3562094933,
+      "files_after": 1,
+      "bytes_after": 22575104,
+      "removed_cached_torch_wheel": {
+        "bytes": 2761338915,
+        "sha256": "74387a554c90785c4ffa74bebd9fc97d8dc868476ca99637675a542783f7a847"
+      }
+    }
+  ],
+  "retained_tool": {
+    "path": ".audit-tools/gitleaks-8.30.1/gitleaks.exe",
+    "bytes": 22575104,
+    "sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "verified_after_staging": true
+  },
+  "preserved": [
+    ".git",
+    ".venv_nitro",
+    "workspace",
+    "external corpus",
+    "external checkpoints"
+  ],
+  "rollback": {
+    "legacy_organism": "rename workspace/runtime/quarantine/legacy-organism back to .organism only for forensic rollback; never promote it as current lineage",
+    "f51_history": "rename governance/archive/legacy-state/f51 back to .f51",
+    "agent_history": "rename governance/archive/agent-bus back to .agent_bus"
+  }
+}

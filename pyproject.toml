@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools==83.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "f51-darwin-ssd"
+version = "0.1.0"
+description = "F51 Darwin-SSD source package; GPU runtime identity is governed separately."
+readme = "README.md"
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.scripts]
+f51-darwin = "f51_darwin.cli:main"
+
+[project.optional-dependencies]
+cpu-audit = [
+  "numpy==2.5.1",
+  "PyYAML==6.0.3",
+  "torch==2.13.0",
+]
+cpu-audit-dev = [
+  "numpy==2.5.1",
+  "PyYAML==6.0.3",
+  "torch==2.13.0",
+  "pytest==9.1.1",
+]
+transplant = [
+  "safetensors==0.8.0",
+  "tokenizers==0.22.2",
+  "transformers==5.14.1",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["f51_darwin*"]
+exclude = ["archive*", "audit*", "research*", "tests*", "tools*", "workspace*"]
+
+[tool.setuptools.package-data]
+"f51_darwin.serving" = ["static/*.html"]
+"f51_darwin.operations" = ["*.ps1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["src/tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

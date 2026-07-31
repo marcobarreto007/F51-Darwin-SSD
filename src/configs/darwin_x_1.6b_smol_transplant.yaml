@@ -1,0 +1,108 @@
+model_name: F51-Darwin-X-1.6B-Smol-Transplant-V1
+init: f51_adapted
+tokenizer: smol_49152_transplant_v1
+vocab_size: 49152
+context_length: 4096
+inference_context_length: 8192
+d_model: 1920
+n_layers: 16
+n_heads: 30
+n_kv_heads: 30
+ssd_attention_ratio: "3:1"
+dropout: 0.0
+rope_base_train: 130000.0
+rope_base_infer: 130000.0
+
+# OBSERVACAO (2026-07-29): os quatro campos abaixo sao contrato de doador,
+# nao preferencia de treino. O build de 2026-07-28 23:52 falhou abaixo do
+# random (bpb 8.935 contra 4.908) com os defaults herdados das linhagens
+# Darwin-X treinadas do zero. Os tres valores corretos ja estavam nas
+# linhagens irmas 1.7b_smol_dense/_exact e sao exigidos por assert em
+# exact_assembly.py:70-72; o caminho 1.6B nunca recebeu o mesmo tratamento.
+#
+# rope_style: o default "interleaved" e a convencao GPT-J (pares ::2/1::2).
+#   SmolLM2 e Llama-family: split-half (rope.py:35, apply_rope_llama).
+#   darwin_x_core/layers.py:62 escolhe pelo campo -- sem ele TODO Q/K dos
+#   blocos de atencao transplantados roda com a rotacao errada.
+# residual_scale_multiplier: block.py:66,84 aplicam
+#   x = x + residual_scale * sublayer(...), com residual_scale =
+#   multiplier / sqrt(n_layers). Com 1.4 dava 1.4/4 = 0.35, entao cada uma
+#   das 32 sub-camadas somava 35% do delta para o qual seus pesos foram
+#   derivados, enquanto o caminho identidade seguia em 100%. 4.0/sqrt(16)
+#   = 1.0 restaura a identidade exigida por um transplante zero-shot.
+#   O 1/sqrt(L) faz sentido para estabilizar treino do zero, nunca aqui.
+# rms_norm_eps / rms_norm_fp32: config.json do doador declara
+#   rms_norm_eps 1e-5; os defaults eram 1e-6 e fp32 desligado, com o
+#   modelo inteiro construido em bf16 (assembly.py:285) -- variancia do
+#   RMSNorm calculada em bf16 sem upcast.
+rope_style: llama
+residual_scale_multiplier: 4.0
+rms_norm_eps: 1.0e-5
+rms_norm_fp32: true
+
+ssm_expand: 2
+ssm_state: 16
+qkv_bias: false
+
+fine_experts: 14
+shared_experts: 2
+experts_per_token: 2
+fine_expert_hidden_dim: 896
+shared_expert_hidden_dim: 896
+
+mtp_depth: 2
+mtp_weight: 0.0
+jepa_predictor_arch: mlp
+jepa_predictor_layers: 2
+jepa_weight: 0.0
+jepa_dist_weight: 1.0
+ghost_weight: 0.0
+ghost_mask_ratio: 0.15
+ghost_enabled: false
+curiosity_weight: 0.0
+spider_sense_enabled: true
+aux_loss_scale: 1.0
+aux_loss_adaptive: true
+
+loss_semantics_version: 2
+heartbeat_enabled: true
+heartbeat_think_interval: 1
+heartbeat_explore_interval: 10
+heartbeat_memory_capacity: 1024
+heartbeat_surprise_threshold: 0.3
+heartbeat_ff_layers: 3
+ttm_residual_enabled: true
+ttm_residual_max_scale: 0.0
+ttm_associative_weight: 0.0
+ttm_entity_addressing: true
+ttm_entity_top_k: 4
+spider_calibration_enabled: true
+spider_calibration_weight: 0.0
+
+nitro_enabled: true
+nitro_gpu_expert_capacity: 5
+dae_enabled: true
+dae_shadow_mode: true
+dae_update_gain_min: 0.75
+dae_update_gain_max: 1.25
+vertical_routing_scale: 0.0
+
+gaba_enabled: true
+inter_hemispheric_enabled: true
+sleep_enabled: true
+decision_engine_enabled: true
+unified_mesh_enabled: true
+
+scan_chunk_size: 512
+gradient_checkpointing: false
+attention_indices_override: []
+legacy_tiers: 7
+checkpoint_root: workspace/03_CHECKPOINTS_1.6B_SMOL_TRANSPLANT_V1
+
+module_states:
+  - candidate
+  - active
+  - frozen
+  - quarantine
+  - merged
+  - dead

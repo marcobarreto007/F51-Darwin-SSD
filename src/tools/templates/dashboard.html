@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="F51 Darwin-X 100M — Mission Control">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d0d0d">
+<title>F51 Darwin-X — Mission Control</title>
+
+<link rel="stylesheet" href="/static/dashboard.css">
+
+<style>
+  /* Critical inline overrides — everything else is in dashboard.css */
+
+  /* Connection dot pulse (connected state) — keyframes defined in dashboard.css */
+  .pulse-dot-connected {
+    animation: pulse-dot 2s infinite;
+  }
+
+  /* Training-stopped overlay */
+  .training-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13, 13, 13, 0.75);
+    backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: var(--z-overlay, 200);
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .training-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  /* SSE connection banner */
+  .sse-banner {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 6px var(--space-4);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: var(--z-toast, 300);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .sse-banner--disconnected {
+    background: rgba(255, 23, 68, 0.92);
+    color: #fff;
+  }
+  .sse-banner--reconnecting {
+    background: rgba(255, 171, 0, 0.92);
+    color: #0d0d0d;
+  }
+  .sse-banner.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  /* Trend arrow inline */
+  .trend-arrow {
+    display: inline-block;
+    font-size: 1.25rem;
+    vertical-align: middle;
+    margin-left: var(--space-2);
+    transition: color var(--transition-fast);
+  }
+
+  /* Cycle progress bar */
+  .cycle-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    margin-top: var(--space-2);
+    overflow: hidden;
+  }
+  .cycle-progress__fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 2px;
+    transition: width 1.5s ease-out;
+  }
+
+  /* Organ grid responsive fallback */
+  .organ-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+  }
+  @media (max-width: 720px) {
+    .organ-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Chart cell sizing */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 180px;
+  }
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* GPU card internal grid */
+  .gpu-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .gpu-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .gpu-bar-label {
+    font-size: 0.625rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 32px;
+  }
+  .gpu-bar-value {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    min-width: 100px;
+    text-align: right;
+  }
+
+  /* Staleness border */
+  .card--stale {
+    opacity: 0.55;
+    border-color: var(--color-yellow-dim) !important;
+  }
+  .card--error {
+    border-color: var(--color-red) !important;
+    border-style: dashed;
+  }
+
+  /* OOM pulse animation */
+  @keyframes oom-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.4); }
+    50%      { box-shadow: 0 0 0 6px rgba(255, 23, 68, 0); }
+  }
+  .oom-risk {
+    animation: oom-pulse 1.2s infinite;
+    border-color: var(--color-red) !important;
+  }
+
+  /* Flash update */
+  @keyframes flash-bg {
+    0%   { background-color: rgba(0, 212, 255, 0.12); }
+    100% { background-color: transparent; }
+  }
+  .flash-bg {
+    animation: flash-bg 0.6s ease;
+  }
+
+  /* Skeleton and shimmer already defined in dashboard.css */
+
+  /* System health strip */
+  .health-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+  }
+  .health-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .health-item__label {
+    font-size: 0.625rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .health-item__value {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+</style>
+</head>
+
+<body class="dashboard">
+
+<!-- SSE connection banner -->
+<div id="sse-banner" class="sse-banner hidden" role="alert" aria-live="assertive"></div>
+
+<!-- Training stopped overlay -->
+<div id="training-overlay" class="training-overlay hidden" aria-hidden="true">
+  TRAINING STOPPED
+</div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="dashboard__header">
+  <div>
+    <span class="dashboard__title">
+      <span class="dashboard__title-emoji">🧬</span> F51 DARWIN-X
+    </span>
+    <small style="font-size:0.75rem;color:var(--color-text-secondary);margin-left:var(--space-3)">
+      Mission Control — 100M lineage — Cycle <span id="header-cycle">{{ initial.hero.cycle | default('--') }}</span>
+    </small>
+  </div>
+  <div style="display:flex;align-items:center;gap:var(--space-4)">
+    <span class="dashboard__clock" id="utc-clock">--:--:-- UTC</span>
+    <span class="connection-indicator" id="conn-indicator" title="SSE connection status">
+      <span class="connection-indicator__dot connection-indicator__dot--connecting" id="conn-dot"></span>
+      <span id="conn-label" style="font-family:var(--font-mono);font-size:0.625rem">connecting</span>
+      <span id="conn-latency" style="font-family:var(--font-mono);font-size:0.5625rem;color:var(--color-text-muted)"></span>
+    </span>
+    <span id="training-badge" class="card__badge" style="font-size:0.625rem">
+      {{ 'LIVE' if initial.hero and initial.hero.loss is not none else 'IDLE' }}
+    </span>
+  </div>
+</header>
+
+<!-- ═══════════════ MAIN GRID ═══════════════ -->
+<main class="dashboard__grid">
+
+  <!-- ── HERO ── -->
+  <section class="card card--hero span-full" id="hero-card" aria-label="Training status">
+    <div class="card__header">
+      <span class="card__title">🎯 Training Status</span>
+      <span class="card__badge" id="hero-badge">2s</span>
+    </div>
+    <div class="hero">
+      <!-- Loss -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Loss</span>
+        <span class="stat-tile__value stat-tile__value--hero" id="hero-loss">
+          {{ "%.3f"|format(initial.hero.loss) if initial.hero and initial.hero.loss is not none else '--.---' }}
+        </span>
+        <span class="stat-tile__delta" id="hero-trend">--</span>
+      </div>
+      <!-- Cycle -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Cycle</span>
+        <span class="stat-tile__value" id="hero-cycle">
+          {{ initial.hero.cycle | default('--') }}
+        </span>
+        <span class="stat-tile__sub">of 500 steps</span>
+        <div class="cycle-progress">
+          <div class="cycle-progress__fill" id="cycle-progress-fill"
+               style="width: {{ ((initial.hero.step|default(0)|int % 500) / 500 * 100)|round(1) if initial.hero and initial.hero.step else 0 }}%"></div>
+        </div>
+      </div>
+      <!-- Step -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Step</span>
+        <span class="stat-tile__value" id="hero-step">
+          {{ initial.hero.step | default('--') }}
+        </span>
+        <span class="stat-tile__sub" id="hero-ckpt-ref">
+          {% if initial.hero and initial.hero.ckpt_step %}
+            ckpt @ {{ initial.hero.ckpt_step }}
+          {% else %}--{% endif %}
+        </span>
+      </div>
+      <!-- Perplexity -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Perplexity</span>
+        <span class="stat-tile__value" id="hero-ppl">
+          {{ "%.1f"|format(initial.hero.ppl) if initial.hero and initial.hero.ppl is not none else '--' }}
+        </span>
+        <span class="stat-tile__sub">exp(loss)</span>
+      </div>
+      <!-- tok/s -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Tokens/s</span>
+        <span class="stat-tile__value" id="hero-tok-s">
+          {{ initial.hero.tok_s | default('--') }}
+        </span>
+        <span class="stat-tile__sub">throughput</span>
+      </div>
+      <!-- Version -->
+      <div class="stat-tile">
+        <span class="stat-tile__label">Checkpoint</span>
+        <span class="stat-tile__value" id="hero-version" style="font-size:1.25rem">
+          {{ initial.hero.version | default('v9') }}
+        </span>
+        <span class="stat-tile__sub" id="hero-ckpt-hash" style="font-size:0.5625rem">
+          {{ initial.hero.base_id[:16] | default('--') }}...
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GPU 0 ── -->
+  <section class="card" id="gpu0-card" aria-label="GPU 0">
+    <div class="card__header">
+      <span class="card__title">🖥 GPU 0</span>
+      <span class="card__badge">2s</span>
+    </div>
+    {% set g0 = initial.gpus[0] if initial.gpus and initial.gpus|length > 0 else none %}
+    <div class="gpu-card">
+      <div class="gpu-card__name" id="gpu0-name">{{ g0.name if g0 else 'RTX 5060 Ti' }}</div>
+      <div class="gpu-bars">
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">Util</span>
+          <div class="progress" style="flex:1" title="GPU utilization">
+            <div class="progress__fill progress__fill--low" id="gpu0-util-bar"
+                 style="width:{{ g0.util|default(0) }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu0-util-val">{{ g0.util|default('0') }}%</span>
+        </div>
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">VRAM</span>
+          <div class="progress" style="flex:1" title="Memory">
+            <div class="progress__fill progress__fill--low" id="gpu0-mem-bar"
+                 style="width:{{ ((g0.mem_used|default(0)|int) / (g0.mem_total|default(1)|int) * 100)|round(0) if g0 else 0 }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu0-mem-val">{{ g0.mem_used|default('0') }} / {{ g0.mem_total|default('16311') }} MiB</span>
+        </div>
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">Temp</span>
+          <div class="progress" style="flex:1" title="Temperature">
+            <div class="progress__fill progress__fill--low" id="gpu0-temp-bar"
+                 style="width:{{ g0.temp|default(0) if g0 else 0 }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu0-temp-val">{{ g0.temp|default('--') }}°C</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GPU 1 ── -->
+  <section class="card" id="gpu1-card" aria-label="GPU 1">
+    <div class="card__header">
+      <span class="card__title">🖥 GPU 1</span>
+      <span class="card__badge">2s</span>
+    </div>
+    {% set g1 = initial.gpus[1] if initial.gpus and initial.gpus|length > 1 else none %}
+    <div class="gpu-card">
+      <div class="gpu-card__name" id="gpu1-name">{{ g1.name if g1 else 'RTX 3060' }}</div>
+      <div class="gpu-bars">
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">Util</span>
+          <div class="progress" style="flex:1" title="GPU utilization">
+            <div class="progress__fill progress__fill--low" id="gpu1-util-bar"
+                 style="width:{{ g1.util|default(0) }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu1-util-val">{{ g1.util|default('0') }}%</span>
+        </div>
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">VRAM</span>
+          <div class="progress" style="flex:1" title="Memory">
+            <div class="progress__fill progress__fill--low" id="gpu1-mem-bar"
+                 style="width:{{ ((g1.mem_used|default(0)|int) / (g1.mem_total|default(1)|int) * 100)|round(0) if g1 else 0 }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu1-mem-val">{{ g1.mem_used|default('0') }} / {{ g1.mem_total|default('12288') }} MiB</span>
+        </div>
+        <div class="gpu-bar-row">
+          <span class="gpu-bar-label">Temp</span>
+          <div class="progress" style="flex:1" title="Temperature">
+            <div class="progress__fill progress__fill--low" id="gpu1-temp-bar"
+                 style="width:{{ g1.temp|default(0) if g1 else 0 }}%"></div>
+          </div>
+          <span class="gpu-bar-value" id="gpu1-temp-val">{{ g1.temp|default('--') }}°C</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TRAINING METRICS ── -->
+  <section class="card span-2" id="metrics-card" aria-label="Training metrics">
+    <div class="card__header">
+      <span class="card__title">📈 Training Metrics</span>
+      <span class="card__badge">2s</span>
+    </div>
+    <div class="metrics-grid" id="metrics-grid">
+      {% set metrics = [
+        ('loss',     'Loss (lm)',     '%.4f', true),
+        ('ppl',      'Perplexity',    '%.1f', true),
+        ('tok_s',    'Tokens/s',      '%.0f', false),
+        ('jepa_raw', 'JEPA Raw',      '%.4f', true),
+        ('dope',     'Dopamine',      '%.4f', false),
+        ('delta',    'Delta Loss',    '%.4f', true),
+        ('gmc',      'GMC',           '%.4f', true),
+      ] %}
+      {% for key, label, fmt, lower_better in metrics %}
+        <div class="metric-item" id="metric-{{ key|replace('_','-') }}">
+          <span class="metric-item__label">{{ label }}</span>
+          <span class="metric-item__value" id="metric-val-{{ key|replace('_','-') }}">
+            {% set v = initial.training.get(key, none) if initial.training else none %}
+            {{ fmt|format(v) if v is not none else '--' }}
+          </span>
+          <span class="metric-item__trend" id="metric-delta-{{ key|replace('_','-') }}">--</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── CHARTS 2x2 ── -->
+  <section class="card span-full" id="charts-card" aria-label="Live training charts">
+    <div class="card__header">
+      <span class="card__title">📉 Live Charts (4 hr window)</span>
+      <span class="card__badge">LIVE</span>
+    </div>
+    <div class="charts-grid" id="charts-grid">
+      <div class="chart-container" id="chart-loss-container">
+        <canvas id="chart-loss"></canvas>
+        <div class="chart-placeholder skeleton" style="width:80%;height:60%;margin:auto"></div>
+      </div>
+      <div class="chart-container" id="chart-ppl-container">
+        <canvas id="chart-ppl"></canvas>
+        <div class="chart-placeholder skeleton" style="width:80%;height:60%;margin:auto"></div>
+      </div>
+      <div class="chart-container" id="chart-tok-s-container">
+        <canvas id="chart-tok-s"></canvas>
+        <div class="chart-placeholder skeleton" style="width:80%;height:60%;margin:auto"></div>
+      </div>
+      <div class="chart-container" id="chart-dopamine-container">
+        <canvas id="chart-dopamine"></canvas>
+        <div class="chart-placeholder skeleton" style="width:80%;height:60%;margin:auto"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BLOCKCHAIN ── -->
+  <section class="card span-2" id="blockchain-card" aria-label="Blockchain status">
+    <div class="card__header">
+      <span class="card__title">⛓ Blockchain — Organ Ledger</span>
+      <span class="card__badge">10s</span>
+    </div>
+    <div class="blockchain-panel" id="blockchain-panel">
+      <div class="blockchain-panel__stat">
+        <span class="blockchain-panel__label">Blocks</span>
+        <span class="blockchain-panel__value" id="bc-blocks" style="font-size:1.5rem;color:var(--color-accent)">
+          {{ initial.blockchain.blocks | default(0) }}
+        </span>
+      </div>
+      <div class="blockchain-panel__stat">
+        <span class="blockchain-panel__label">Head Hash</span>
+        <span class="blockchain-panel__value" id="bc-head" style="font-size:0.6875rem;color:var(--color-accent)">
+          {{ initial.blockchain.head_hash | default('--') }}
+        </span>
+      </div>
+      <div class="blockchain-panel__stat">
+        <span class="blockchain-panel__label">Last Cycle</span>
+        <span class="blockchain-panel__value" id="bc-cycle">
+          {{ initial.blockchain.last_cycle | default('--') }}
+        </span>
+      </div>
+      <div class="blockchain-panel__stat">
+        <span class="blockchain-panel__label">File Size</span>
+        <span class="blockchain-panel__value" id="bc-size">
+          {{ initial.blockchain.size_kb | default(0) }} KB
+        </span>
+      </div>
+      <div class="blockchain-panel__stat">
+        <span class="blockchain-panel__label">Status</span>
+        <span class="blockchain-panel__value" id="bc-status"
+              style="color:{{ 'var(--color-green)' if initial.blockchain and initial.blockchain.status == 'ACTIVE' else 'var(--color-yellow)' }}">
+          {{ initial.blockchain.status | default('NO DATA') }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ORGAN GRID ── -->
+  <section class="card span-2" id="organs-card" aria-label="Organ status grid">
+    <div class="card__header">
+      <span class="card__title">🧠 Organ Status</span>
+      <span class="card__badge">60s</span>
+    </div>
+    <div class="organ-grid" id="organ-grid">
+      {% set organs = [
+        ('Core',             'Backbone SSD-MoE transformer'),
+        ('MoE Router',       'Expert routing with load balancing'),
+        ('Ghost',            'Masked autoencoder auxiliary head'),
+        ('JEPA',             'Joint embedding predictive architecture'),
+        ('MTP',              'Multi-token prediction head'),
+        ('Spider',           'Gradient anomaly detection'),
+        ('TTM',              'Test-time memory (heartbeat)'),
+        ('GABA',             'Inhibitory gating modulation'),
+        ('Inter-Hemi',       'Corpus callosum inter-hemisphere'),
+        ('DAE',              'Denoising autoencoder regularizer'),
+        ('Heartbeat',        'Dopamine-driven exploration'),
+        ('Curiosity',        'Intrinsic reward exploration'),
+        ('Decision Eng.',    'Autonomous weight proposals'),
+        ('Nitro',            'GPU expert capacity optimizer'),
+        ('Unified Mesh',     'Cross-organ communication fabric'),
+        ('Sleep',            'Weight consolidation cycle'),
+      ] %}
+      {% for name, desc in organs %}
+        {% set key = name.lower().replace(' ', '_').replace('.', '') %}
+        {% set org = initial.organs.get(key, {}) if initial.organs else {} %}
+        {% set active = org.get('active', false) %}
+        <div class="organ-chip" id="organ-{{ key }}" title="{{ desc }}{% if org.get('identity_hash') %}&#10;sha256:{{ org.identity_hash[-16:] }}{% endif %}">
+          <span class="organ-chip__dot {{ 'organ-chip__dot--active' if active else 'organ-chip__dot--inactive' }}"
+                id="organ-dot-{{ key }}"></span>
+          <span class="u-truncate">{{ name }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── SHA-256 INTEGRITY ── -->
+  <section class="card span-2" id="hashes-card" aria-label="SHA-256 file integrity">
+    <div class="card__header">
+      <span class="card__title">🔐 SHA-256 Integrity</span>
+      <span class="card__badge">60s</span>
+    </div>
+    <div class="hash-list" id="hash-list">
+      {% set hashes = [
+        ('checkpoint.pt',       'checkpoint', 'Active model checkpoint'),
+        ('organism_latest.json','pointer',    'Checkpoint pointer manifest'),
+        ('blocks.jsonl',        'blocks',     'Blockchain ledger'),
+        ('causal_events.jsonl', 'ledger',     'Causal event ledger'),
+        ('config.yaml',         'config',     'Model configuration'),
+      ] %}
+      {% for label, key, desc in hashes %}
+        {% set h = initial.hashes.get(key, '--') if initial.hashes else '--' %}
+        <div class="hash-item" id="hash-row-{{ key }}" title="{{ desc }}">
+          <span class="hash-item__label">{{ label }}</span>
+          <span class="hash-item__value {{ 'hash-item__value--missing' if h == '--' else '' }}"
+                id="hash-val-{{ key }}">
+            {{ h if h != '--' else '(no file)' }}
+          </span>
+          <button class="hash-item__copy"
+                  id="hash-copy-{{ key }}"
+                  onclick="copyHash('{{ key }}')"
+                  title="Copy full SHA-256 to clipboard"
+                  aria-label="Copy hash for {{ label }}">
+            <span class="hash-item__copy-icon">📋</span>
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── AGENT TIMELINE ── -->
+  <section class="card span-2" id="timeline-card" aria-label="Agent activity timeline">
+    <div class="card__header">
+      <span class="card__title">📋 Agent Timeline — Diário de Bordo</span>
+      <span class="card__badge">60s</span>
+    </div>
+    <div class="timeline" id="timeline-list" style="max-height:360px">
+      {% if initial.timeline %}
+        {% for entry in initial.timeline[:10] %}
+          <div class="timeline__entry timeline__entry--{{ entry.operation_type | default('read') | lower }}">
+            <div class="timeline__entry__meta">
+              <span class="timeline__entry__time">{{ entry.timestamp | default('--') }}</span>
+              <span class="timeline__entry__op timeline__entry__op--{{ entry.operation_type | default('read') | lower }}">
+                {{ entry.operation | default('READ') }}
+              </span>
+            </div>
+            <div class="timeline__entry__agent">{{ entry.agent | default('Unknown') }}</div>
+            <div class="timeline__entry__detail">{{ entry.summary | default('No summary') }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <span class="empty-state__icon">📋</span>
+          <span class="empty-state__text">No agent entries recorded yet</span>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── SYSTEM HEALTH ── -->
+  <section class="card span-full" id="health-card" aria-label="System health">
+    <div class="card__header">
+      <span class="card__title">💻 System Health</span>
+      <span class="card__badge">10s</span>
+    </div>
+    {% set sys = initial.system if initial.system else {} %}
+    <div class="health-strip" id="health-strip">
+      <div class="health-item">
+        <span class="health-item__label">RAM</span>
+        <div class="progress" style="width:80px" title="RAM usage">
+          <div class="progress__fill progress__fill--low" id="health-ram-bar"
+               style="width:{{ ((sys.ram_used_gb|default(0)) / (sys.ram_total_gb|default(1)) * 100)|round(0) }}%"></div>
+        </div>
+        <span class="health-item__value" id="health-ram">
+          {{ "%.1f"|format(sys.ram_used_gb|default(0)) }} / {{ "%.0f"|format(sys.ram_total_gb|default(32)) }} GB
+        </span>
+      </div>
+      <div class="health-item">
+        <span class="health-item__label">Disk</span>
+        <div class="progress" style="width:80px" title="Disk usage">
+          <div class="progress__fill progress__fill--low" id="health-disk-bar"
+               style="width:{{ ((sys.disk_used_gb|default(0)) / (sys.disk_total_gb|default(1)) * 100)|round(0) }}%"></div>
+        </div>
+        <span class="health-item__value" id="health-disk">
+          {{ "%.0f"|format(sys.disk_used_gb|default(0)) }} / {{ "%.0f"|format(sys.disk_total_gb|default(1000)) }} GB
+        </span>
+      </div>
+      <div class="health-item">
+        <span class="health-item__label">Processes</span>
+        <span class="health-item__value" id="health-procs">
+          {{ sys.process_count | default('--') }}
+        </span>
+      </div>
+      <div class="health-item">
+        <span class="health-item__label">Uptime</span>
+        <span class="health-item__value" id="health-uptime">
+          {{ sys.uptime | default('--') }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="dashboard__footer">
+  <span>F51 Darwin-X 100M</span>
+  <span>
+    dashboard v2.0.0 — config
+    <span id="footer-config-hash" style="color:var(--color-accent-dim)">
+      {{ initial.hashes.config[:16] | default('--') if initial.hashes else '--' }}
+    </span>
+  </span>
+  <span>rendered <span id="footer-render-time">{{ initial.render_time_utc | default('--') }}</span></span>
+</footer>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="/static/htmx.min.js"></script>
+<script src="/static/chart.min.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ========================================================================
+     F51 Darwin-X Mission Control — Client-Side Runtime
+     SSE Event routing · Chart.js 4 · auto-reconnect · staleness detection
+     ======================================================================== */
+
+  // ── Constants ──
+  var MAX_CHART_POINTS = 7200;      // 4 hours at 2s
+  var HEARTBEAT_TIMEOUT_MS = 30000; // 30s without heartbeat = disconnected
+  var STALE_TIMEOUT_MS = 30000;     // 30s without metrics = stale cards
+  var SSE_URL = '/api/sse/stream';
+  var CYCLE_LENGTH = 500;           // steps per cycle for 100M
+
+  // ── Chart colors (OLED dark theme) ──
+  var CC = {
+    loss:     '#00d4ff',
+    ppl:      '#b388ff',
+    tok_s:    '#00e676',
+    dopamine: '#ff9100',
+    grid:     'rgba(42,42,42,0.4)',
+    text:     '#555555',
+  };
+
+  // ── State ──
+  var lastHeartbeat = Date.now();
+  var lastMetricsTime = Date.now();
+  var prevMetrics = {};
+  var trainingRunning = {{ 'true' if initial.hero and initial.hero.loss is not none else 'false' }};
+  var connectionState = 'connecting'; // connecting | connected | disconnected
+  var reconnectTimer = null;
+  var eventSource = null;
+
+  // ── Chart deques (ring buffers) ──
+  var chartData = { loss: [], ppl: [], tok_s: [], dopamine: [] };
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Chart.js initialization
+  // ══════════════════════════════════════════════════════════════════════
+
+  Chart.defaults.color = CC.text;
+  Chart.defaults.borderColor = CC.grid;
+  Chart.defaults.plugins.legend.display = false;
+  Chart.defaults.animation = false; // instant update, no morph flash
+
+  function makeChartOpts(yLabel, yMin, yMax) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { intersect: false, mode: 'nearest' },
+      scales: {
+        x: {
+          type: 'linear',
+          display: false,
+        },
+        y: {
+          display: true,
+          min: yMin,
+          max: yMax,
+          grid: { color: CC.grid },
+          ticks: {
+            color: CC.text,
+            font: { size: 9, family: '"Cascadia Code",monospace' },
+            maxTicksLimit: 4,
+          },
+        },
+      },
+      plugins: {
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          titleColor: '#e0e0e0',
+          bodyColor: '#9a9a9a',
+          borderColor: '#2a2a2a',
+          borderWidth: 1,
+          titleFont: { family: '"Cascadia Code",monospace', size: 10 },
+          bodyFont: { family: '"Cascadia Code",monospace', size: 9 },
+        },
+      },
+    };
+  }
+
+  function makeDataset(color, fill) {
+    return {
+      data: [],
+      borderColor: color,
+      backgroundColor: fill ? hexToRgba(color, 0.12) : 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: fill ? 0.2 : 0.1,
+      fill: !!fill,
+    };
+  }
+
+  function hexToRgba(hex, alpha) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
+  // Loss chart (line)
+  var chartLoss = new Chart(document.getElementById('chart-loss').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [makeDataset(CC.loss, false)] },
+    options: makeChartOpts('Loss'),
+  });
+
+  // PPL chart (line)
+  var chartPpl = new Chart(document.getElementById('chart-ppl').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [makeDataset(CC.ppl, false)] },
+    options: makeChartOpts('PPL', 0),
+  });
+
+  // tok/s chart (bar)
+  var chartTokS = new Chart(document.getElementById('chart-tok-s').getContext('2d'), {
+    type: 'bar',
+    data: { datasets: [{
+      data: [],
+      backgroundColor: CC.tok_s,
+      borderRadius: 1,
+      borderSkipped: false,
+    }]},
+    options: makeChartOpts('tok/s', 0),
+  });
+
+  // Dopamine chart (area fill)
+  var chartDopamine = new Chart(document.getElementById('chart-dopamine').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [makeDataset(CC.dopamine, true)] },
+    options: makeChartOpts('Dopamine', 0, 1),
+  });
+
+  // Hide skeleton placeholders after charts init
+  document.querySelectorAll('.chart-placeholder').forEach(function(el) { el.style.display = 'none'; });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Chart data helpers
+  // ══════════════════════════════════════════════════════════════════════
+
+  function cleanNum(v) {
+    if (v === null || v === undefined || typeof v !== 'number') return NaN;
+    if (!isFinite(v)) return NaN;
+    return v;
+  }
+
+  function pushChartPoint(chart, dsIdx, x, y) {
+    var ds = chart.data.datasets[dsIdx];
+    if (!ds) return;
+    var cy = cleanNum(y);
+    if (isNaN(cy)) return;
+    ds.data.push({x: x, y: cy});
+    while (ds.data.length > MAX_CHART_POINTS) {
+      ds.data.shift();
+    }
+    chart.update('none');
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // SSE Connection
+  // ══════════════════════════════════════════════════════════════════════
+
+  function setConnection(state, msg) {
+    connectionState = state;
+    var dot = document.getElementById('conn-dot');
+    var label = document.getElementById('conn-label');
+    if (!dot || !label) return;
+
+    // Use dashboard.css classes: connection-indicator__dot (base) + state modifier
+    dot.className = 'connection-indicator__dot';
+    switch (state) {
+      case 'connected':
+        dot.classList.add('pulse-dot-connected');
+        label.textContent = msg || 'live';
+        label.style.color = 'var(--color-green)';
+        break;
+      case 'connecting':
+        dot.classList.add('connection-indicator__dot--connecting');
+        label.textContent = msg || 'connecting';
+        label.style.color = 'var(--color-yellow)';
+        break;
+      case 'disconnected':
+        dot.classList.add('connection-indicator__dot--disconnected');
+        label.textContent = msg || 'disconnected';
+        label.style.color = 'var(--color-red)';
+        break;
+    }
+  }
+
+  function showBanner(type, text) {
+    var b = document.getElementById('sse-banner');
+    if (!b) return;
+    b.textContent = text;
+    b.className = 'sse-banner sse-banner--' + type;
+    if (type === 'connected') {
+      setTimeout(function() { b.classList.add('hidden'); }, 2000);
+    }
+  }
+
+  function hideBanner() {
+    var b = document.getElementById('sse-banner');
+    if (b) b.classList.add('hidden');
+  }
+
+  function connectSSE() {
+    if (eventSource) {
+      try { eventSource.close(); } catch(e) { /* ignore */ }
+    }
+
+    setConnection('connecting');
+    eventSource = new EventSource(SSE_URL);
+
+    eventSource.onopen = function() {
+      lastHeartbeat = Date.now();
+      setConnection('connected', 'live');
+      hideBanner();
+    };
+
+    // ── SSE: metrics (every 2s — main telemetry) ──
+    eventSource.addEventListener('metrics', function(evt) {
+      try {
+        var d = JSON.parse(evt.data);
+        lastMetricsTime = Date.now();
+        var ts = d.ts || (Date.now() / 1000);
+
+        // Hero
+        updateHeroMetrics(d);
+
+        // Training metrics grid
+        updateTrainingMetrics(d);
+
+        // GPU cards
+        if (Array.isArray(d.gpus)) {
+          d.gpus.forEach(function(g, i) {
+            if (i > 1) return;
+            updateGpuCard(i, g);
+          });
+        }
+
+        // Charts
+        if (d.loss !== undefined)  pushChartPoint(chartLoss, 0, ts, d.loss);
+        if (d.ppl !== undefined)   pushChartPoint(chartPpl, 0, ts, d.ppl);
+        if (d.tok_s !== undefined) pushChartPoint(chartTokS, 0, ts, d.tok_s);
+        if (d.dope !== undefined)  pushChartPoint(chartDopamine, 0, ts, d.dope);
+
+        // Store previous for delta calc
+        prevMetrics = d;
+      } catch(e) { /* ignore malformed */ }
+    });
+
+    // ── SSE: blockchain (every 10s) ──
+    eventSource.addEventListener('blockchain', function(evt) {
+      try {
+        var d = JSON.parse(evt.data);
+        setText('bc-blocks', d.blocks);
+        setText('bc-head', d.head_hash);
+        setText('bc-cycle', d.last_cycle);
+        setText('bc-size', d.size_kb !== undefined ? (d.size_kb + ' KB') : null);
+        setText('bc-status', d.status);
+        var statusEl = document.getElementById('bc-status');
+        if (statusEl) {
+          statusEl.style.color = d.status === 'ACTIVE' ? 'var(--color-green)' : 'var(--color-yellow)';
+        }
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: system (every 10s) ──
+    eventSource.addEventListener('system', function(evt) {
+      try {
+        var d = JSON.parse(evt.data);
+        updateSystemHealth(d);
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: integrity (every 60s) ──
+    eventSource.addEventListener('integrity', function(evt) {
+      try {
+        var d = JSON.parse(evt.data);
+        var map = { checkpoint: 'checkpoint', pointer: 'pointer', blocks: 'blocks', ledger: 'ledger', config: 'config' };
+        Object.keys(map).forEach(function(k) {
+          var domKey = map[k];
+          var val = d[k];
+          var el = document.getElementById('hash-val-' + domKey);
+          if (el && val !== undefined) {
+            el.textContent = val === '--' ? '(no file)' : val;
+            el.className = 'hash-item__value' + (val === '--' ? ' hash-item__value--missing' : '');
+          }
+        });
+        if (d.config !== undefined) {
+          setText('footer-config-hash', d.config !== '--' ? d.config.slice(0, 16) : '--');
+        }
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: organs (every 60s) ──
+    eventSource.addEventListener('organs', function(evt) {
+      try {
+        var organs = JSON.parse(evt.data);
+        // organs can be array or object
+        var entries = Array.isArray(organs) ? organs : Object.entries(organs).map(function(_a) {
+          return { name: _a[0], active: _a[1].active, identity_hash: _a[1].identity_hash };
+        });
+        entries.forEach(function(o) {
+          var key = (o.name || '').toLowerCase().replace(/[\s.]+/g, '_');
+          var dot = document.getElementById('organ-dot-' + key);
+          if (dot) {
+            dot.className = 'organ-chip__dot ' + (o.active ? 'organ-chip__dot--active' : 'organ-chip__dot--inactive');
+            if (o.identity_hash) {
+              dot.parentElement.title = (dot.parentElement.title || '').split('\nsha256:')[0] +
+                '\nsha256:' + o.identity_hash.slice(-16);
+            }
+          }
+        });
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: timeline (every 60s) ──
+    eventSource.addEventListener('timeline', function(evt) {
+      try {
+        var entries = JSON.parse(evt.data);
+        var container = document.getElementById('timeline-list');
+        if (!container || !Array.isArray(entries)) return;
+        var html = '';
+        entries.slice(0, 12).forEach(function(e) {
+          var opType = (e.operation_type || 'read').toLowerCase();
+          html += '<div class="timeline__entry timeline__entry--' + opType + '">' +
+            '<div class="timeline__entry__meta">' +
+              '<span class="timeline__entry__time">' + (e.timestamp || '--') + '</span>' +
+              '<span class="timeline__entry__op timeline__entry__op--' + opType + '">' + (e.operation || 'READ') + '</span>' +
+            '</div>' +
+            '<div class="timeline__entry__agent">' + (e.agent || 'Unknown') + '</div>' +
+            '<div class="timeline__entry__detail">' + (e.summary || '') + '</div>' +
+            '</div>';
+        });
+        container.innerHTML = html || '<div class="empty-state"><span class="empty-state__icon">📋</span><span class="empty-state__text">No entries</span></div>';
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: heartbeat (every 15s) ──
+    eventSource.addEventListener('heartbeat', function(evt) {
+      lastHeartbeat = Date.now();
+      try {
+        var d = JSON.parse(evt.data);
+        if (d.server_time) {
+          var latency = Date.now() - new Date(d.server_time).getTime();
+          var latEl = document.getElementById('conn-latency');
+          if (latEl) latEl.textContent = latency + 'ms';
+        }
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── SSE: training_status ──
+    eventSource.addEventListener('training_status', function(evt) {
+      try {
+        var d = JSON.parse(evt.data);
+        var wasRunning = trainingRunning;
+        trainingRunning = (d.status === 'running');
+        var overlay = document.getElementById('training-overlay');
+        var badge = document.getElementById('training-badge');
+
+        if (trainingRunning) {
+          if (overlay) overlay.classList.add('hidden');
+          if (badge) { badge.textContent = 'LIVE'; badge.className = 'card__badge card__badge--green'; }
+        } else {
+          if (overlay) overlay.classList.remove('hidden');
+          if (badge) { badge.textContent = 'STOPPED'; badge.className = 'card__badge card__badge--red'; }
+        }
+
+        if (d.status === 'hung') {
+          if (badge) { badge.textContent = 'HUNG'; badge.className = 'card__badge card__badge--yellow'; }
+        }
+      } catch(e) { /* ignore */ }
+    });
+
+    // ── Fallback listeners for legacy event names (backward compat) ──
+    setupLegacyListeners();
+
+    // ── Error handling ──
+    eventSource.onerror = function() {
+      if (eventSource.readyState === EventSource.CLOSED) {
+        setConnection('disconnected', 'disconnected');
+        showBanner('disconnected', '⚠ SSE disconnected — retrying...');
+        scheduleReconnect();
+      } else if (eventSource.readyState === EventSource.CONNECTING) {
+        setConnection('connecting', 'reconnecting');
+        showBanner('reconnecting', '♻ Reconnecting...');
+      }
+    };
+
+    return eventSource;
+  }
+
+  function scheduleReconnect() {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(function() {
+      if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+        connectSSE();
+      }
+    }, 3000);
+  }
+
+  // Legacy event name handlers (for backward compat with existing backends)
+  function setupLegacyListeners() {
+    var legacyMap = {
+      'hero': function(d) {
+        updateHeroMetrics(d);
+        updateTrainingMetrics(d);
+      },
+      'gpu': function(d) {
+        var gpus = Array.isArray(d) ? d : d.gpus;
+        if (Array.isArray(gpus)) {
+          gpus.forEach(function(g, i) { if (i <= 1) updateGpuCard(i, g); });
+        }
+      },
+      'training': function(d) { updateTrainingMetrics(d); },
+      'chart_point': function(d) {
+        var ts = d.ts || (Date.now() / 1000);
+        if (d.loss !== undefined)  pushChartPoint(chartLoss, 0, ts, d.loss);
+        if (d.ppl !== undefined)   pushChartPoint(chartPpl, 0, ts, d.ppl);
+        if (d.tok_s !== undefined) pushChartPoint(chartTokS, 0, ts, d.tok_s);
+        if (d.dope !== undefined)  pushChartPoint(chartDopamine, 0, ts, d.dope);
+      },
+      'hashes': function(d) {
+        var map = { checkpoint: 'checkpoint', config: 'config', ledger: 'ledger', blocks: 'blocks', script: 'script' };
+        Object.keys(map).forEach(function(k) {
+          var domKey = map[k];
+          var el = document.getElementById('hash-val-' + domKey);
+          if (el && d[k] !== undefined) {
+            el.textContent = d[k] === '--' ? '(no file)' : d[k];
+          }
+        });
+      },
+      'health': function(d) { updateSystemHealth(d); },
+      'organs': function(d) {
+        var entries = Array.isArray(d) ? d : Object.entries(d).map(function(_a) {
+          return { name: _a[0], active: _a[1].active, identity_hash: _a[1].identity_hash };
+        });
+        entries.forEach(function(o) {
+          var key = (o.name || '').toLowerCase().replace(/[\s.]+/g, '_');
+          var dot = document.getElementById('organ-dot-' + key);
+          if (dot) {
+            dot.className = 'organ-chip__dot ' + (o.active ? 'organ-chip__dot--active' : 'organ-chip__dot--inactive');
+          }
+        });
+      },
+      'timeline': function(entries) {
+        if (!Array.isArray(entries)) return;
+        var container = document.getElementById('timeline-list');
+        if (!container) return;
+        var html = '';
+        entries.slice(0, 12).forEach(function(e) {
+          var opType = (e.operation_type || 'read').toLowerCase();
+          html += '<div class="timeline__entry timeline__entry--' + opType + '">' +
+            '<div class="timeline__entry__meta">' +
+              '<span class="timeline__entry__time">' + (e.timestamp || '--') + '</span>' +
+              '<span class="timeline__entry__op timeline__entry__op--' + opType + '">' + (e.operation || 'READ') + '</span>' +
+            '</div>' +
+            '<div class="timeline__entry__agent">' + (e.agent || 'Unknown') + '</div>' +
+            '<div class="timeline__entry__detail">' + (e.summary || '') + '</div>' +
+            '</div>';
+        });
+        container.innerHTML = html || '<div class="empty-state"><span class="empty-state__text">No entries</span></div>';
+      },
+    };
+
+    Object.keys(legacyMap).forEach(function(evtName) {
+      eventSource.addEventListener(evtName, function(evt) {
+        try {
+          var d = JSON.parse(evt.data);
+          lastMetricsTime = Date.now();
+          legacyMap[evtName](d);
+        } catch(e) { /* ignore */ }
+      });
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // DOM update helpers
+  // ══════════════════════════════════════════════════════════════════════
+
+  function setText(id, value) {
+    if (value === null || value === undefined) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    var str = String(value);
+    if (el.textContent.trim() !== str) {
+      el.textContent = str;
+      flashEl(el);
+    }
+  }
+
+  function flashEl(el) {
+    el.classList.remove('flash-bg');
+    void el.offsetWidth; // force reflow
+    el.classList.add('flash-bg');
+  }
+
+  function updateHeroMetrics(d) {
+    // Loss
+    setText('hero-loss', d.loss !== undefined ? d.loss.toFixed(3) : null);
+    // Trend arrow
+    var trendEl = document.getElementById('hero-trend');
+    if (trendEl && d.loss !== undefined && prevMetrics.loss !== undefined) {
+      var delta = d.loss - prevMetrics.loss;
+      if (Math.abs(delta) < 0.0001) {
+        trendEl.innerHTML = '<span class="stat-tile__delta--flat">◆ 0.0000</span>';
+      } else if (delta < 0) {
+        trendEl.innerHTML = '<span class="stat-tile__delta--down">▼ ' + delta.toFixed(4) + '</span>';
+        flashTrend(d.loss, 'var(--color-green)');
+      } else {
+        trendEl.innerHTML = '<span class="stat-tile__delta--up">▲ +' + delta.toFixed(4) + '</span>';
+        if (delta > 0.05) flashTrend(d.loss, 'var(--color-red)');
+      }
+    }
+    // Cycle
+    setText('hero-cycle', d.cycle);
+    setText('header-cycle', d.cycle);
+    // Step
+    setText('hero-step', d.step !== undefined ? d.step.toLocaleString() : null);
+    // Cycle progress bar
+    if (d.step !== undefined) {
+      var bar = document.getElementById('cycle-progress-fill');
+      if (bar) {
+        var pct = (d.step % CYCLE_LENGTH) / CYCLE_LENGTH * 100;
+        bar.style.width = Math.min(pct, 100) + '%';
+      }
+    }
+    // PPL
+    setText('hero-ppl', d.ppl !== undefined ? d.ppl.toFixed(1) : null);
+    // tok/s
+    setText('hero-tok-s', d.tok_s !== undefined ? Math.round(d.tok_s).toLocaleString() : null);
+    // Checkpoint ref
+    if (d.ckpt_step !== undefined) {
+      setText('hero-ckpt-ref', 'ckpt @ ' + d.ckpt_step);
+    }
+    // Version
+    setText('hero-version', d.version);
+    if (d.base_id) {
+      setText('hero-ckpt-hash', d.base_id.slice(0, 16) + '...');
+    }
+    // PPL hero
+    setText('hero-ppl', d.ppl !== undefined ? d.ppl.toFixed(1) : null);
+    setText('hero-tok-s', d.tok_s !== undefined ? Math.round(d.tok_s).toLocaleString() : null);
+  }
+
+  function flashTrend(value, color) {
+    var el = document.getElementById('hero-loss');
+    if (!el) return;
+    el.style.transition = 'box-shadow 0.15s ease';
+    el.style.boxShadow = '0 0 20px ' + color.replace(')', ', 0.4)').replace('rgb', 'rgba');
+    setTimeout(function() { el.style.boxShadow = ''; }, 500);
+  }
+
+  function updateTrainingMetrics(d) {
+    var keys = ['loss', 'ppl', 'tok_s', 'jepa_raw', 'dope', 'delta', 'gmc'];
+    var fmt4 = { loss: true, jepa_raw: true, dope: true, delta: true, gmc: true };
+    keys.forEach(function(k) {
+      var domKey = k.replace(/_/g, '-');
+      if (d[k] !== undefined) {
+        var val = fmt4[k] ? d[k].toFixed(4) : (k === 'ppl' ? d[k].toFixed(1) : d[k]);
+        setText('metric-val-' + domKey, val);
+      }
+    });
+    // Loss delta
+    if (d.loss !== undefined && prevMetrics.loss !== undefined) {
+      var ld = d.loss - prevMetrics.loss;
+      var deltaEl = document.getElementById('metric-delta-loss');
+      if (deltaEl) {
+        var cls = Math.abs(ld) < 0.0001 ? '--flat' : (ld < 0 ? '--down' : '--up');
+        var sign = ld >= 0 ? '+' : '';
+        deltaEl.innerHTML = '<span class="stat-tile__delta' + cls + '">' + sign + ld.toFixed(4) + '</span>';
+      }
+    }
+  }
+
+  function updateGpuCard(idx, g) {
+    var prefix = 'gpu' + idx;
+    // Util
+    var utilBar = document.getElementById(prefix + '-util-bar');
+    var utilVal = document.getElementById(prefix + '-util-val');
+    if (utilBar && g.util !== undefined) {
+      var u = Math.min(Math.max(parseInt(g.util) || 0, 0), 100);
+      utilBar.style.width = u + '%';
+      updateBarColor(utilBar, u, 70, 85);
+    }
+    if (utilVal && g.util !== undefined) utilVal.textContent = g.util + '%';
+    // Mem
+    var memBar = document.getElementById(prefix + '-mem-bar');
+    var memVal = document.getElementById(prefix + '-mem-val');
+    if (memBar && g.mem_used !== undefined && g.mem_total !== undefined) {
+      var mu = parseInt(g.mem_used) || 0;
+      var mt = parseInt(g.mem_total) || 1;
+      var mp = Math.round(mu / mt * 100);
+      memBar.style.width = Math.min(mp, 100) + '%';
+      updateBarColor(memBar, mp, 70, 90);
+      // OOM check
+      var card = document.getElementById(prefix + '-card');
+      if (card) {
+        if (mp >= 95) card.classList.add('oom-risk');
+        else card.classList.remove('oom-risk');
+      }
+    }
+    if (memVal) memVal.textContent = (g.mem_used || '0') + ' / ' + (g.mem_total || '?') + ' MiB';
+    // Temp
+    var tempBar = document.getElementById(prefix + '-temp-bar');
+    var tempVal = document.getElementById(prefix + '-temp-val');
+    if (tempBar && g.temp !== undefined) {
+      var tp = Math.min(parseInt(g.temp) || 0, 100);
+      tempBar.style.width = tp + '%';
+      updateBarColor(tempBar, tp, 60, 75);
+    }
+    if (tempVal) tempVal.textContent = (g.temp || '--') + '°C';
+  }
+
+  function updateBarColor(bar, pct, warnThresh, critThresh) {
+    bar.classList.remove('progress__fill--low', 'progress__fill--mid', 'progress__fill--high', 'progress__fill--max');
+    if (pct >= critThresh)      bar.classList.add('progress__fill--max');
+    else if (pct >= warnThresh) bar.classList.add('progress__fill--high');
+    else if (pct >= warnThresh * 0.75) bar.classList.add('progress__fill--mid');
+    else                        bar.classList.add('progress__fill--low');
+  }
+
+  function updateSystemHealth(d) {
+    // RAM
+    if (d.ram_used_gb !== undefined && d.ram_total_gb) {
+      setText('health-ram', d.ram_used_gb.toFixed(1) + ' / ' + d.ram_total_gb.toFixed(0) + ' GB');
+      var rb = document.getElementById('health-ram-bar');
+      if (rb) {
+        var rp = Math.round(d.ram_used_gb / d.ram_total_gb * 100);
+        rb.style.width = Math.min(rp, 100) + '%';
+        updateBarColor(rb, rp, 80, 95);
+      }
+    }
+    // Disk
+    if (d.disk_used_gb !== undefined && d.disk_total_gb) {
+      setText('health-disk', d.disk_used_gb.toFixed(0) + ' / ' + d.disk_total_gb.toFixed(0) + ' GB');
+      var db = document.getElementById('health-disk-bar');
+      if (db) {
+        var dp = Math.round(d.disk_used_gb / d.disk_total_gb * 100);
+        db.style.width = Math.min(dp, 100) + '%';
+        updateBarColor(db, dp, 80, 95);
+      }
+    }
+    // Processes
+    setText('health-procs', d.process_count);
+    // Uptime
+    setText('health-uptime', d.uptime);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Copy to clipboard
+  // ══════════════════════════════════════════════════════════════════════
+
+  window.copyHash = function(key) {
+    var el = document.getElementById('hash-val-' + key);
+    if (!el) return;
+    var text = el.textContent.trim();
+    if (text === '(no file)' || text === '--') return;
+
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById('hash-copy-' + key);
+      if (!btn) return;
+      btn.classList.add('hash-item__copy--copied');
+      btn.innerHTML = '✓';
+      setTimeout(function() {
+        btn.classList.remove('hash-item__copy--copied');
+        btn.innerHTML = '<span class="hash-item__copy-icon">📋</span>';
+      }, 1500);
+    }).catch(function() {
+      // Fallback: select text
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  };
+
+  // ══════════════════════════════════════════════════════════════════════
+  // UTC Clock (tick every second)
+  // ══════════════════════════════════════════════════════════════════════
+
+  function updateClock() {
+    var now = new Date();
+    var utc = now.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+    var el = document.getElementById('utc-clock');
+    if (el) el.textContent = utc;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Staleness checker (every 5s)
+  // ══════════════════════════════════════════════════════════════════════
+
+  setInterval(function() {
+    var now = Date.now();
+    var metricsStale = (now - lastMetricsTime) > STALE_TIMEOUT_MS;
+    var heartbeatStale = (now - lastHeartbeat) > HEARTBEAT_TIMEOUT_MS;
+
+    // Mark cards stale
+    var fastCards = document.querySelectorAll('#hero-card, #gpu0-card, #gpu1-card, #metrics-card, #charts-card');
+    fastCards.forEach(function(card) {
+      if (metricsStale) card.classList.add('card--stale');
+      else card.classList.remove('card--stale');
+    });
+
+    // Connection check
+    if (heartbeatStale && connectionState === 'connected') {
+      setConnection('disconnected', 'no heartbeat');
+      showBanner('disconnected', '⚠ No heartbeat for 30s — data may be stale');
+    }
+
+    // Auto-reconnect if disconnected
+    if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+      if (reconnectTimer === null) {
+        scheduleReconnect();
+      }
+    }
+  }, 5000);
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Tab visibility handling
+  // ══════════════════════════════════════════════════════════════════════
+
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && eventSource && eventSource.readyState === EventSource.CLOSED) {
+      // Tab refocused, reconnect if needed
+      connectSSE();
+    }
+    if (!document.hidden) {
+      // On refocus, check heartbeat freshness
+      if (Date.now() - lastHeartbeat > HEARTBEAT_TIMEOUT_MS) {
+        setConnection('disconnected', 'stale');
+        showBanner('disconnected', '⚠ Connection lost while tab was backgrounded');
+        scheduleReconnect();
+      }
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Keyboard shortcut: Ctrl+Shift+D = toggle dark/light debug
+  // ══════════════════════════════════════════════════════════════════════
+
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      var html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'debug' ? 'dark' : 'debug';
+      console.log('[dashboard] theme:', html.dataset.theme);
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Bootstrap
+  // ══════════════════════════════════════════════════════════════════════
+
+  eventSource = connectSSE();
+
+  // Seed charts from initial data if available
+  (function seedCharts() {
+    {% if initial and initial.chart_history %}
+    var h = {{ initial.chart_history | tojson }};
+    var baseTs = (Date.now() / 1000) - ((h.loss ? h.loss.length : 0) * 2);
+    if (h.loss) h.loss.forEach(function(v, i) { chartData.loss.push({x: baseTs + i*2, y: v}); });
+    if (h.ppl)  h.ppl.forEach(function(v, i)  { chartData.ppl.push({x: baseTs + i*2, y: v}); });
+    if (h.tok_s) h.tok_s.forEach(function(v, i) { chartData.tok_s.push({x: baseTs + i*2, y: v}); });
+    if (h.dope) h.dope.forEach(function(v, i) { chartData.dopamine.push({x: baseTs + i*2, y: v}); });
+    // Push to chart instances
+    chartLoss.data.datasets[0].data = chartData.loss.slice(-MAX_CHART_POINTS);
+    chartPpl.data.datasets[0].data = chartData.ppl.slice(-MAX_CHART_POINTS);
+    chartTokS.data.datasets[0].data = chartData.tok_s.slice(-MAX_CHART_POINTS);
+    chartDopamine.data.datasets[0].data = chartData.dopamine.slice(-MAX_CHART_POINTS);
+    chartLoss.update('none');
+    chartPpl.update('none');
+    chartTokS.update('none');
+    chartDopamine.update('none');
+    {% endif %}
+  })();
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+title = "F51 Darwin source secret policy"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "f51-jwt"
+description = "JSON Web Token"
+regex = '''\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "f51-hugging-face-token"
+description = "Hugging Face access token"
+regex = '''\bhf_[A-Za-z0-9]{34}\b'''
+keywords = ["hf_"]
+
+[[rules]]
+id = "f51-aws-access-key"
+description = "AWS access key identifier"
+regex = '''\b(?:AKIA|ASIA)[A-Z0-9]{16}\b'''
+keywords = ["AKIA", "ASIA"]
+
+[[rules]]
+id = "f51-generic-credential"
+description = "Assigned generic credential"
+regex = '''(?i)(?:api[_-]?key|access[_-]?token|secret[_-]?key|password)\s*[:=]\s*["']?([A-Za-z0-9_+./=-]{16,})'''
+secretGroup = 1

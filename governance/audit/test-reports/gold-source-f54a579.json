@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "audit_kind": "gold_source",
+  "source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+  "report_source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+  "observed_end_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+  "started_utc": "2026-07-17T14:43:38.1590581Z",
+  "ended_utc": "2026-07-17T14:45:18.7489831Z",
+  "root": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+  "tools": {
+    "powershell": "7.6.3",
+    "git": "git version 2.53.0.windows.3",
+    "python": "Python 3.12.13"
+  },
+  "commands": [
+    {
+      "id": "pytest",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe -m pytest -q -p no:cacheprovider",
+      "started_utc": "2026-07-17T14:43:38.2105279Z",
+      "ended_utc": "2026-07-17T14:44:42.6862513Z",
+      "exit_code": 0,
+      "output_tail": "........................................................................ [ 18%]\r\n........................................................................ [ 37%]\r\n........................................................................ [ 56%]\r\n........................................................................ [ 75%]\r\n........................................................................ [ 93%]\r\n........................                                                 [100%]\r\n"
+    },
+    {
+      "id": "py_compile",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe -c import json\nimport py_compile\nimport subprocess\n\nraw = subprocess.check_output([\"git\", \"ls-files\", \"-z\", \"--\", \"*.py\"])\nfiles = [item.decode(\"utf-8\", \"surrogateescape\") for item in raw.split(b\"\\0\") if item]\nactive = [path for path in files if not path.replace(\"\\\\\", \"/\").startswith(\"archive/\")]\nfailed = 0\nfor path in active:\n    try:\n        py_compile.compile(path, doraise=True)\n    except Exception:\n        failed += 1\nsummary = {\n    \"tracked\": len(files),\n    \"attempted\": len(active),\n    \"compiled\": len(active) - failed,\n    \"skipped_archive\": len(files) - len(active),\n    \"failed\": failed,\n}\nprint(json.dumps(summary, sort_keys=True, separators=(\",\", \":\")))\nraise SystemExit(0 if failed == 0 else 2)",
+      "started_utc": "2026-07-17T14:44:42.6935764Z",
+      "ended_utc": "2026-07-17T14:44:43.2799589Z",
+      "exit_code": 0,
+      "output_tail": "{\"attempted\":250,\"compiled\":250,\"failed\":0,\"skipped_archive\":58,\"tracked\":308}\r\n"
+    },
+    {
+      "id": "powershell_parse",
+      "command": "PowerShell Parser::ParseFile tracked active ps1",
+      "started_utc": "2026-07-17T14:44:43.3465142Z",
+      "ended_utc": "2026-07-17T14:44:43.3465142Z",
+      "exit_code": 0,
+      "output_tail": ""
+    },
+    {
+      "id": "check_docs_links",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_docs_links.py --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:43.3482496Z",
+      "ended_utc": "2026-07-17T14:44:43.4263301Z",
+      "exit_code": 0,
+      "output_tail": "{\r\n  \"status\": \"pass\",\r\n  \"findings\": []\r\n}\r\n"
+    },
+    {
+      "id": "check_canonical_docs",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_canonical_docs.py --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:43.4267502Z",
+      "ended_utc": "2026-07-17T14:44:43.4806110Z",
+      "exit_code": 0,
+      "output_tail": "{\r\n  \"status\": \"pass\",\r\n  \"findings\": []\r\n}\r\n"
+    },
+    {
+      "id": "check_duplicates",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_duplicates.py --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:43.4809342Z",
+      "ended_utc": "2026-07-17T14:44:43.6037830Z",
+      "exit_code": 0,
+      "output_tail": "{\r\n  \"status\": \"pass\",\r\n  \"findings\": []\r\n}\r\n"
+    },
+    {
+      "id": "check_dependency_policy",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_dependency_policy.py --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:43.6041135Z",
+      "ended_utc": "2026-07-17T14:44:43.9220766Z",
+      "exit_code": 0,
+      "output_tail": "{\r\n  \"failures\": [],\r\n  \"status\": \"pass\"\r\n}\r\n"
+    },
+    {
+      "id": "check_operational_surface",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_operational_surface.py --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:43.9224184Z",
+      "ended_utc": "2026-07-17T14:44:44.0033276Z",
+      "exit_code": 0,
+      "output_tail": "{\r\n  \"status\": \"pass\",\r\n  \"findings\": []\r\n}\r\n"
+    },
+    {
+      "id": "secret_scan",
+      "command": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\.venv_nitro\\Scripts\\python.exe C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\scripts\\check_source_secrets.py --scope all --root C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+      "started_utc": "2026-07-17T14:44:44.0037206Z",
+      "ended_utc": "2026-07-17T14:45:18.6565367Z",
+      "exit_code": 2,
+      "output_tail": ",\r\n        \"--no-banner\",\r\n        \"--no-color\",\r\n        \"--exit-code\",\r\n        \"2\",\r\n        \"--max-decode-depth\",\r\n        \"2\",\r\n        \"--max-archive-depth\",\r\n        \"2\",\r\n        \"--log-opts=--all --full-history\",\r\n        \"C:\\\\Users\\\\marco\\\\Desktop\\\\F51-Darwin-SSD\"\r\n      ],\r\n      \"finding_count\": 9,\r\n      \"findings\": [\r\n        {\r\n          \"commit\": \"7c42b4b3ec5480f0310319366ab973e5a141587f\",\r\n          \"fingerprint\": \"7c42b4b3ec5480f0310319366ab973e5a141587f:_check_credit.py:generic-api-key:2\",\r\n          \"line\": 2,\r\n          \"path\": \"_check_credit.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"bfdde9a12e233c5641bff2cb8ca021f4c676f1df\",\r\n          \"fingerprint\": \"bfdde9a12e233c5641bff2cb8ca021f4c676f1df:_s2b.py:generic-api-key:2\",\r\n          \"line\": 2,\r\n          \"path\": \"_s2b.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c\",\r\n          \"fingerprint\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_check.py:generic-api-key:2\",\r\n          \"line\": 2,\r\n          \"path\": \"_check.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c\",\r\n          \"fingerprint\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_rent.py:generic-api-key:3\",\r\n          \"line\": 3,\r\n          \"path\": \"_rent.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c\",\r\n          \"fingerprint\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_rent2.py:generic-api-key:3\",\r\n          \"line\": 3,\r\n          \"path\": \"_rent2.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c\",\r\n          \"fingerprint\": \"2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_fresh.py:generic-api-key:3\",\r\n          \"line\": 3,\r\n          \"path\": \"_fresh.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"bd45b1447a85d834b5aa648953c4e7ec4fb90440\",\r\n          \"fingerprint\": \"bd45b1447a85d834b5aa648953c4e7ec4fb90440:tests/test_live_inference_runtime.py:generic-api-key:137\",\r\n          \"line\": 137,\r\n          \"path\": \"tests/test_live_inference_runtime.py\",\r\n          \"rule_id\": \"generic-api-key\"\r\n        },\r\n        {\r\n          \"commit\": \"651330ef7351f3a2b10b111dffc6622f55a0523b\",\r\n          \"fingerprint\": \"651330ef7351f3a2b10b111dffc6622f55a0523b:scripts/stream_all.py:huggingface-access-token:4\",\r\n          \"line\": 4,\r\n          \"path\": \"scripts/stream_all.py\",\r\n          \"rule_id\": \"huggingface-access-token\"\r\n        },\r\n        {\r\n          \"commit\": \"651330ef7351f3a2b10b111dffc6622f55a0523b\",\r\n          \"fingerprint\": \"651330ef7351f3a2b10b111dffc6622f55a0523b:scripts/stream_all.py:f51-hugging-face-token:4\",\r\n          \"line\": 4,\r\n          \"path\": \"scripts/stream_all.py\",\r\n          \"rule_id\": \"f51-hugging-face-token\"\r\n        }\r\n      ],\r\n      \"refs\": [\r\n        \"refs/heads/master f54a579802e8e56b819eba37ce81b69c444fd781\",\r\n        \"refs/remotes/origin/HEAD afd5d34422ebf7d07ecf19747a1680d84a8e1014\",\r\n        \"refs/remotes/origin/cursor/bilingual-readme-olavo-sources 0e8cf53204af4484152599426dc4d55473ea3449\",\r\n        \"refs/remotes/origin/cursor/darwin-moe-organism-stack b36ab814e4d8c6c3c9fd2dd5ba4f10034f49b2ec\",\r\n        \"refs/remotes/origin/master afd5d34422ebf7d07ecf19747a1680d84a8e1014\",\r\n        \"refs/tags/v0.1-checkpoints afd5d34422ebf7d07ecf19747a1680d84a8e1014\"\r\n      ],\r\n      \"refset_sha256\": \"694e0332dbf8f4327356526d49c44e7322440e2b4c4f968451dd7227013f8f1b\",\r\n      \"report_sha256\": \"bb5d536ad2edcee1ba3dd4ea59ce5171cea7ab58550443f4a4ca007b37e6a223\",\r\n      \"scope\": \"history\",\r\n      \"status\": \"fail\",\r\n      \"tracked_files\": null\r\n    }\r\n  ],\r\n  \"status\": \"fail\",\r\n  \"tool\": \"gitleaks\",\r\n  \"tool_sha256\": \"17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c\",\r\n  \"tool_version\": \"8.30.1\"\r\n}\r\n"
+    },
+    {
+      "id": "git_diff_check",
+      "command": "git diff-tree --check --root -m --no-commit-id -r f54a579802e8e56b819eba37ce81b69c444fd781 --",
+      "started_utc": "2026-07-17T14:45:18.6585981Z",
+      "ended_utc": "2026-07-17T14:45:18.6813618Z",
+      "exit_code": 0,
+      "output_tail": ""
+    },
+    {
+      "id": "tracked_worktree",
+      "command": "git status --porcelain --untracked-files=no",
+      "started_utc": "2026-07-17T14:45:18.7040608Z",
+      "ended_utc": "2026-07-17T14:45:18.7040608Z",
+      "exit_code": 0,
+      "output_tail": ""
+    },
+    {
+      "id": "source_report_commit",
+      "command": "compare frozen source commit with observed end HEAD",
+      "started_utc": "2026-07-17T14:45:18.7240436Z",
+      "ended_utc": "2026-07-17T14:45:18.7240436Z",
+      "exit_code": 0,
+      "output_tail": "match"
+    }
+  ],
+  "counts": {
+    "total": 12,
+    "passed": 11,
+    "failed": 1
+  },
+  "python_compilation": {
+    "tracked": 308,
+    "attempted": 250,
+    "compiled": 250,
+    "skipped_archive": 58,
+    "failed": 0
+  },
+  "tracked_worktree_clean": true,
+  "status": "fail",
+  "failures": [
+    "secret_scan"
+  ]
+}

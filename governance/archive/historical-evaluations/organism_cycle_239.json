@@ -1,0 +1,77 @@
+{
+  "checkpoint": "organism_cycle_239.pt",
+  "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_239.pt",
+  "config": "F51-Darwin-X-600M",
+  "cycle": 239,
+  "step": 119560,
+  "version": 6,
+  "device": "cuda",
+  "ppl_pt": {
+    "ppl": 990.96,
+    "loss": 6.8987,
+    "tokens": 107
+  },
+  "ppl_en": {
+    "ppl": 200.19,
+    "loss": 5.2993,
+    "tokens": 94
+  },
+  "lexical_diversity": {
+    "type_token_ratio": 0.177,
+    "total_words": 209,
+    "unique_words": 37
+  },
+  "generations": [
+    {
+      "prompt": "Quem te criou?",
+      "text": "In the first spermatocyte. In the growth chromosome is found in the odd chromosome is equal in the first \n \n growth somatic number of pair is even in the",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu nome?",
+      "text": "In the first spermatocyte. In the growth somatic number is in the \n \n unequal pair of the Hemiptera (Wilson, '05 and '06), in the",
+      "token_count": 64
+    },
+    {
+      "prompt": "Qual o seu proposito?",
+      "text": "In the first spermatocyte. The odd chromosome is equal in the first spermatocyte. In the growth chromosome is in the \n \n number of the male and spermatogon",
+      "token_count": 64
+    },
+    {
+      "prompt": "Soli Deo Gloria significa",
+      "text": "in the unequal pair is an unequal pair in the presence of the unequal pair in cases of the unequal pair. In the first spermatocyte. In",
+      "token_count": 64
+    },
+    {
+      "prompt": "O que voce sabe sobre o Brasil?",
+      "text": "",
+      "token_count": 64
+    },
+    {
+      "prompt": "A capital do Brasil eh",
+      "text": "in the somatic spermatogonial number and of the unequal pair in cases of the unequal pair in the male pair of the unequal pair in the male",
+      "token_count": 64
+    },
+    {
+      "prompt": "A agua ferve a",
+      "text": "union of the \n \n Hemiptera (Wilson, '05 and '11), the number in the other spermatogonial number and somatic pair is found to be in",
+      "token_count": 64
+    },
+    {
+      "prompt": "O sol eh uma",
+      "text": "somatic cells are \n \n be been found in the male somatic number and \n \n the odd chromosome is equal in the presence of the unequal pair in cases of",
+      "token_count": 64
+    },
+    {
+      "prompt": "Explain what a transformer is in one sentence.",
+      "text": "",
+      "token_count": 64
+    },
+    {
+      "prompt": "The meaning of life is",
+      "text": "equal in the first \n \n growth somatic number of pair is even in the species of the unequal pair in has been found in the male somatic number and of",
+      "token_count": 64
+    }
+  ],
+  "eval_timestamp": "2026-07-12T23:57:31Z"
+}

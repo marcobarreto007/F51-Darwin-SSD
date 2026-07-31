@@ -1,0 +1,1626 @@
+/* ==========================================================================
+   F51 Darwin-X — Mission Control Dashboard CSS
+   Dark OLED theme · CSS Grid · htmx-ready · Chart.js companion
+   Version: 1.0.0 — 2026-07-24
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   0. FONT-FACE DECLARATIONS
+   System-native stacks — no web font downloads required.
+   Inter → system UI sans; Cascadia Code → system mono.
+   -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Inter";
+  src: local("Inter"), local("Inter Display"), local("Inter Variable");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cascadia Code";
+  src: local("Cascadia Code"), local("Cascadia Mono"), local("CaskaydiaCove Nerd Font");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --------------------------------------------------------------------------
+   1. CSS CUSTOM PROPERTIES — Dark OLED Color System
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* ── Core palette ── */
+  --color-surface:      #0d0d0d;
+  --color-surface-alt:  #111111;
+  --color-card:         #1a1a1a;
+  --color-card-hover:   #1f1f1f;
+  --color-card-raised:  #222222;
+  --color-border:       #2a2a2a;
+  --color-border-faint: #1e1e1e;
+
+  /* ── Accent (cyan) ── */
+  --color-accent:       #00d4ff;
+  --color-accent-dim:   #0088aa;
+  --color-accent-glow:  rgba(0, 212, 255, 0.15);
+  --color-accent-ring:  rgba(0, 212, 255, 0.35);
+
+  /* ── Semantic status ── */
+  --color-green:        #00e676;
+  --color-green-dim:    #009944;
+  --color-yellow:       #ffc107;
+  --color-yellow-dim:   #997300;
+  --color-orange:       #ff9100;
+  --color-orange-dim:   #995600;
+  --color-red:          #ff1744;
+  --color-red-dim:      #990022;
+  --color-purple:       #b388ff;
+  --color-purple-dim:   #5c3d99;
+
+  /* ── Text ── */
+  --color-text-primary:   #e0e0e0;
+  --color-text-secondary: #999999;
+  --color-text-muted:     #555555;
+  --color-text-inverse:   #0d0d0d;
+
+  /* ── Typography ── */
+  --font-sans:  "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:  "Cascadia Code", "Cascadia Mono", "Fira Code", "JetBrains Mono",
+                "SF Mono", "Consolas", "Liberation Mono", monospace;
+
+  /* ── Spacing scale (4px base) ── */
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+
+  /* ── Radii ── */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-glow:    0 0 12px var(--color-accent-glow);
+  --shadow-glow-lg: 0 0 24px rgba(0, 212, 255, 0.20);
+
+  /* ── Transitions ── */
+  --transition-fast:   120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   350ms ease;
+  --transition-value:  400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Grid ── */
+  --grid-gap:       var(--space-4);
+  --grid-col-min:   320px;
+
+  /* ── Z-index layers ── */
+  --z-base:     0;
+  --z-card:     10;
+  --z-sticky:   100;
+  --z-overlay:  200;
+  --z-toast:    300;
+  --z-tooltip:  400;
+}
+
+/* --------------------------------------------------------------------------
+   2. RESET & BASE
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover { color: var(--color-accent-dim); }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   3. SCROLLBAR — Dark OLED
+   -------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3a;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-surface);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-surface);
+}
+
+/* --------------------------------------------------------------------------
+   4. LAYOUT — Dashboard Shell
+   -------------------------------------------------------------------------- */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  backdrop-filter: blur(12px);
+}
+
+.dashboard__title {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.dashboard__title-emoji {
+  margin-right: var(--space-2);
+  font-family: var(--font-sans); /* emoji fallback */
+}
+
+.dashboard__clock {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.dashboard__status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  margin-right: var(--space-2);
+  animation: pulse-dot 2s infinite;
+}
+
+.dashboard__status-dot--live  { background: var(--color-green); }
+.dashboard__status-dot--idle  { background: var(--color-yellow); }
+.dashboard__status-dot--dead  { background: var(--color-red); }
+.dashboard__status-dot--hung  { background: var(--color-orange); }
+
+/* ── Main grid container ── */
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--grid-gap);
+  padding: var(--space-4) var(--space-6);
+  flex: 1;
+}
+
+/* ── Responsive breakpoints ── */
+
+/* 4-col at 1440p+ */
+@media (min-width: 1440px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-8);
+  }
+}
+
+/* 5-col at ultrawide (2560px+) */
+@media (min-width: 1920px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-10);
+    max-width: 2200px;
+    margin: 0 auto;
+  }
+}
+
+/* Tablet: 2-col */
+@media (max-width: 1079px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: var(--space-3) var(--space-4);
+  }
+  .dashboard__header {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+/* Mobile: single column */
+@media (max-width: 720px) {
+  .dashboard__grid {
+    grid-template-columns: 1fr;
+    padding: var(--space-2) var(--space-3);
+  }
+  .dashboard__header {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+}
+
+/* ── Section spanning helpers ── */
+.dashboard__grid > .span-2 { grid-column: span 2; }
+.dashboard__grid > .span-3 { grid-column: span 3; }
+.dashboard__grid > .span-4 { grid-column: span 4; }
+.dashboard__grid > .span-5 { grid-column: span 5; }
+.dashboard__grid > .span-full { grid-column: 1 / -1; }
+
+@media (max-width: 1079px) {
+  .dashboard__grid > .span-2,
+  .dashboard__grid > .span-3,
+  .dashboard__grid > .span-4,
+  .dashboard__grid > .span-5,
+  .dashboard__grid > .span-full {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard__grid > .span-2,
+  .dashboard__grid > .span-3,
+  .dashboard__grid > .span-4,
+  .dashboard__grid > .span-5,
+  .dashboard__grid > .span-full {
+    grid-column: span 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. CARD COMPONENT
+   -------------------------------------------------------------------------- */
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  position: relative;
+  z-index: var(--z-card);
+  transition:
+    background var(--transition-normal),
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  background: var(--color-card-hover);
+  border-color: var(--color-border);
+}
+
+.card:focus-within {
+  border-color: var(--color-accent-ring);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Card variants */
+.card--hero {
+  background: linear-gradient(135deg, var(--color-card) 0%, var(--color-card-raised) 100%);
+  border-color: var(--color-accent-dim);
+  padding: var(--space-6);
+}
+
+.card--hero:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.card--ghost {
+  background: transparent;
+  border-color: transparent;
+  padding: var(--space-3);
+}
+.card--ghost:hover {
+  background: var(--color-card);
+  border-color: var(--color-border-faint);
+}
+
+.card--alert {
+  border-color: var(--color-red-dim);
+}
+.card--alert:hover {
+  border-color: var(--color-red);
+  box-shadow: 0 0 16px rgba(255, 23, 68, 0.12);
+}
+
+.card--warn {
+  border-color: var(--color-yellow-dim);
+}
+.card--warn:hover {
+  border-color: var(--color-yellow);
+  box-shadow: 0 0 16px rgba(255, 171, 0, 0.10);
+}
+
+/* ── Card header ── */
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.card__title {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.card__badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-glow);
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.card__badge--green  { background: rgba(0, 230, 118, 0.12); color: var(--color-green); }
+.card__badge--yellow { background: rgba(255, 171, 0, 0.12);  color: var(--color-yellow); }
+.card__badge--red    { background: rgba(255, 23, 68, 0.12);  color: var(--color-red); }
+.card__badge--purple { background: rgba(179, 136, 255, 0.12); color: var(--color-purple); }
+
+/* ── Card body ── */
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* --------------------------------------------------------------------------
+   6. HERO SECTION — Stat Tiles
+   -------------------------------------------------------------------------- */
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+/* ── Stat tile ── */
+.stat-tile {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-card);
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.stat-tile:hover {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-card-lg);
+}
+
+.stat-tile__label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.stat-tile__value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+  transition: color var(--transition-value);
+}
+
+.stat-tile__value--hero {
+  font-size: 2.75rem;
+  color: var(--color-accent);
+  text-shadow: 0 0 20px var(--color-accent-glow);
+}
+
+.stat-tile__value--improving { color: var(--color-green); }
+.stat-tile__value--worsening { color: var(--color-red); }
+.stat-tile__value--warning   { color: var(--color-yellow); }
+
+.stat-tile__sub {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.stat-tile__delta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: var(--space-1);
+}
+
+.stat-tile__delta--down  { color: var(--color-green); }  /* loss down = good */
+.stat-tile__delta--up    { color: var(--color-red); }
+.stat-tile__delta--flat  { color: var(--color-text-muted); }
+
+/* ── Cycle / Step chip ── */
+.chip-row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-card-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.chip--accent {
+  background: var(--color-accent-glow);
+  border-color: var(--color-accent-dim);
+  color: var(--color-accent);
+}
+
+.chip--green  { border-color: var(--color-green-dim);  color: var(--color-green); }
+.chip--yellow { border-color: var(--color-yellow-dim); color: var(--color-yellow); }
+.chip--red    { border-color: var(--color-red-dim);    color: var(--color-red); }
+
+/* --------------------------------------------------------------------------
+   7. GPU CARDS — Progress Bars with Color Bands
+   -------------------------------------------------------------------------- */
+
+.gpu-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gpu-card__name {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gpu-card__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+}
+
+.gpu-card__metric-label {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gpu-card__metric-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+/* ── Progress bar ── */
+.progress {
+  width: 100%;
+  height: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--transition-value), background var(--transition-value);
+  min-width: 0;
+}
+
+/* Color bands: 0-60% green, 61-80% yellow, 81-95% orange, 96-100% red */
+
+/* The actual color is applied via inline style or a data attribute,
+   but we also provide static classes for non-JS rendering. */
+.progress__fill[data-pct] {
+  /* JS sets --pct via custom property */
+  width: var(--pct);
+}
+
+.progress--util .progress__fill {
+  background: var(--color-green-dim);
+}
+
+/* We use CSS custom property driven by JS/htmx swapping */
+.progress__fill--low    { background: var(--color-green);  }
+.progress__fill--mid    { background: var(--color-yellow); }
+.progress__fill--high   { background: var(--color-orange); }
+.progress__fill--max    { background: var(--color-red);    }
+
+.progress--mem .progress__fill {
+  background: var(--color-purple-dim);
+}
+
+.progress--temp .progress__fill {
+  background: var(--color-orange-dim);
+}
+
+/* ── Progress bar with label ── */
+.progress-labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.progress-labeled .progress {
+  flex: 1;
+}
+
+.progress-labeled__value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-width: 3.5em;
+  text-align: right;
+  color: var(--color-text-primary);
+  transition: color var(--transition-value);
+}
+
+/* Climate (temp) status colors on the progress label */
+.progress-labeled__value--cool  { color: var(--color-green); }
+.progress-labeled__value--warm  { color: var(--color-yellow); }
+.progress-labeled__value--hot   { color: var(--color-orange); }
+.progress-labeled__value--crit  { color: var(--color-red); }
+
+/* --------------------------------------------------------------------------
+   8. TRAINING METRICS SECTION
+   -------------------------------------------------------------------------- */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.metric-item:hover {
+  background: var(--color-card-raised);
+  border-color: var(--color-border-faint);
+}
+
+.metric-item__label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.metric-item__value {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  transition: color var(--transition-value);
+}
+
+.metric-item__trend {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   9. CHARTS 2x2 GRID
+   -------------------------------------------------------------------------- */
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 720px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 200px;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Chart placeholder (shown while loading) */
+.chart-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   10. BLOCKCHAIN PANEL
+   -------------------------------------------------------------------------- */
+
+.blockchain-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.blockchain-panel__stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.blockchain-panel__stat:last-child {
+  border-bottom: none;
+}
+
+.blockchain-panel__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.blockchain-panel__value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Block list mini (compact table inside card) */
+.block-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.block-list__row {
+  display: grid;
+  grid-template-columns: 3em 1fr 4em;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.block-list__row:nth-child(even) {
+  background: var(--color-surface-alt);
+}
+
+.block-list__cycle {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.block-list__hash {
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.block-list__size {
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   11. ORGAN GRID — 16 Chip Pills with Status Dots
+   -------------------------------------------------------------------------- */
+
+.organ-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+@media (max-width: 400px) {
+  .organ-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.organ-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+  cursor: default;
+}
+
+.organ-chip:hover {
+  border-color: var(--color-border);
+  background: var(--color-card-raised);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Status dot inside organ chip ── */
+.organ-chip__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-normal);
+}
+
+.organ-chip__dot--active    { background: var(--color-green);  box-shadow: 0 0 6px rgba(0, 230, 118, 0.5); }
+.organ-chip__dot--shadow    { background: var(--color-yellow); box-shadow: 0 0 6px rgba(255, 171, 0, 0.4); }
+.organ-chip__dot--inactive  { background: var(--color-text-muted); }
+.organ-chip__dot--error     { background: var(--color-red);    box-shadow: 0 0 6px rgba(255, 23, 68, 0.5); }
+
+/* ── Organ section header ── */
+.organ-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.organ-summary__count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.organ-summary__count strong {
+  color: var(--color-green);
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   12. AGENT TIMELINE — Vertical Line with Colored Dots
+   -------------------------------------------------------------------------- */
+
+.timeline {
+  position: relative;
+  padding-left: var(--space-6);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Vertical line */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 1px;
+}
+
+.timeline__entry {
+  position: relative;
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid transparent;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.timeline__entry:hover {
+  background: var(--color-card);
+  border-color: var(--color-border-faint);
+}
+
+/* Dot on the vertical line */
+.timeline__entry::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--space-6) + 3px);
+  top: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-surface);
+  transition: transform var(--transition-fast);
+}
+
+.timeline__entry:hover::before {
+  transform: scale(1.3);
+}
+
+/* Dot colors by operation type */
+.timeline__entry--read::before    { background: var(--color-accent); }
+.timeline__entry--write::before   { background: var(--color-green); }
+.timeline__entry--execute::before { background: var(--color-red); }
+.timeline__entry--decide::before  { background: var(--color-purple); }
+.timeline__entry--mixed::before   { background: var(--color-yellow); }
+
+.timeline__entry__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 2px;
+}
+
+.timeline__entry__time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.timeline__entry__op {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.timeline__entry__op--read    { background: rgba(0, 212, 255, 0.15);  color: var(--color-accent); }
+.timeline__entry__op--write   { background: rgba(0, 230, 118, 0.15);  color: var(--color-green); }
+.timeline__entry__op--execute { background: rgba(255, 23, 68, 0.15);  color: var(--color-red); }
+.timeline__entry__op--decide  { background: rgba(179, 136, 255, 0.15); color: var(--color-purple); }
+.timeline__entry__op--mixed   { background: rgba(255, 171, 0, 0.15);  color: var(--color-yellow); }
+
+.timeline__entry__agent {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.timeline__entry__detail {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------------------------
+   13. SHA-256 INTEGRITY — Hash Display
+   -------------------------------------------------------------------------- */
+
+.hash-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hash-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-faint);
+}
+
+.hash-item__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.hash-item__value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+.hash-item__value--missing {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ── Copy button ── */
+.hash-item__copy {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-card);
+  border: 1px solid var(--color-border-faint);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.hash-item:hover .hash-item__copy {
+  opacity: 1;
+}
+
+.hash-item__copy:hover {
+  background: var(--color-accent-glow);
+  border-color: var(--color-accent-dim);
+  color: var(--color-accent);
+}
+
+.hash-item__copy--copied {
+  opacity: 1;
+  background: rgba(0, 230, 118, 0.15);
+  border-color: var(--color-green-dim);
+  color: var(--color-green);
+}
+
+/* Checkmark flash after copy */
+.hash-item__copy--copied::after {
+  content: "\2713";
+  font-size: 0.75rem;
+}
+
+/* Disappear the copy icon text when checkmark is shown */
+.hash-item__copy--copied .hash-item__copy-icon {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   14. ANIMATIONS — Value Transitions & Opacity Morphs
+   -------------------------------------------------------------------------- */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flash-update {
+  0%   { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Value flash: apply when htmx swaps in a new value */
+.value-flash {
+  animation: flash-update 400ms ease;
+}
+
+/* Section entrance */
+.section-enter {
+  animation: fade-in 250ms ease both;
+}
+
+/* Stagger children entrance */
+.section-enter > *:nth-child(1) { animation-delay: 0ms; }
+.section-enter > *:nth-child(2) { animation-delay: 40ms; }
+.section-enter > *:nth-child(3) { animation-delay: 80ms; }
+.section-enter > *:nth-child(4) { animation-delay: 120ms; }
+.section-enter > *:nth-child(5) { animation-delay: 160ms; }
+
+/* Skeleton loading placeholder */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-card) 25%,
+    var(--color-card-raised) 37%,
+    var(--color-card) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+  min-height: 1em;
+}
+
+/* Tooltip */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-card-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: var(--z-tooltip);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   15. STATUS BAR — Footer
+   -------------------------------------------------------------------------- */
+
+.dashboard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard__footer a {
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 720px) {
+  .dashboard__footer {
+    flex-direction: column;
+    gap: var(--space-1);
+    align-items: flex-start;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   16. CONNECTION INDICATOR (SSE status)
+   -------------------------------------------------------------------------- */
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.connection-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-green);
+  transition: background var(--transition-normal);
+}
+
+.connection-indicator__dot--connecting { background: var(--color-yellow); animation: pulse-dot 1s infinite; }
+.connection-indicator__dot--disconnected { background: var(--color-red); }
+.connection-indicator__dot--error { background: var(--color-red); animation: pulse-dot 0.5s infinite; }
+
+/* --------------------------------------------------------------------------
+   17. EMPTY STATES & NOTICES
+   -------------------------------------------------------------------------- */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.empty-state__icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-3);
+  opacity: 0.4;
+}
+
+.empty-state__text {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-left: 3px solid;
+}
+
+.notice--info    { background: rgba(0, 212, 255, 0.08);  border-color: var(--color-accent);     color: var(--color-accent); }
+.notice--success { background: rgba(0, 230, 118, 0.08);  border-color: var(--color-green);      color: var(--color-green); }
+.notice--warn    { background: rgba(255, 171, 0, 0.08);  border-color: var(--color-yellow);     color: var(--color-yellow); }
+.notice--error   { background: rgba(255, 23, 68, 0.08);  border-color: var(--color-red);        color: var(--color-red); }
+
+/* --------------------------------------------------------------------------
+   18. HTMX INDICATORS
+   -------------------------------------------------------------------------- */
+
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+/* Swap transitions */
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.htmx-settling {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   19. UTILITY CLASSES
+   -------------------------------------------------------------------------- */
+
+.u-mono       { font-family: var(--font-mono); }
+.u-sans       { font-family: var(--font-sans); }
+
+.u-text-accent   { color: var(--color-accent); }
+.u-text-green    { color: var(--color-green); }
+.u-text-yellow   { color: var(--color-yellow); }
+.u-text-red      { color: var(--color-red); }
+.u-text-muted    { color: var(--color-text-muted); }
+.u-text-secondary { color: var(--color-text-secondary); }
+
+.u-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.u-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.u-gap-1 { gap: var(--space-1); }
+.u-gap-2 { gap: var(--space-2); }
+.u-gap-3 { gap: var(--space-3); }
+.u-gap-4 { gap: var(--space-4); }
+
+.u-mb-2 { margin-bottom: var(--space-2); }
+.u-mb-4 { margin-bottom: var(--space-4); }
+.u-mt-2 { margin-top: var(--space-2); }
+.u-mt-4 { margin-top: var(--space-4); }
+
+.u-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   20. PRINT STYLESHEET
+   -------------------------------------------------------------------------- */
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: #ffffff !important;
+    color: #111111 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #cccccc !important;
+  }
+
+  body {
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #111111;
+    background: #ffffff;
+  }
+
+  .dashboard__header,
+  .dashboard__footer {
+    position: static;
+    border-bottom: 2px solid #000;
+    border-top: 2px solid #000;
+    padding: 8pt 0;
+    margin-bottom: 12pt;
+  }
+
+  .dashboard__title {
+    font-size: 14pt;
+  }
+
+  .dashboard__clock {
+    font-size: 9pt;
+  }
+
+  .dashboard__grid {
+    display: block;
+    padding: 0;
+  }
+
+  .dashboard__grid > * {
+    display: block;
+    margin-bottom: 16pt;
+    page-break-inside: avoid;
+  }
+
+  .card {
+    border: 1px solid #999;
+    padding: 10pt;
+    margin-bottom: 12pt;
+    background: #ffffff !important;
+  }
+
+  .card--hero {
+    border: 2px solid #333;
+  }
+
+  .card__header {
+    border-bottom: 1px solid #999;
+    margin-bottom: 8pt;
+    padding-bottom: 6pt;
+  }
+
+  .card__title {
+    font-size: 9pt;
+    font-weight: 700;
+  }
+
+  .card__badge {
+    border: 1px solid #666;
+    background: #f0f0f0 !important;
+  }
+
+  .hero {
+    display: block;
+  }
+
+  .stat-tile {
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 6pt 10pt;
+    margin: 4pt;
+    background: #fafafa !important;
+  }
+
+  .stat-tile__value {
+    font-size: 14pt;
+  }
+
+  .stat-tile__value--hero {
+    font-size: 18pt;
+  }
+
+  .progress {
+    border: 1px solid #999;
+    background: #f0f0f0 !important;
+  }
+
+  .progress__fill {
+    background: #666 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .organ-grid {
+    display: block;
+  }
+
+  .organ-chip {
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 3pt 8pt;
+    margin: 2pt;
+    border-radius: 12pt;
+    font-size: 7pt;
+  }
+
+  .organ-chip__dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 3pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .organ-chip__dot--active   { background: #00aa44 !important; }
+  .organ-chip__dot--shadow   { background: #cc8800 !important; }
+  .organ-chip__dot--inactive { background: #999999 !important; }
+  .organ-chip__dot--error    { background: #cc0000 !important; }
+
+  .timeline::before {
+    background: #999 !important;
+  }
+
+  .timeline__entry::before {
+    border-color: #ffffff !important;
+  }
+
+  .hash-item__copy {
+    display: none;
+  }
+
+  .charts-grid {
+    display: block;
+  }
+
+  .chart-container {
+    page-break-inside: avoid;
+    margin-bottom: 16pt;
+    aspect-ratio: auto;
+    min-height: 150px;
+  }
+
+  .chart-container canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .dashboard__grid > .span-2,
+  .dashboard__grid > .span-3,
+  .dashboard__grid > .span-4,
+  .dashboard__grid > .span-5,
+  .dashboard__grid > .span-full {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  /* Hide interactive elements */
+  .hash-item__copy,
+  .connection-indicator,
+  .dashboard__status-dot {
+    display: none !important;
+  }
+
+  /* Show URLs for links */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #555 !important;
+  }
+
+  /* Avoid page breaks inside cards */
+  .card,
+  .stat-tile,
+  .hash-item,
+  .timeline__entry,
+  .gpu-card {
+    page-break-inside: avoid;
+  }
+
+  /* Add page header / footer */
+  @page {
+    margin: 1.5cm;
+    @top-center {
+      content: "F51 Darwin-X Mission Control — Dashboard Snapshot";
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 8pt;
+      color: #666;
+    }
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8pt;
+      color: #666;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   21. REDUCED MOTION
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .dashboard__status-dot {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   22. HIGH CONTRAST MODE (Windows HCM / forced-colors)
+   -------------------------------------------------------------------------- */
+
+@media (forced-colors: active) {
+  .card {
+    border: 1px solid CanvasText;
+  }
+
+  .progress__fill {
+    background: Highlight;
+  }
+
+  .organ-chip__dot--active   { background: Highlight; }
+  .organ-chip__dot--shadow   { background: GrayText; }
+  .organ-chip__dot--inactive { background: GrayText; }
+  .organ-chip__dot--error    { background: Mark; }
+
+  .timeline__entry::before {
+    border-color: Canvas;
+  }
+
+  .hash-item__copy {
+    opacity: 1;
+    border: 1px solid ButtonText;
+    color: ButtonText;
+  }
+
+  .stat-tile__value--hero {
+    text-shadow: none;
+  }
+}

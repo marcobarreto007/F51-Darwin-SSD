@@ -1,0 +1,236 @@
+================================================================================
+F51 DARWIN-SSD - DIARIO DE BORDO
+================================================================================
+Ultima atualizacao: 2026-07-11 15:48 EDT
+Autores: Marco Barreto + agentes F51
+Status no snapshot: Gate 0 causal validado em CPU e dual GPU; checkpoint v5 cycle 91.
+
+DIA 5 (cont.) — 11 Jul 2026 15:00-15:45: GATES CAUSAIS
+  - Codex auditou o sistema: descobriu que Replay, ExpertPool e Legacy
+    eram metadata-only — nao afetavam o treino real
+  - Concept Note PARI-CNRC: hipotese formal, desenho experimental,
+    orcamento 75-140K CAD, 24 semanas
+  - GATE 0.1: Replay no gradiente — 20% exatos dos updates, sem aumentar
+    o batch. Buffer reservoir, RNG e exemplos sobrevivem ao checkpoint.
+  - GATE 0.2: ExpertPool conectado aos experts MoE reais.
+    bind_real_expert(), freeze_expert(), activate_expert(), mask_expert()
+    FineRouter.external_bias para controle externo.
+    Referencia: Lifelong-MoE 2023, SEE 2025, SETA 2026
+  - GATE 0.3: Legacy Layers com acoes causais.
+    TIER_ACTIONS: GPU→grad, RAM→grad, SSD→freeze, DEEP→freeze+bias,
+    ASHES→freeze-5, SCAR→freeze-inf.
+    _apply_tier_actions() propaga bias pro FineRouter real.
+    Referencia: PackNet 2018, HAT 2018, Progressive Nets 2016
+  - Roadmap GATE0.md: planejamento detalhado com papers 2024-2026
+  - Auditoria posterior corrigiu: serializacao em atributo inexistente,
+    streak ASHES no mesmo ciclo, ressurreicao sem candidato persistente,
+    lineage reiniciada, tiers resetados no bootstrap e eval BF16 sem autocast.
+  - 135 testes passaram; 13 testes causais novos cobrem replay, checkpoint,
+    ExpertPool real, Legacy, ressurreicao, lineage e corpus mutavel.
+  - Prova dual GPU: cycle 91, step 45.560, loss 2,2647 -> 1,2065,
+    replay_train_count=2/10, replay_fraction=0,20, replay_loss=1,4660.
+  - Checkpoint organism_cycle_091.pt v5 recarregado com AdamW, ReplayBuffer,
+    ashes_streak e identidade de data/tokens_live.bin.
+
+Este arquivo preserva a historia do projeto. Para operacao atual, consulte
+README.md e docs/STATUS_ATUAL.md.
+
+================================================================================
+1. SISTEMA ATUAL
+================================================================================
+
+O F51 Darwin-SSD e um laboratorio de modelo causal treinado do zero.
+
+Arquitetura Darwin-X local:
+  - 12 layers: 9 SSD + 3 Attention (3:1)
+  - GQA: 16 query heads, 4 KV heads
+  - 6 fine experts + 1 shared expert por layer, top-2
+  - d_model 1408
+  - vocab efetivo 58.162, tokenizer F51 BPE
+  - contexto 4.096 treino / 32.768 inferencia
+  - 452.269.384 parametros estimados; aproximadamente 490M no runtime
+
+O nome de config "600M" e historico e nao deve ser usado como contagem exata.
+
+Orgaos integrados no organismo:
+  - DarwinXModel: cortex SSD/Attention/MoE
+  - Heartbeat: memoria, exploracao e sinais internos
+  - Ghost Token + Ghost Brain
+  - JEPA
+  - Spider Sense
+  - Curiosity
+  - MTP
+  - DataFirewall + provenance
+  - ExpertPool + LegacyLayers + LineageTracker
+  - Brainstem + Soul
+
+================================================================================
+2. LINHA DO TEMPO
+================================================================================
+
+07 JUL 2026 - NUCLEO E CORPUS
+  - tokenizer F51 BPE consolidado em vocab efetivo 58.162
+  - corpus local/remoto e infraestrutura NUCLEO organizados
+  - watchers e gates de integridade criados
+  - estado remoto desta fase e historico ate nova verificacao ao vivo
+
+08 JUL 2026 - DARWIN-X
+  - arquitetura SSD + GQA + MoE 3:1 estabelecida
+  - MTP, JEPA, Ghost, Curiosity, Spider e Heartbeat integrados
+  - trainer Darwin-X e contratos de token bin/index adicionados
+
+09 JUL 2026 - ORGANISMO
+  - ciclo evolutivo e escola 24/7 ativados
+  - treino local com corpus Feast iniciado
+  - colapso de 72 experts revelou erro na selecao antes de LegacyLayers
+  - doutrina Legacy-first passou a proteger o ciclo de vida
+
+10 JUL 2026 - FUSAO E REPAROS
+  - orquestradores consolidados em scripts/darwin_organism.py
+  - import quebrado apos remocao de f51_darwin/organism.py foi corrigido
+  - erros de sintaxe em jepa_v2.py e demo_legacy_layers.py corrigidos
+  - contrato de resume v4 passou a salvar training_state e optimizer_type
+  - AdamW legado passou a ser restaurado com seu estado compativel
+  - ExpertPool, LegacyLayers e LineageTracker integrados
+  - Ghost Stream, Ghost Feeder e cap de 10% sintetico conectados
+  - rotacao automatica passou a manter os cinco checkpoints mais recentes
+  - live_generate bf16 corrigido
+
+11 JUL 2026 - DUAL GPU, INGESTAO E ESTABILIZACAO
+  - CLI recebeu --batch-size
+  - Heartbeat foi corrigido para batch maior que um
+  - split dual-GPU mudou para 7/5 conforme VRAM heterogenea
+  - pipeline de ingestao passou a reconstruir tokens_live.bin
+  - run atual foi relancado de cycle_068 com block 192, batch 1 e lr 5e-4
+  - checkpoints cycle_083 e cycle_084 foram validados em disco
+  - documentacao foi novamente reconciliada as 14:05 EDT
+
+================================================================================
+3. SNAPSHOT VALIDADO - 2026-07-11 15:48 EDT
+================================================================================
+
+Processo Python:   PID 25256
+Inicio do run:     2026-07-11 15:47:17 EDT
+Entrypoint:        scripts/darwin_organism.py run247
+Resume validado:   organism_cycle_091.pt
+Checkpoint atual: organism_cycle_091.pt
+Step:              45.560
+Optimizer:         AdamW
+Learning rate:     5e-4
+Batch size:        1
+Block size:        192
+Token bin:         data/tokens_live.bin
+
+GPU 0: RTX 5060 Ti, layers 0-6 + embedding/norm/head/Heartbeat
+GPU 1: RTX 3060, layers 7-11
+
+Checkpoint 91:
+  - version 5
+  - loss_start 2,2647 (smoke de 10 steps)
+  - loss_end 1,2065
+  - replay_loss 1,4660; replay fraction 0,20
+  - 72 experts ativos
+  - 0 mortos, 0 nascidos no ciclo
+  - LegacyLayers: 72 GPU + 1 DNA
+  - replay, ashes streak e token source persistidos
+  - run247 retomado no cycle 92; replay restaurou 4 exemplos
+
+Dados:
+  tokens_feast.bin: 122.704.955.392 bytes / 30.676.238.848 tokens
+  tokens_live.bin:       83.358.024 bytes /     20.839.506 tokens
+  tokens_80k.bin:         3.357.712 bytes /        839.428 tokens
+
+Disco C: aproximadamente 153,9 GB livres no snapshot.
+
+Nao existe medicao atual confiavel de tok/s para block 192. O numero antigo de
+~221 tok/s pertencia a outra configuracao e nao deve ser apresentado como atual.
+
+================================================================================
+4. FALHAS IMPORTANTES E APRENDIZADOS
+================================================================================
+
+COLAPSO DE EXPERTS
+  Sintoma: 72 experts mortos em massa.
+  Causa: selecao matava antes da decisao de LegacyLayers.
+  Correcao: Legacy-first e criterios de morte persistentes.
+
+RESUME DE OTIMIZADOR
+  Sintoma: regressao grande de loss ao trocar AdamW por Adafactor.
+  Causa: estado/momentum incompatível descartado.
+  Correcao: checkpoint registra optimizer_type e restaura somente tipo compativel.
+
+IMPORT QUEBRADO
+  Sintoma: ModuleNotFoundError em qualquer import f51_darwin.
+  Causa: modulo removido ainda exportado no __init__.py.
+  Correcao: exports reconciliados e gate de import.
+
+OOM GHOST
+  Sintoma: batch 2 + block 256 excedeu VRAM.
+  Causa: Ghost adiciona segundo forward e ativacoes.
+  Resposta operacional: reduzir batch/block; run atual usa batch 1, block 192.
+
+GPU DESBALANCEADA
+  Sintoma: GPU 0 muito mais cheia que GPU 1.
+  Causa: split 6/6 ignorava embedding/head/Heartbeat na GPU 0.
+  Correcao: split 7/5; ainda precisa de benchmark/autotuning.
+
+DOCUMENTACAO VOLATIL
+  Sintoma: README ficou obsoleto entre cycle 70 e 83 no mesmo dia.
+  Causa: estado transitorio misturado com contrato duravel.
+  Correcao: README aponta para docs/STATUS_ATUAL.md e inclui comandos de refresh.
+
+================================================================================
+5. O QUE ESTA COMPROVADO E O QUE NAO ESTA
+================================================================================
+
+COMPROVADO:
+  - ciclo causal validado em duas GPUs
+  - checkpoint v5 carregavel e atomico
+  - ciclo/step/optimizer/report persistidos
+  - 72 experts vivos no checkpoint 91
+  - Feast alinhado e Live usado pelo processo
+  - rotacao de cinco checkpoints funcionando
+
+NAO COMPROVADO AINDA:
+  - melhora de qualidade geral
+  - throughput atual de block 192
+  - ausencia de contaminacao em benchmarks externos
+  - reproducao exata do checkpoint a partir de tokens_live.bin mutavel
+  - estado atual do NUCLEO remoto
+  - beneficio causal de cada orgao sem ablacao
+
+================================================================================
+6. PROXIMOS GATES
+================================================================================
+
+  1. organism_latest.json atomico e validado
+  2. hash do token bin + commit Git gravados no checkpoint
+  3. baseline congelado para cycle_091 ou sucessor promovido
+  4. metricas JSONL por ciclo
+  5. manifesto versionado do tokens_live.bin
+  6. benchmark/ablacao antes de aumentar para 1.2B
+
+================================================================================
+7. COMANDOS
+================================================================================
+
+Verificar runtime:
+  Get-CimInstance Win32_Process |
+    Where-Object { $_.CommandLine -match 'darwin_organism.py run247' }
+  nvidia-smi
+
+Listar checkpoints:
+  Get-ChildItem checkpoints/organism/organism_cycle_*.pt |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 5
+
+Ingestao:
+  python scripts/ingest_pipeline.py monitor
+
+Gates CPU:
+  $env:CUDA_VISIBLE_DEVICES='-1'
+  python -m pytest -q -p no:cacheprovider
+  Remove-Item Env:CUDA_VISIBLE_DEVICES
+
+================================================================================
+ULTIMA ATUALIZACAO: 2026-07-11 15:48 EDT - CHECKPOINT 91 V5, RUN247 ATIVO
+================================================================================

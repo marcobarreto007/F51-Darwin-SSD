@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "captured_utc": "2026-07-17T05:59:51Z",
+  "tool": {
+    "name": "gitleaks",
+    "version": "8.30.1",
+    "executable_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "config_sha256": "c78b204682e8fa4aa526cf25240196f264c7139b4c5c7a83d66a8d38d0a975e9"
+  },
+  "current_tree": {
+    "status": "pass",
+    "tracked_files_scanned": 456,
+    "finding_count": 0,
+    "redaction_percent": 100,
+    "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  "history": {
+    "status": "fail",
+    "finding_count": 9,
+    "redaction_percent": 100,
+    "report_sha256": "a89af3b7db9f53e2d03b7e35580652c4eebaa29a73f47910ca23588ecf016f45",
+    "refset_sha256": "3e4306abceb00353fe8a1d43c722e494c98fbc098b70a647137e90bece220c04",
+    "refs_scanned": [
+      "refs/heads/master 85700f1ffece7cae5c62e5eafe229861d860637b",
+      "refs/remotes/origin/HEAD afd5d34422ebf7d07ecf19747a1680d84a8e1014",
+      "refs/remotes/origin/cursor/bilingual-readme-olavo-sources 0e8cf53204af4484152599426dc4d55473ea3449",
+      "refs/remotes/origin/cursor/darwin-moe-organism-stack b36ab814e4d8c6c3c9fd2dd5ba4f10034f49b2ec",
+      "refs/remotes/origin/master afd5d34422ebf7d07ecf19747a1680d84a8e1014",
+      "refs/tags/v0.1-checkpoints afd5d34422ebf7d07ecf19747a1680d84a8e1014"
+    ],
+    "redacted_findings": [
+      {"commit": "bfdde9a12e233c5641bff2cb8ca021f4c676f1df", "path": "_s2b.py", "line": 2, "rule_id": "generic-api-key", "fingerprint": "bfdde9a12e233c5641bff2cb8ca021f4c676f1df:_s2b.py:generic-api-key:2"},
+      {"commit": "7c42b4b3ec5480f0310319366ab973e5a141587f", "path": "_check_credit.py", "line": 2, "rule_id": "generic-api-key", "fingerprint": "7c42b4b3ec5480f0310319366ab973e5a141587f:_check_credit.py:generic-api-key:2"},
+      {"commit": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c", "path": "_fresh.py", "line": 3, "rule_id": "generic-api-key", "fingerprint": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_fresh.py:generic-api-key:3"},
+      {"commit": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c", "path": "_check.py", "line": 2, "rule_id": "generic-api-key", "fingerprint": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_check.py:generic-api-key:2"},
+      {"commit": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c", "path": "_rent.py", "line": 3, "rule_id": "generic-api-key", "fingerprint": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_rent.py:generic-api-key:3"},
+      {"commit": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c", "path": "_rent2.py", "line": 3, "rule_id": "generic-api-key", "fingerprint": "2312cbf1324a9a6be6c3ea422e74eb5b10d2d80c:_rent2.py:generic-api-key:3"},
+      {"commit": "bd45b1447a85d834b5aa648953c4e7ec4fb90440", "path": "src/tests/test_live_inference_runtime.py", "line": 137, "rule_id": "generic-api-key", "fingerprint": "bd45b1447a85d834b5aa648953c4e7ec4fb90440:src/tests/test_live_inference_runtime.py:generic-api-key:137", "classification": "historical_false_positive_tensor_key_metadata"},
+      {"commit": "651330ef7351f3a2b10b111dffc6622f55a0523b", "path": "src/scripts/stream_all.py", "line": 4, "rule_id": "f51-hugging-face-token", "fingerprint": "651330ef7351f3a2b10b111dffc6622f55a0523b:src/scripts/stream_all.py:f51-hugging-face-token:4"},
+      {"commit": "651330ef7351f3a2b10b111dffc6622f55a0523b", "path": "src/scripts/stream_all.py", "line": 4, "rule_id": "huggingface-access-token", "fingerprint": "651330ef7351f3a2b10b111dffc6622f55a0523b:src/scripts/stream_all.py:huggingface-access-token:4"}
+    ],
+    "blocker": "credential_revocation_and_history_rewrite_required",
+    "history_rewritten": false,
+    "credential_revocation_verified": false
+  },
+  "secret_values_recorded": false
+}

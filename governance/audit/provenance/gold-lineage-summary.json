@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "tracked_audit_snapshot",
+  "status": "ok",
+  "source_commit": "e9c35e0f96d27af9da551cdb185842921d5fa8f1",
+  "audited_source_commit": "e9c35e0f96d27af9da551cdb185842921d5fa8f1",
+  "evidence_commit_note": "This tracked snapshot audits the named source commit. The ignored operational manifest is regenerated only from a clean current HEAD.",
+  "blockers": [],
+  "corpus": {
+    "bytes": 74195890756,
+    "tokens": 18548972689,
+    "sha256": "9677e9f22f4d78efa7b25c77b2da3cbdb5fb2a499926ac641a75c13b65e25cff",
+    "status": "ok",
+    "tokenizer": "f51_bpe_80k"
+  },
+  "tokenizer_identity": "f51-bpe-contract-v1:ab8779c8a8222a94552d67b159ec79e99ab090ac3b371cf3a882f7bba9104bf7",
+  "checkpoints": {
+    "70": {
+      "filename": "organism_cycle_070.pt",
+      "cycle": 70,
+      "step": 38751,
+      "size_bytes": 10876800007,
+      "sha256": "bf8118b3bd1bdfcf37fe2e8b3c13f0c89d5745f569fcb587477eac29d80395f5",
+      "declared_integral_identity": "darwin-model-core-v1:7b71c01df0ec88ceb7580511dc514c5092a6d6b4bfbd8b74a07604d0379e06ce",
+      "recomputed_from_raw_embedded_config": "darwin-model-core-v1:7b71c01df0ec88ceb7580511dc514c5092a6d6b4bfbd8b74a07604d0379e06ce",
+      "normalized_config_compatible": true,
+      "strict_resume_valid": true,
+      "gold_valid": true,
+      "canonical_eligible": true,
+      "gold_issues": []
+    },
+    "71": {
+      "filename": "organism_cycle_071.pt",
+      "cycle": 71,
+      "step": 40751,
+      "size_bytes": 10876850383,
+      "sha256": "239fdcf175ac35d9402d664e2a2b40252ec9c73aea8ee458250d426adde9241b",
+      "declared_integral_identity": "darwin-model-core-v1:0aca76705e7d40b737083639a0f45e0acf82f5a740020b5266396315e47e065b",
+      "recomputed_from_raw_embedded_config": "darwin-model-core-v1:0aca76705e7d40b737083639a0f45e0acf82f5a740020b5266396315e47e065b",
+      "normalized_config_compatible": true,
+      "strict_resume_valid": true,
+      "gold_valid": true,
+      "canonical_eligible": true,
+      "gold_issues": []
+    },
+    "77": {
+      "filename": "organism_cycle_077.pt",
+      "cycle": 77,
+      "step": 54501,
+      "size_bytes": 11914584035,
+      "sha256": "13682d9f4bf9cc3b248d941f07ebc856bd312d21d3e5525f2b694c254d6277b5",
+      "gold_valid": false,
+      "canonical_eligible": false,
+      "gold_issues": [
+        "outside approved 070 to 071 local GOLD lineage"
+      ]
+    }
+  },
+  "lineage_contract": {
+    "schema_v7_identity": "same-checkpoint tensors plus raw embedded config",
+    "parent_link_not_encoded": true,
+    "checkpoint_070_identity_need_not_equal_checkpoint_071_identity": true
+  },
+  "pointer": {
+    "status": "operational_publication_not_claimed_by_tracked_snapshot",
+    "operational_manifest": "workspace/04_MANIFESTOS/gold_local_lineage.json",
+    "canonical_target": "workspace/03_CHECKPOINTS/organism_cycle_071.pt"
+  }
+}

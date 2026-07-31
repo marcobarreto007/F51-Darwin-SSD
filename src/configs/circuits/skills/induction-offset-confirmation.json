@@ -1,0 +1,12 @@
+{
+  "batch_size": 64,
+  "builder": "induction_repeat_offset_v1",
+  "copy_length": 24,
+  "domain": "induction",
+  "items": 256,
+  "schema_version": 1,
+  "seed": 4401,
+  "skill_id": "induction-repeat-offset-v1",
+  "split": "confirmation",
+  "token_pool": "gpt2_alpha_space_v1"
+}

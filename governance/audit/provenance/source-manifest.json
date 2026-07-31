@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "external_audit_source_manifest",
+  "generated_utc": "2026-07-17T14:47:07.2866387Z",
+  "audited_source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+  "source_tree_oid": "9ece38a0b833c65f5f05255017400778bea8c1f1",
+  "branch": "master",
+  "evidence_publication": {
+    "source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+    "initial_evidence_commit": "09c41e4f576d4b9806e41bcb792180bb8443e996",
+    "evidence_correction_base": "ce85120484ea27dd70d857536ca44318e4060b8f",
+    "resolve_latest_evidence_commit": "git log -1 --format=%H -- governance/audit/provenance/source-manifest.json"
+  },
+  "tracked_source_files": 467,
+  "root_contract": {
+    "project_root": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD",
+    "workspace_relative": "workspace",
+    "workspace_is_physical_directory": true,
+    "sibling_dataset_root_exists": false,
+    "data_compatibility_path_exists": false,
+    "root_checkpoint_compatibility_path_exists": false,
+    "tracked_workspace_files": 0
+  },
+  "lineage": {
+    "status": "ok",
+    "manifest": "workspace/04_MANIFESTOS/gold_local_lineage.json",
+    "manifest_sha256": "509d7beea761fffd034e9377210c27071676b11a5f0f0b9c40f4825b1b675bc4",
+    "source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+    "canonical_checkpoint": "workspace/03_CHECKPOINTS/organism_cycle_071.pt",
+    "cycle": 71,
+    "step": 40751,
+    "checkpoint_sha256": "239fdcf175ac35d9402d664e2a2b40252ec9c73aea8ee458250d426adde9241b",
+    "corpus_sha256": "9677e9f22f4d78efa7b25c77b2da3cbdb5fb2a499926ac641a75c13b65e25cff",
+    "noncanonical_cycle_77_rejected": true
+  },
+  "pointer": {
+    "path": "workspace/03_CHECKPOINTS/organism_latest.json",
+    "sha256": "48d1871b33926615526bdd7f68ff388bdc5803044cb5b3855078cb62f22198c1",
+    "source_commit": "f54a579802e8e56b819eba37ce81b69c444fd781",
+    "cycle": 71,
+    "step": 40751,
+    "health": "ok"
+  },
+  "source_audit": {
+    "command": "powershell -ExecutionPolicy Bypass -File src/scripts/run_gold_source_audit.ps1 -PythonExe ./.venv_nitro/Scripts/python.exe -OutputPath governance/audit/generated/gold-source-final-f54a579.json",
+    "generated_report": "governance/audit/generated/gold-source-final-f54a579.json",
+    "generated_report_hash_profile": "exact_generated_file_bytes",
+    "generated_report_sha256": "6d2c2912f29b37224ca1285dd2a1ddaa7c1db1f369509773620992ab426da505",
+    "tracked_report": "governance/audit/test-reports/gold-source-f54a579.json",
+    "tracked_report_hash_profile": "git_blob_bytes_v1",
+    "tracked_report_blob_oid": "b5b3e0f438d807902a5e294900a3bc19c5fb6ef2",
+    "tracked_report_sha256_git_blob": "a54d5955b2693820c1159d7ca1331207030e5810074dc5bdfca1c985dcb50225",
+    "tracked_report_verify_command": "git cat-file blob d6df06e08af8e0d89fa4951e8d773f3645cdbf3e:governance/audit/test-reports/gold-source-f54a579.json",
+    "schema_and_semantics_valid": true,
+    "total_gates": 12,
+    "passed_gates": 11,
+    "failed_gates": 1,
+    "failures": [
+      "secret_scan"
+    ],
+    "pytest_exit_code": 0,
+    "collected_tests": 384,
+    "python_active_tracked": 250,
+    "python_compiled": 250,
+    "tracked_worktree_clean": true
+  },
+  "secrets": {
+    "tool": "gitleaks",
+    "version": "8.30.1",
+    "executable_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "current_tree": {
+      "status": "pass",
+      "tracked_files": 467,
+      "finding_count": 0,
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "reachable_history": {
+      "status": "fail",
+      "finding_count": 9,
+      "redaction_percent": 100,
+      "refset_sha256": "694e0332dbf8f4327356526d49c44e7322440e2b4c4f968451dd7227013f8f1b",
+      "master_ref": "f54a579802e8e56b819eba37ce81b69c444fd781",
+      "credential_revocation_verified": false,
+      "history_rewritten": false,
+      "blocker": "credential_revocation_and_history_rewrite_required"
+    },
+    "secret_values_recorded": false
+  },
+  "canary": {
+    "nonlaunch_gate_executed": false,
+    "launch_executed": false,
+    "process_created": false,
+    "reason": "source audit is not fully green because reachable Git history contains unresolved secret findings"
+  },
+  "verdict": {
+    "status": "NOT_GOLD",
+    "reason": "external_security_blocker",
+    "p0_count": 0,
+    "p1_count": 1
+  }
+}

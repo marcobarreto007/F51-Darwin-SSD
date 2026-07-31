@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://f51labs.local/schemas/gold-lineage.schema.json",
+  "title": "F51 Darwin-X local GOLD lineage report",
+  "type": "object",
+  "required": ["schema_version", "status", "source_commit", "corpus", "checkpoints", "pointer"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"enum": ["ok", "blocked"]},
+    "source_commit": {"type": "string"},
+    "corpus": {"type": "object"},
+    "checkpoints": {"type": "object"},
+    "pointer": {"type": "object"},
+    "blockers": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,541 @@
+[
+  {
+    "checkpoint": "darwin_trained_v3.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\darwin_trained_v3.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 2,
+    "step": 2000,
+    "version": 3,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 2834.45,
+      "loss": 7.9496,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 592.29,
+      "loss": 6.384,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.3092,
+      "total_words": 207,
+      "unique_words": 64
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "semigroup of a projective the first component of $��$ at $\\mathfrak p$ is the Steinberg representa tion, one can associate two types of $\\mathscr",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "a cuspidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "a cuspidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\mathfrak p$",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "s. O setup that the local component of $��$ at $\\mathfrak p$ is the Steinberg representa tion, one can associate two types of $\\mathscr L$",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "o orações is not adequates. effect for the local component of $��$ at $\\mathfrak p$ is the Steinberg representa tion, one can associate two types of $",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "todospidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "observations. Half of the necessary weak values are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "O professor deixa 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "not adequates. Our results are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\mathscr L$-",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:49:45Z"
+  },
+  {
+    "checkpoint": "darwin_merged_v4.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\darwin_merged_v4.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 1,
+    "step": 500,
+    "version": 4,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 2793.46,
+      "loss": 7.935,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 584.33,
+      "loss": 6.3705,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.322,
+      "total_words": 236,
+      "unique_words": 76
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "semigroup of distinct integral local and in the underly ing totally real field such that the local component of $��$ at $\\mathfrak p$ is the Steinberg",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "a cuspidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "Compa is not adequate for mak ing the weak measurements that define this interferometric effect. Half of the necessary weak values are not observed, and the other half is",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\mathfrak p$",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "s. Our analysis are the generalized weak values are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "o orações is not adequates. effect for the local component of $��$ at $\\mathfrak p$ is the Steinberg representa tion, one can associate two types of $",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "todospidal Hilbert modular eigenform $��$ of parallel weight 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "observations. Half of the necessary weak values are not observed, and the other half is obtained indirectly by combin ing results measured with distinct setups. TITLE: On $\\",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "O professor deixa 2 and a nonarchimedian place $\\mathfrak p$ of the underly ing totally real field such that the local component of $��$ at $\\",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "not adequates. Our results impome the first genuine experimental observa tion of the necessary the first genuine experimental observa tion of the necessary the first genuine experimental observa tion of the necessary",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:51:02Z"
+  },
+  {
+    "checkpoint": "organism_cycle_235.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_235.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 235,
+    "step": 117560,
+    "version": 6,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 2903.07,
+      "loss": 7.9735,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 223.95,
+      "loss": 5.4114,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.1534,
+      "total_words": 176,
+      "unique_words": 27
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "Wanneer wetten wet de de wetten wetten wetten zijke die de wetten de de wetten in de wetten wetten wetten z",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "Die wet harmonie de wetten in de wetten wetten de wet van erfelijkheid de wetten de nadoen de de gewoo",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "* * * * * \n \n \n \n Wanneer wet in de wetten in de wetten, die harmonie de wetten zijke die",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "gewust \n \n wetten zijn de wetten wetten zijke die de wetten zij wetten wetten zijke die de wetten zijke",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "doel wetten in wetten wetten wetten in de wetten in de wetten in de wetten in de wetten wetten wetten zijke die de",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "wetten van de wetten wetten zelde zij zijn, die wetten en de de gewoonte en oefen ing in het gewoonte",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "an de wetten, die wetten \n \n gewij de wetten wetten de wet van gewoonte en oefen ing in het gewoonte en oefen ing",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "wetten \n \n van gewoonte en oefen ing in het gewoonte en oefen ing in het gewoonte en oefen ing in het gewoo",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "a \n \n gehogt gewendig. Weniger zijn, die de wetten in de wetten wetten de wet van erfelijkheid de wetten de",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:52:20Z"
+  },
+  {
+    "checkpoint": "organism_cycle_236.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_236.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 236,
+    "step": 118060,
+    "version": 6,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 2327.87,
+      "loss": 7.7527,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 187.82,
+      "loss": 5.2355,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.6795,
+      "total_words": 78,
+      "unique_words": 53
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "In the subsequent article of his electron is \n \n only true, the species of turns outside the radioactive distribu tion is called the posterior stage to",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "rians of the \n \n sun is het opmerkelijk zelfstandig.",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "ary",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "En gijnen gij gij",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "tom, \n \n is de gij zelfstandig.",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "k \n \n gij zijn uit uitwaarn. Gij zult zelfstandig.",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "a displacement \n \n is the same domain of the country that the cells of the human reactions in the follow ing values with different given between two or three different",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:53:37Z"
+  },
+  {
+    "checkpoint": "organism_cycle_237.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_237.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 237,
+    "step": 118560,
+    "version": 6,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 838.17,
+      "loss": 6.7312,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 172.92,
+      "loss": 5.1528,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.3765,
+      "total_words": 170,
+      "unique_words": 64
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "(_Contribu tion were \n \n in the spermatogonial spermatids of (_1, _b___ (fig. 99), but it like",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "The \n \n spermatids of spermatogonial spermatogonial of githms (_a_) (fig. 102, (fig. 99), but it like page (figs. 8",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "In \n \n the spermatogonial plates in figure 16. The spermatogonial but spermatids of the spermatogonial and spermatocyte spermatids of spermatogon",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "(fig. 107) (fig. 67) (fig. 67) (_] \n \n \n \n \n \n _The _speristn_ (fig. 99), \n \n (fig",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "A large chromosome and the spermatogonial spermatogonial of _Discoat (fig. 81) in the spermatogonial spermatogonial of _Discoat (fig.",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "the chromatin of the figure 40 _fig. 2016° (fig. 99). The spermatogonial and spermatocyte spermatids of _giv ing spermatids",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "bivalent plates of the first mitosis. The \n \n unequal pair is shown in figure 186, and that the spermatogonial spermatogonial of _Discoat (",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "spermatids of \n \n _p�� (fig. 97) (_g_) +geg_ (fig. 107) (fig. 97) (_g_) | (_0, ) (_a_",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "The spermatogonial spermatocyte spermatids of spermatogonial spermatogonial of _Discoat (fig. 81) (_giv ing and are small",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "the same chromosomes were _found_ (fig. 103) (_g_), and to be possible to show the small of the spermatogonial spermatids of",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:54:53Z"
+  },
+  {
+    "checkpoint": "organism_cycle_238.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_238.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 238,
+    "step": 119060,
+    "version": 6,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 1123.18,
+      "loss": 7.0239,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 172.97,
+      "loss": 5.1531,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.3258,
+      "total_words": 221,
+      "unique_words": 72
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "The atomic weight of \n \n tetrads of the chromatin and the two material is in the spireme (figs. \n \n 84-86). It decreases in size and",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "The \n \n spindle of the spermatogonia and odd is anaplve in the odd chromosome of the _m_ in the spindle is in the spindle",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "The \n \n spindle of the spermatogonia and chromatin in the spermatogonia and chromatin _m_ (fig. 207-27 e-16 and the _m_",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "(fig. 241) and the region of the _m_ is a figure (figs. 207) is to show the sphere (fig. \n \n 249).",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "inted and from \n \n Colorththust and the chromatin of the spermatogonium. \n \n \n \n Figures 253, _a_ and _b_, and A",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "_m_ \n \n and the spindle is a spindle in odd spindle (_a_ {1} _), which is in the _m_ _b_, and _gamma",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "naar material of the \n \n kunnen is a new form of the polar spindle is found in the odd chromosome of a small tetrads and the spind",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "tetrads of the \n \n _Discoan chromosome and as the spindle is found in the spindent plate, a few plates of the spindle in the sp",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "The \n \n unequal pair is not separated in the spindle of the spindle of the spermatogonia and odd is anaples in the odd chromosome of",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "found in the \n \n odd chromosome is always it was often found in the odd chromosome is as in the first matura tion of the first matura tion chromosomes, and and",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:56:09Z"
+  },
+  {
+    "checkpoint": "organism_cycle_239.pt",
+    "checkpoint_path": "C:\\Users\\marco\\Desktop\\F51-Darwin-SSD\\checkpoints\\audit_frozen\\organism_cycle_239.pt",
+    "config": "F51-Darwin-X-600M",
+    "cycle": 239,
+    "step": 119560,
+    "version": 6,
+    "device": "cuda",
+    "ppl_pt": {
+      "ppl": 990.96,
+      "loss": 6.8987,
+      "tokens": 107
+    },
+    "ppl_en": {
+      "ppl": 200.19,
+      "loss": 5.2993,
+      "tokens": 94
+    },
+    "lexical_diversity": {
+      "type_token_ratio": 0.177,
+      "total_words": 209,
+      "unique_words": 37
+    },
+    "generations": [
+      {
+        "prompt": "Quem te criou?",
+        "text": "In the first spermatocyte. In the growth chromosome is found in the odd chromosome is equal in the first \n \n growth somatic number of pair is even in the",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu nome?",
+        "text": "In the first spermatocyte. In the growth somatic number is in the \n \n unequal pair of the Hemiptera (Wilson, '05 and '06), in the",
+        "token_count": 64
+      },
+      {
+        "prompt": "Qual o seu proposito?",
+        "text": "In the first spermatocyte. The odd chromosome is equal in the first spermatocyte. In the growth chromosome is in the \n \n number of the male and spermatogon",
+        "token_count": 64
+      },
+      {
+        "prompt": "Soli Deo Gloria significa",
+        "text": "in the unequal pair is an unequal pair in the presence of the unequal pair in cases of the unequal pair. In the first spermatocyte. In",
+        "token_count": 64
+      },
+      {
+        "prompt": "O que voce sabe sobre o Brasil?",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "A capital do Brasil eh",
+        "text": "in the somatic spermatogonial number and of the unequal pair in cases of the unequal pair in the male pair of the unequal pair in the male",
+        "token_count": 64
+      },
+      {
+        "prompt": "A agua ferve a",
+        "text": "union of the \n \n Hemiptera (Wilson, '05 and '11), the number in the other spermatogonial number and somatic pair is found to be in",
+        "token_count": 64
+      },
+      {
+        "prompt": "O sol eh uma",
+        "text": "somatic cells are \n \n be been found in the male somatic number and \n \n the odd chromosome is equal in the presence of the unequal pair in cases of",
+        "token_count": 64
+      },
+      {
+        "prompt": "Explain what a transformer is in one sentence.",
+        "text": "",
+        "token_count": 64
+      },
+      {
+        "prompt": "The meaning of life is",
+        "text": "equal in the first \n \n growth somatic number of pair is even in the species of the unequal pair in has been found in the male somatic number and of",
+        "token_count": 64
+      }
+    ],
+    "eval_timestamp": "2026-07-12T23:57:31Z"
+  }
+]

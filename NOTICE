@@ -1,0 +1,9 @@
+F51 Darwin-X / F51-Darwin-SSD
+Copyright (c) 2026 F51 Labs. All rights reserved.
+
+This repository is proprietary. It includes third-party Python packages whose
+notices and license identifiers are listed in THIRD_PARTY_NOTICES.md and whose
+resolved identities are recorded in governance/audit/sbom/cyclonedx.json.
+
+Model checkpoints, corpora and generated runtime evidence are not distributed
+as repository source and may carry separate provenance or usage restrictions.
