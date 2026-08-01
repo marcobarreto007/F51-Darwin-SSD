@@ -267,7 +267,7 @@ def main() -> None:
         print("CUDA indisponivel — rodando em CPU (tempos nao representativos)")
     else:
         gpu_name = torch.cuda.get_device_name(device)
-        gpu_mem = torch.cuda.get_device_properties(device).total_mem / (1024**3)
+        gpu_mem = torch.cuda.get_device_properties(device).total_memory / (1024**3)
         print(f"GPU: {gpu_name} ({gpu_mem:.0f} GB)")
 
     print(f"Carregando config: {args.config}")

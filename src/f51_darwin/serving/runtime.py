@@ -39,6 +39,8 @@ from f51_darwin.inference_learner import (
 )
 from f51_darwin.artifacts import resolve_latest_organism_checkpoint
 from f51_darwin.dataset_layout import WorkspacePaths
+from f51_darwin.serving.burst_detector import BurstDetector
+from f51_darwin.serving.prefix_cache import PrefixCache
 
 import torch
 
@@ -255,6 +257,15 @@ class DaviService:
         self.api_token = secrets.token_urlsafe(32)
         self._transaction_lock = threading.RLock()
 
+        # BTB: cache de prefixo compartilhado + detector de burst
+        self._btb_prefix_cache = PrefixCache(max_entries=16)
+        self._btb_burst_detector = BurstDetector(
+            threshold=2,    # X
+            prefix_blocks=32,  # Y — 32 * 256 = 8192 tokens de prefixo
+            window_s=1.0,   # Z
+            warm_copies=1,  # M — single-node: 1 copia
+        )
+
     def set_mode(self, mode: str) -> str:
         """Serialize mode changes with inference and approval transactions."""
         if self.training is None:
@@ -369,6 +380,23 @@ class DaviService:
         else:
             s["mode"] = "inference"
 
+        # BTB: prefix cache + burst detector stats
+        s["btb"] = {
+            "prefix_cache": {
+                "entries": self._btb_prefix_cache.size(),
+                "hits": self._btb_prefix_cache.stats.hits,
+                "misses": self._btb_prefix_cache.stats.misses,
+                "hit_rate": round(self._btb_prefix_cache.stats.hit_rate, 3),
+                "stores": self._btb_prefix_cache.stats.stores,
+                "evictions": self._btb_prefix_cache.stats.evictions,
+            },
+            "burst_detector": {
+                "total_arrivals": self._btb_burst_detector.stats.total_arrivals,
+                "bursts_detected": self._btb_burst_detector.stats.bursts_detected,
+                "active_prefixes": len(self._btb_burst_detector.active_prefixes()),
+            },
+        }
+
         return s
 
 
@@ -464,6 +492,9 @@ def build_http_server(
                 return
             if self.path == "/api/stats" and self._authorized():
                 self._json(200, service.stats())
+                return
+            if self.path == "/api/btb/stats" and self._authorized():
+                self._json(200, service.stats().get("btb", {}))
                 return
             self._json(404, {"error": "not found"})
 

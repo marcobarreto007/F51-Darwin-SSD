@@ -1,0 +1,270 @@
+{
+  "gpu": "NVIDIA GeForce RTX 5060 Ti",
+  "model": "F51-Darwin-X-100M",
+  "results": [
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "burst_size": 5,
+      "cold_mean_ms": 329.5,
+      "cold_p95_ms": 647.2,
+      "warm_mean_ms": 250.2,
+      "warm_p95_ms": 275.0,
+      "post_trigger_mean_ms": 243.3,
+      "speedup_mean_pct": 24.1,
+      "speedup_post_trigger_pct": 26.2,
+      "speedup_p95_pct": 57.5,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 252.5,
+      "cold_p95_ms": 262.9,
+      "warm_mean_ms": 232.4,
+      "warm_p95_ms": 245.5,
+      "post_trigger_mean_ms": 230.0,
+      "speedup_mean_pct": 8.0,
+      "speedup_post_trigger_pct": 8.9,
+      "speedup_p95_pct": 6.6,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 10,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 8,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "burst_size": 20,
+      "cold_mean_ms": 252.4,
+      "cold_p95_ms": 266.1,
+      "warm_mean_ms": 236.3,
+      "warm_p95_ms": 255.1,
+      "post_trigger_mean_ms": 233.9,
+      "speedup_mean_pct": 6.4,
+      "speedup_post_trigger_pct": 7.3,
+      "speedup_p95_pct": 4.1,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 20,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 18,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 5,
+      "cold_mean_ms": 264.2,
+      "cold_p95_ms": 274.2,
+      "warm_mean_ms": 243.0,
+      "warm_p95_ms": 267.4,
+      "post_trigger_mean_ms": 228.3,
+      "speedup_mean_pct": 8.0,
+      "speedup_post_trigger_pct": 13.6,
+      "speedup_p95_pct": 2.5,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 266.4,
+      "cold_p95_ms": 277.0,
+      "warm_mean_ms": 237.4,
+      "warm_p95_ms": 267.3,
+      "post_trigger_mean_ms": 232.5,
+      "speedup_mean_pct": 10.9,
+      "speedup_post_trigger_pct": 12.7,
+      "speedup_p95_pct": 3.5,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 10,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 8,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 20,
+      "cold_mean_ms": 265.8,
+      "cold_p95_ms": 277.8,
+      "warm_mean_ms": 233.2,
+      "warm_p95_ms": 270.1,
+      "post_trigger_mean_ms": 229.6,
+      "speedup_mean_pct": 12.3,
+      "speedup_post_trigger_pct": 13.6,
+      "speedup_p95_pct": 2.8,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 20,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 18,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "burst_size": 5,
+      "cold_mean_ms": 291.1,
+      "cold_p95_ms": 302.0,
+      "warm_mean_ms": 252.3,
+      "warm_p95_ms": 291.8,
+      "post_trigger_mean_ms": 227.1,
+      "speedup_mean_pct": 13.3,
+      "speedup_post_trigger_pct": 22.0,
+      "speedup_p95_pct": 3.4,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 293.6,
+      "cold_p95_ms": 302.5,
+      "warm_mean_ms": 242.6,
+      "warm_p95_ms": 297.4,
+      "post_trigger_mean_ms": 228.9,
+      "speedup_mean_pct": 17.4,
+      "speedup_post_trigger_pct": 22.0,
+      "speedup_p95_pct": 1.7,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 10,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 8,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "burst_size": 20,
+      "cold_mean_ms": 288.3,
+      "cold_p95_ms": 301.1,
+      "warm_mean_ms": 240.9,
+      "warm_p95_ms": 295.8,
+      "post_trigger_mean_ms": 235.1,
+      "speedup_mean_pct": 16.4,
+      "speedup_post_trigger_pct": 18.5,
+      "speedup_p95_pct": 1.8,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 20,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 18,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 1024,
+      "suffix_tokens": 32,
+      "burst_size": 5,
+      "cold_mean_ms": 355.5,
+      "cold_p95_ms": 375.0,
+      "warm_mean_ms": 276.0,
+      "warm_p95_ms": 347.6,
+      "post_trigger_mean_ms": 223.5,
+      "speedup_mean_pct": 22.3,
+      "speedup_post_trigger_pct": 37.1,
+      "speedup_p95_pct": 7.3,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 1024,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 341.3,
+      "cold_p95_ms": 347.5,
+      "warm_mean_ms": 258.0,
+      "warm_p95_ms": 349.8,
+      "post_trigger_mean_ms": 235.8,
+      "speedup_mean_pct": 24.4,
+      "speedup_post_trigger_pct": 30.9,
+      "speedup_p95_pct": -0.7,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 10,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 8,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 1024,
+      "suffix_tokens": 32,
+      "burst_size": 20,
+      "cold_mean_ms": 347.1,
+      "cold_p95_ms": 384.8,
+      "warm_mean_ms": 243.8,
+      "warm_p95_ms": 356.6,
+      "post_trigger_mean_ms": 232.1,
+      "speedup_mean_pct": 29.8,
+      "speedup_post_trigger_pct": 33.1,
+      "speedup_p95_pct": 7.3,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 20,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 18,
+        "misses": 2
+      }
+    }
+  ]
+}
