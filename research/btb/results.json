@@ -1,0 +1,116 @@
+{
+  "gpu": "cpu",
+  "model": "F51-Darwin-X-100M",
+  "config": "src/configs/darwin_x_100m.yaml",
+  "kv_kib_per_token": 12.0,
+  "results": [
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "num_requests": 2,
+      "kv_size_kib": 1536.0,
+      "cold_ttft_ms": 307.725,
+      "warm_setup_ms": 279.819,
+      "warm_reuse_ms": 125.842,
+      "warm_amortized_ms": 265.751,
+      "prefill_reuse_ratio": 2.4,
+      "speedup_pct": 13.6
+    },
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "num_requests": 5,
+      "kv_size_kib": 1536.0,
+      "cold_ttft_ms": 310.305,
+      "warm_setup_ms": 260.865,
+      "warm_reuse_ms": 124.56,
+      "warm_amortized_ms": 176.733,
+      "prefill_reuse_ratio": 2.5,
+      "speedup_pct": 43.0
+    },
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "num_requests": 10,
+      "kv_size_kib": 1536.0,
+      "cold_ttft_ms": 316.255,
+      "warm_setup_ms": 265.78,
+      "warm_reuse_ms": 127.07,
+      "warm_amortized_ms": 153.648,
+      "prefill_reuse_ratio": 2.5,
+      "speedup_pct": 51.4
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "num_requests": 2,
+      "kv_size_kib": 3072.0,
+      "cold_ttft_ms": 489.073,
+      "warm_setup_ms": 437.407,
+      "warm_reuse_ms": 130.008,
+      "warm_amortized_ms": 348.712,
+      "prefill_reuse_ratio": 3.8,
+      "speedup_pct": 28.7
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "num_requests": 5,
+      "kv_size_kib": 3072.0,
+      "cold_ttft_ms": 464.777,
+      "warm_setup_ms": 469.7,
+      "warm_reuse_ms": 127.742,
+      "warm_amortized_ms": 221.682,
+      "prefill_reuse_ratio": 3.6,
+      "speedup_pct": 52.3
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "num_requests": 10,
+      "kv_size_kib": 3072.0,
+      "cold_ttft_ms": 469.356,
+      "warm_setup_ms": 452.998,
+      "warm_reuse_ms": 126.714,
+      "warm_amortized_ms": 172.014,
+      "prefill_reuse_ratio": 3.7,
+      "speedup_pct": 63.4
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "num_requests": 2,
+      "kv_size_kib": 6144.0,
+      "cold_ttft_ms": 800.134,
+      "warm_setup_ms": 754.724,
+      "warm_reuse_ms": 128.003,
+      "warm_amortized_ms": 505.365,
+      "prefill_reuse_ratio": 6.3,
+      "speedup_pct": 36.8
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "num_requests": 5,
+      "kv_size_kib": 6144.0,
+      "cold_ttft_ms": 822.286,
+      "warm_setup_ms": 753.199,
+      "warm_reuse_ms": 127.429,
+      "warm_amortized_ms": 278.069,
+      "prefill_reuse_ratio": 6.5,
+      "speedup_pct": 66.2
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "num_requests": 10,
+      "kv_size_kib": 6144.0,
+      "cold_ttft_ms": 837.656,
+      "warm_setup_ms": 918.548,
+      "warm_reuse_ms": 130.699,
+      "warm_amortized_ms": 222.554,
+      "prefill_reuse_ratio": 6.4,
+      "speedup_pct": 73.4
+    }
+  ]
+}
