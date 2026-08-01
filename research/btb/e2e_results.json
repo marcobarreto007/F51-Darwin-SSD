@@ -6,14 +6,14 @@
       "prefix_tokens": 128,
       "suffix_tokens": 32,
       "burst_size": 5,
-      "cold_mean_ms": 329.5,
-      "cold_p95_ms": 647.2,
-      "warm_mean_ms": 250.2,
-      "warm_p95_ms": 275.0,
-      "post_trigger_mean_ms": 243.3,
-      "speedup_mean_pct": 24.1,
-      "speedup_post_trigger_pct": 26.2,
-      "speedup_p95_pct": 57.5,
+      "cold_mean_ms": 2588.4,
+      "cold_p95_ms": 2893.2,
+      "warm_mean_ms": 2589.3,
+      "warm_p95_ms": 3186.3,
+      "post_trigger_mean_ms": 2391.4,
+      "speedup_mean_pct": -0.0,
+      "speedup_post_trigger_pct": 7.6,
+      "speedup_p95_pct": -10.1,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 5,
@@ -28,14 +28,14 @@
       "prefix_tokens": 128,
       "suffix_tokens": 32,
       "burst_size": 10,
-      "cold_mean_ms": 252.5,
-      "cold_p95_ms": 262.9,
-      "warm_mean_ms": 232.4,
-      "warm_p95_ms": 245.5,
-      "post_trigger_mean_ms": 230.0,
-      "speedup_mean_pct": 8.0,
-      "speedup_post_trigger_pct": 8.9,
-      "speedup_p95_pct": 6.6,
+      "cold_mean_ms": 2326.4,
+      "cold_p95_ms": 3046.5,
+      "warm_mean_ms": 989.0,
+      "warm_p95_ms": 1346.3,
+      "post_trigger_mean_ms": 1026.2,
+      "speedup_mean_pct": 57.5,
+      "speedup_post_trigger_pct": 55.9,
+      "speedup_p95_pct": 55.8,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 10,
@@ -50,14 +50,102 @@
       "prefix_tokens": 128,
       "suffix_tokens": 32,
       "burst_size": 20,
-      "cold_mean_ms": 252.4,
-      "cold_p95_ms": 266.1,
-      "warm_mean_ms": 236.3,
-      "warm_p95_ms": 255.1,
-      "post_trigger_mean_ms": 233.9,
-      "speedup_mean_pct": 6.4,
-      "speedup_post_trigger_pct": 7.3,
-      "speedup_p95_pct": 4.1,
+      "cold_mean_ms": 2619.7,
+      "cold_p95_ms": 3285.6,
+      "warm_mean_ms": 2356.2,
+      "warm_p95_ms": 3576.6,
+      "post_trigger_mean_ms": 2316.7,
+      "speedup_mean_pct": 10.1,
+      "speedup_post_trigger_pct": 11.6,
+      "speedup_p95_pct": -8.9,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 20,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 18,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 128,
+      "suffix_tokens": 32,
+      "burst_size": 50,
+      "cold_mean_ms": 2578.6,
+      "cold_p95_ms": 3266.1,
+      "warm_mean_ms": 2368.5,
+      "warm_p95_ms": 2760.8,
+      "post_trigger_mean_ms": 2359.5,
+      "speedup_mean_pct": 8.1,
+      "speedup_post_trigger_pct": 8.5,
+      "speedup_p95_pct": 15.5,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 50,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 48,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 5,
+      "cold_mean_ms": 2979.1,
+      "cold_p95_ms": 3563.3,
+      "warm_mean_ms": 2476.3,
+      "warm_p95_ms": 3066.6,
+      "post_trigger_mean_ms": 2199.2,
+      "speedup_mean_pct": 16.9,
+      "speedup_post_trigger_pct": 26.2,
+      "speedup_p95_pct": 13.9,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 2779.9,
+      "cold_p95_ms": 3192.6,
+      "warm_mean_ms": 2628.1,
+      "warm_p95_ms": 2802.1,
+      "post_trigger_mean_ms": 2596.1,
+      "speedup_mean_pct": 5.5,
+      "speedup_post_trigger_pct": 6.6,
+      "speedup_p95_pct": 12.2,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 10,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 8,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 256,
+      "suffix_tokens": 32,
+      "burst_size": 20,
+      "cold_mean_ms": 2137.1,
+      "cold_p95_ms": 3128.0,
+      "warm_mean_ms": 805.4,
+      "warm_p95_ms": 1128.1,
+      "post_trigger_mean_ms": 774.8,
+      "speedup_mean_pct": 62.3,
+      "speedup_post_trigger_pct": 63.7,
+      "speedup_p95_pct": 63.9,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 20,
@@ -71,39 +159,61 @@
     {
       "prefix_tokens": 256,
       "suffix_tokens": 32,
+      "burst_size": 50,
+      "cold_mean_ms": 831.4,
+      "cold_p95_ms": 1188.5,
+      "warm_mean_ms": 1026.6,
+      "warm_p95_ms": 1477.0,
+      "post_trigger_mean_ms": 1033.0,
+      "speedup_mean_pct": -23.5,
+      "speedup_post_trigger_pct": -24.2,
+      "speedup_p95_pct": -24.3,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 50,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 48,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
       "burst_size": 5,
-      "cold_mean_ms": 264.2,
-      "cold_p95_ms": 274.2,
-      "warm_mean_ms": 243.0,
-      "warm_p95_ms": 267.4,
-      "post_trigger_mean_ms": 228.3,
-      "speedup_mean_pct": 8.0,
-      "speedup_post_trigger_pct": 13.6,
+      "cold_mean_ms": 1314.0,
+      "cold_p95_ms": 1410.7,
+      "warm_mean_ms": 1255.4,
+      "warm_p95_ms": 1564.6,
+      "post_trigger_mean_ms": 1095.6,
+      "speedup_mean_pct": 4.5,
+      "speedup_post_trigger_pct": 16.6,
+      "speedup_p95_pct": -10.9,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 5,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 3,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 512,
+      "suffix_tokens": 32,
+      "burst_size": 10,
+      "cold_mean_ms": 1375.7,
+      "cold_p95_ms": 1718.6,
+      "warm_mean_ms": 1231.2,
+      "warm_p95_ms": 1676.0,
+      "post_trigger_mean_ms": 1176.7,
+      "speedup_mean_pct": 10.5,
+      "speedup_post_trigger_pct": 14.5,
       "speedup_p95_pct": 2.5,
       "burst_detected": true,
       "detector_stats": {
-        "total_arrivals": 5,
-        "bursts_detected": 1
-      },
-      "cache_stats": {
-        "hits": 3,
-        "misses": 2
-      }
-    },
-    {
-      "prefix_tokens": 256,
-      "suffix_tokens": 32,
-      "burst_size": 10,
-      "cold_mean_ms": 266.4,
-      "cold_p95_ms": 277.0,
-      "warm_mean_ms": 237.4,
-      "warm_p95_ms": 267.3,
-      "post_trigger_mean_ms": 232.5,
-      "speedup_mean_pct": 10.9,
-      "speedup_post_trigger_pct": 12.7,
-      "speedup_p95_pct": 3.5,
-      "burst_detected": true,
-      "detector_stats": {
         "total_arrivals": 10,
         "bursts_detected": 1
       },
@@ -113,17 +223,17 @@
       }
     },
     {
-      "prefix_tokens": 256,
+      "prefix_tokens": 512,
       "suffix_tokens": 32,
       "burst_size": 20,
-      "cold_mean_ms": 265.8,
-      "cold_p95_ms": 277.8,
-      "warm_mean_ms": 233.2,
-      "warm_p95_ms": 270.1,
-      "post_trigger_mean_ms": 229.6,
-      "speedup_mean_pct": 12.3,
-      "speedup_post_trigger_pct": 13.6,
-      "speedup_p95_pct": 2.8,
+      "cold_mean_ms": 899.9,
+      "cold_p95_ms": 1298.4,
+      "warm_mean_ms": 1114.8,
+      "warm_p95_ms": 1562.6,
+      "post_trigger_mean_ms": 1153.2,
+      "speedup_mean_pct": -23.9,
+      "speedup_post_trigger_pct": -28.1,
+      "speedup_p95_pct": -20.4,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 20,
@@ -137,66 +247,22 @@
     {
       "prefix_tokens": 512,
       "suffix_tokens": 32,
-      "burst_size": 5,
-      "cold_mean_ms": 291.1,
-      "cold_p95_ms": 302.0,
-      "warm_mean_ms": 252.3,
-      "warm_p95_ms": 291.8,
-      "post_trigger_mean_ms": 227.1,
-      "speedup_mean_pct": 13.3,
-      "speedup_post_trigger_pct": 22.0,
-      "speedup_p95_pct": 3.4,
+      "burst_size": 50,
+      "cold_mean_ms": 1462.9,
+      "cold_p95_ms": 1801.0,
+      "warm_mean_ms": 1160.8,
+      "warm_p95_ms": 1889.7,
+      "post_trigger_mean_ms": 1133.9,
+      "speedup_mean_pct": 20.6,
+      "speedup_post_trigger_pct": 22.5,
+      "speedup_p95_pct": -4.9,
       "burst_detected": true,
       "detector_stats": {
-        "total_arrivals": 5,
+        "total_arrivals": 50,
         "bursts_detected": 1
       },
       "cache_stats": {
-        "hits": 3,
-        "misses": 2
-      }
-    },
-    {
-      "prefix_tokens": 512,
-      "suffix_tokens": 32,
-      "burst_size": 10,
-      "cold_mean_ms": 293.6,
-      "cold_p95_ms": 302.5,
-      "warm_mean_ms": 242.6,
-      "warm_p95_ms": 297.4,
-      "post_trigger_mean_ms": 228.9,
-      "speedup_mean_pct": 17.4,
-      "speedup_post_trigger_pct": 22.0,
-      "speedup_p95_pct": 1.7,
-      "burst_detected": true,
-      "detector_stats": {
-        "total_arrivals": 10,
-        "bursts_detected": 1
-      },
-      "cache_stats": {
-        "hits": 8,
-        "misses": 2
-      }
-    },
-    {
-      "prefix_tokens": 512,
-      "suffix_tokens": 32,
-      "burst_size": 20,
-      "cold_mean_ms": 288.3,
-      "cold_p95_ms": 301.1,
-      "warm_mean_ms": 240.9,
-      "warm_p95_ms": 295.8,
-      "post_trigger_mean_ms": 235.1,
-      "speedup_mean_pct": 16.4,
-      "speedup_post_trigger_pct": 18.5,
-      "speedup_p95_pct": 1.8,
-      "burst_detected": true,
-      "detector_stats": {
-        "total_arrivals": 20,
-        "bursts_detected": 1
-      },
-      "cache_stats": {
-        "hits": 18,
+        "hits": 48,
         "misses": 2
       }
     },
@@ -204,14 +270,14 @@
       "prefix_tokens": 1024,
       "suffix_tokens": 32,
       "burst_size": 5,
-      "cold_mean_ms": 355.5,
-      "cold_p95_ms": 375.0,
-      "warm_mean_ms": 276.0,
-      "warm_p95_ms": 347.6,
-      "post_trigger_mean_ms": 223.5,
-      "speedup_mean_pct": 22.3,
-      "speedup_post_trigger_pct": 37.1,
-      "speedup_p95_pct": 7.3,
+      "cold_mean_ms": 1378.4,
+      "cold_p95_ms": 2200.1,
+      "warm_mean_ms": 1713.9,
+      "warm_p95_ms": 1945.5,
+      "post_trigger_mean_ms": 1615.7,
+      "speedup_mean_pct": -24.3,
+      "speedup_post_trigger_pct": -17.2,
+      "speedup_p95_pct": 11.6,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 5,
@@ -226,14 +292,14 @@
       "prefix_tokens": 1024,
       "suffix_tokens": 32,
       "burst_size": 10,
-      "cold_mean_ms": 341.3,
-      "cold_p95_ms": 347.5,
-      "warm_mean_ms": 258.0,
-      "warm_p95_ms": 349.8,
-      "post_trigger_mean_ms": 235.8,
-      "speedup_mean_pct": 24.4,
-      "speedup_post_trigger_pct": 30.9,
-      "speedup_p95_pct": -0.7,
+      "cold_mean_ms": 1953.8,
+      "cold_p95_ms": 2213.8,
+      "warm_mean_ms": 1424.9,
+      "warm_p95_ms": 2017.4,
+      "post_trigger_mean_ms": 1260.3,
+      "speedup_mean_pct": 27.1,
+      "speedup_post_trigger_pct": 35.5,
+      "speedup_p95_pct": 8.9,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 10,
@@ -248,14 +314,14 @@
       "prefix_tokens": 1024,
       "suffix_tokens": 32,
       "burst_size": 20,
-      "cold_mean_ms": 347.1,
-      "cold_p95_ms": 384.8,
-      "warm_mean_ms": 243.8,
-      "warm_p95_ms": 356.6,
-      "post_trigger_mean_ms": 232.1,
-      "speedup_mean_pct": 29.8,
-      "speedup_post_trigger_pct": 33.1,
-      "speedup_p95_pct": 7.3,
+      "cold_mean_ms": 1728.2,
+      "cold_p95_ms": 2158.5,
+      "warm_mean_ms": 1754.1,
+      "warm_p95_ms": 2208.9,
+      "post_trigger_mean_ms": 1742.1,
+      "speedup_mean_pct": -1.5,
+      "speedup_post_trigger_pct": -0.8,
+      "speedup_p95_pct": -2.3,
       "burst_detected": true,
       "detector_stats": {
         "total_arrivals": 20,
@@ -263,6 +329,28 @@
       },
       "cache_stats": {
         "hits": 18,
+        "misses": 2
+      }
+    },
+    {
+      "prefix_tokens": 1024,
+      "suffix_tokens": 32,
+      "burst_size": 50,
+      "cold_mean_ms": 1324.4,
+      "cold_p95_ms": 2108.6,
+      "warm_mean_ms": 656.9,
+      "warm_p95_ms": 946.0,
+      "post_trigger_mean_ms": 638.1,
+      "speedup_mean_pct": 50.4,
+      "speedup_post_trigger_pct": 51.8,
+      "speedup_p95_pct": 55.1,
+      "burst_detected": true,
+      "detector_stats": {
+        "total_arrivals": 50,
+        "bursts_detected": 1
+      },
+      "cache_stats": {
+        "hits": 48,
         "misses": 2
       }
     }

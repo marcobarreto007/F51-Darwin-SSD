@@ -138,11 +138,15 @@ def run_e2e(
     t0 = time.perf_counter()
 
     print(f"  BTB pipeline   ({burst_size} requests)...", end=" ", flush=True)
+    sim_clock = time.perf_counter()  # relogio simulado para chegadas
     for i, suffix_ids in enumerate(suffix_ids_list):
-        now = time.perf_counter()
+        # Simula chegadas espacadas em 0.1s (independente do tempo de compute)
+        # Isso garante que o burst detector dispare mesmo com modelos grandes
+        # onde o prefill demora mais que a janela de deteccao
+        sim_clock += 0.1  # 100ms entre chegadas = 50 reqs em 5s
 
-        # Registra chegada no detector
-        state = detector.ingest(phash, now)
+        # Registra chegada no detector com timestamp simulado
+        state = detector.ingest(phash, sim_clock)
 
         # Logica: se burst ativo e prefixo em cache, usa cache
         if state.active and cache.has(phash):
