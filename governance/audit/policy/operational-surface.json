@@ -170,7 +170,15 @@
       "classification": "research"
     },
     {
+      "path": "research/btb/burst_test.py",
+      "classification": "research"
+    },
+    {
       "path": "research/btb/prefix_cache_store.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/btb/run_e2e.py",
       "classification": "research"
     },
     {
@@ -1387,6 +1395,10 @@
     },
     {
       "path": "README.md",
+      "classification": "documentation"
+    },
+    {
+      "path": "RELATORIO_PROJETOS_E_PESQUISA_2026.md",
       "classification": "documentation"
     },
     {
