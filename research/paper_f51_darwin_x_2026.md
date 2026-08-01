@@ -1,87 +1,232 @@
-# F51 Darwin-X: Predictive Speculative State-Space Replication and In-Place Test-Time Training for Bursty Hybrid LLM Serving
+# Prefix State Reuse in a Hybrid SSD/Attention Model: A Correctness-First Measurement
 
-**Authors:** Marco Barreto, Antigravity AI Team (Google DeepMind / F51 Laboratory)  
-**Target Venue:** International Conference on Learning Representations (ICLR / NeurIPS 2026)  
-**Primary Research Search Anchor:** `https://news.ycombinator.com/news` (Lei 1 Global)
+**Author:** Marco Barreto — F51 Darwin-X Laboratory (independent, local-only)
+**Status:** Technical report / negative-and-partial result. Not submitted.
+**Artifacts:** `research/btb/state_reuse.py`, `research/btb/verify_state_reuse.py`,
+`src/tests/test_btb_state_reuse_parity.py`, `research/btb/state_reuse_results.json`
 
 ---
 
 ## Abstract
 
-Serving large language models (LLMs) to production workloads often involves sudden, heavy request bursts with identical long prompt prefixes (e.g., multi-agent subagent fanouts, batch extraction, document parsing). Existing routers fail under such bursty traffic: *Least-Load* routing scatters requests across cold GPUs, forcing expensive $O(N)$ prefill recomputation, while *Cache-Aware* routing piles the entire burst onto a single warm node, creating severe queue bottlenecks. 
+Bursty inference workloads — subagent fanout, batch extraction — send many requests sharing
+one long prompt prefix. Reusing the prefix's cached state instead of recomputing it is the
+obvious optimization, and recent routing work (Biting the Bullet) builds burst detection and
+speculative replication on top of it. We ask a narrower question first: **in a hybrid
+Selective-State-Space (SSD) + attention model, is prefix state reuse actually correct, and
+what does the cache actually cost?**
 
-In this paper, we propose **F51 Darwin-X**, a novel hybrid State-Space Model (SSM) and Attention architecture equipped with **Predictive Speculative State Replication** and **In-Place Test-Time Training (TTT)**. By leveraging selective SSM recurrence states ($h$) of constant memory size $O(1)$ alongside dual-descriptor attention pages, F51 Darwin-X enables zero-copy inter-slot state transfers over PCIe/RDMA in $< 2.0\text{ ms}$, bypassing the linear memory transfer overhead of Transformer-only models. 
+We report three findings on F51 Darwin-X (153M params, 9 SSD layers / 3 attention layers,
+NVIDIA RTX 5060 Ti). First, a **correctness pitfall**: with a populated KV cache where
+`k_len > q_len`, PyTorch's `is_causal=True` aligns the triangular mask top-left, so suffix
+queries attend only to the first few keys and silently ignore the cached prefix. Second,
+with an absolute-position mask the reuse path is **numerically equivalent to full recompute**
+(max |Δlogit| ≤ 2e-6, KL ≤ 4.7e-7, top-1 agreement 8/8 across prefixes of 128–2048 tokens).
+Third, the hybrid cache splits cleanly: **SSD recurrent state is constant at 684 KiB**
+regardless of prefix length, while attention KV grows at 3.0 KiB/token, crossing over at
+**~228 tokens**.
 
-Empirical benchmarks on an NVIDIA GeForce RTX 5060 Ti GPU demonstrate that F51 Darwin-X cuts mean Time-To-First-Token (TTFT) by **50.4% to 62.3%** under heavy multi-agent bursts (up to 1024-token prefixes), while maintaining strict mathematical governance via a 4-mode Causal Bus (`disabled`, `control`, `shadow`, `enforce`).
+We report a **null result on latency**. At this model scale a fixed per-forward overhead of
+roughly 780 ms dominates compute, and measured amortized speedup is non-monotonic
+(+29.2%, −25.5%, −0.5%, +5.1% at 128/512/1024/2048 tokens). We therefore make no performance
+claim. We argue that the correctness gate — and its negative control — is the reusable
+contribution, because it is what separates real state reuse from measuring "fewer tokens is
+faster."
 
 ---
 
-## 1. Introduction
+## 1. Motivation and scope
 
-Serving modern agentic LLM workloads requires low Time-to-First-Token (TTFT), high sequence throughput, and real-time adaptability. However, production traffic traces frequently feature **long-prefix bursts**: multiple concurrent requests arriving within short time windows ($Z \le 1.0\text{ s}$) that share exact prompt prefixes ranging from 128 to over 1024 tokens.
+The appeal of prefix reuse in a hybrid architecture is that the SSD half carries a
+*constant-size* recurrent state, so replicating a warm prefix between slots should not scale
+with prefix length the way a pure-Transformer KV cache does. That intuition is sound but had
+not been measured here, and the surrounding claims are easy to get wrong in both directions.
 
-Standard inference engines (e.g., vLLM, SGLang) struggle with these bursty workloads due to fundamental routing tradeoffs:
-1. **Least-Load Routing:** Spreads requests across cold GPU replicas, triggering redundant $O(N^2)$ prefill compute on every node.
-2. **Cache-Aware Routing:** Directs all burst requests to the single GPU node holding the warm KV cache, incurring massive queue delays despite a 100% cache hit rate.
+This report deliberately does **not** cover: multi-GPU or RDMA replication (untested), burst
+routing policy, or test-time training. It covers exactly what was measured on one device.
 
-To bridge this gap, we present **F51 Darwin-X**, which integrates three major scientific breakthroughs into a unified hybrid organism:
-* **Predictive Speculative State-Space Replication (BTB-SSM):** Early prefix repetition detection ($X/Y/Z/M$) coupled with $O(1)$ constant-size SSM state transfers over PCIe/RDMA.
-* **In-Place Test-Time Training (Fast Weights):** Real-time fact retention during inference by updating fast-weight projection matrices in `DenseSwiGLU` blocks while keeping the 1.93B backbone frozen.
-* **Cognitive Sleep Consolidation & Causal Bus Governance:** Biologically inspired NREM/REM sleep cycles for offline parameter pruning and a 4-mode Causal Bus enforcing counterfactual interventions.
+### 1.1 What motivated a correctness-first protocol
+
+An earlier benchmark in this repository (`research/btb/run_e2e.py`) reported 50–62% speedups.
+Its warm path called the model on the suffix alone and stored a placeholder dict in place of
+the cache. It measured "processing 32 tokens is faster than processing 1056," and the
+resulting hidden state differed from the true one by 82.9% relative error. The lesson
+generalizes: **a reuse benchmark without an output-equivalence gate measures nothing**, and
+the failure is invisible in the timing numbers. Everything below is built around that gate.
 
 ---
 
-## 2. Architecture & Methodology
+## 2. Method
 
-### 2.1. Hybrid Architecture: Selective State Space (SSD) + Attention
-F51 Darwin-X combines Selective State-Space (SSD) blocks with multi-head self-attention:
-$$\mathbf{y}_t = \sum_{j=1}^t \mathbf{C}_t \mathbf{A}^{t-j} \mathbf{B}_j \mathbf{u}_j + \mathbf{D} \mathbf{u}_t$$
+### 2.1 Cache model
 
-The SSM hidden state $h_t \in \mathbb{R}^{d_{\text{model}} \times d_{\text{state}}}$ maintains a **constant memory footprint $O(1)$** regardless of sequence length $N$.
+One slot per layer, mirroring `DarwinInferenceEngine._forward_with_cache` in single-device
+form for auditability:
 
-### 2.2. Predictive Speculative State Replication Protocol
-The router monitors incoming request streams using SHA-256 prefix hashes of length $Y \ge 128$ tokens. When $X \ge 2$ requests arrive within window $Z \le 1.0\text{ s}$, the router marks the prefix as an **active burst** and issues a proactive state replication call across $M=4$ replica slots using native F51 serialization (`checkpoint_state` and `restore_state` with `_retarget_batch`).
+* **Attention layers** (`GQACausalAttention`): per-layer `k`, `v` tensors of shape
+  `[1, n_kv_heads, filled, head_dim]`, concatenated as the sequence extends. Size **O(N)**.
+* **SSD layers** (`SSDMixerOnly`): per-layer `conv_state` and `ssm_state` obtained via
+  `block.ssd(..., return_state=True)`. Size **O(1)** in sequence length.
 
+### 2.2 The causal-mask pitfall
+
+`F.scaled_dot_product_attention(..., is_causal=True)` builds its triangular mask aligned to
+the **top-left** of the `[q_len, k_len]` score matrix. During prefill `q_len == k_len` and
+this is correct. During cached continuation `k_len = prefix + suffix` while `q_len = suffix`,
+so a suffix query at absolute position `p` is permitted to attend only to keys
+`0 .. (its row index)` — the first few prefix tokens — rather than to everything up to `p`.
+The cached prefix is effectively discarded, and no error is raised.
+
+We instead build the mask from absolute positions:
+
+```python
+q_pos = position + torch.arange(seq)      # absolute positions of the queries
+k_pos = torch.arange(k_len)               # absolute positions of all cached keys
+attn_mask = k_pos.unsqueeze(0) <= q_pos.unsqueeze(1)
 ```
-[Incoming Request Stream] ──> [SHA-256 Prefix Detector (X=2, Y=128, Z=1.0s)]
-                                          │
-                                 (Active Burst Signal)
-                                          ▼
-                         [Speculative State Transfer (< 2ms)]
-                                          │
-       ┌──────────────────────────────────┴──────────────────────────────────┐
-       ▼                                                                     ▼
-[GPU-01: Source State h] ────(PCIe / RDMA Direct)────> [GPUs 02..M: Warm Replicas]
+
+Before this fix, warm and cold logits diverged by ~5.6e-2. After it, by ~1e-6.
+
+### 2.3 Parity gate
+
+For each of `burst = 8` distinct suffixes sharing one prefix we compare final-token logits
+from the cold path (recompute prefix+suffix from scratch) and the warm path (clone the prefix
+cache, continue from absolute position `prefix_len`). We require **all** of:
+max |Δlogit| ≤ 2e-2, KL(cold ‖ warm) ≤ 1e-5, and top-1 agreement on every suffix.
+`verify_state_reuse.py` exits non-zero and suppresses all timing output if the gate fails.
+
+### 2.4 Negative control
+
+A parity test can pass vacuously if the model ignores its context. `test_btb_state_reuse_parity.py`
+therefore also asserts that dropping the prefix entirely — precisely what the earlier benchmark
+did — **must** change the logits (max |Δ| > 1e-3). A third test asserts the memory scaling
+claim directly: attention KV must grow superlinearly with a 4× token increase while SSD state
+stays byte-identical.
+
+### 2.5 Weights
+
+Deterministic random init (seed 51); no checkpoint is loaded. Parity is a statement about the
+algebra of the cache and is weight-independent. Latency reflects real FLOPs and kernel
+behavior but not generation quality. No claim in this report depends on model quality.
+
+---
+
+## 3. Results
+
+### 3.1 Parity holds
+
+RTX 5060 Ti, `src/configs/darwin_x_100m.yaml`, 153M params, burst = 8, suffix = 16 tokens.
+
+| Prefix | Parity | max abs Δ | KL | top-1 |
+| ---: | :---: | ---: | ---: | :---: |
+| 128 | OK | 1.0e-06 | 2.44e-07 | 8/8 |
+| 512 | OK | 1.0e-06 | 2.43e-07 | 8/8 |
+| 1024 | OK | 2.0e-06 | 4.72e-07 | 8/8 |
+| 2048 | OK | 2.0e-06 | 2.43e-07 | 8/8 |
+
+Residual is float non-associativity: cold sums the prefix and suffix contributions in one
+pass, warm sums them across a concatenation boundary. Three orders of magnitude below the
+gate.
+
+### 3.2 Hybrid cache scaling, measured
+
+| Prefix | Attention KV | SSD state | Total |
+| ---: | ---: | ---: | ---: |
+| 128 | 384 KiB | 684 KiB | 1068 KiB |
+| 512 | 1536 KiB | 684 KiB | 2220 KiB |
+| 1024 | 3072 KiB | 684 KiB | 3756 KiB |
+| 2048 | 6144 KiB | 684 KiB | 6828 KiB |
+
+Attention KV is exactly linear at **3.0 KiB/token** (3 attention layers, `n_kv_heads=2`,
+`head_dim=64`, fp32). SSD state is **byte-identical** across a 16× range of prefix lengths —
+the O(1) claim is confirmed, not assumed.
+
+**Crossover:** SSD state is the larger of the two below **228 tokens** (684 / 3.0) and the
+smaller above it. For short prefixes the hybrid design *costs* memory relative to a
+pure-attention cache; the advantage is real but begins later than the framing "constant state
+is always cheaper" suggests. At 2048 tokens the SSD half is 10% of the total cache; the
+attention half still dominates and still grows linearly. **A hybrid model does not have an
+O(1) cache.** It has an O(N) cache with a smaller constant.
+
+### 3.3 Latency: null result
+
+| Prefix | Cold (ms) | Warm amortized (ms) | Speedup |
+| ---: | ---: | ---: | ---: |
+| 128 | 1120.3 | 793.0 | +29.2% |
+| 512 | 802.1 | 1006.8 | −25.5% |
+| 1024 | 944.3 | 948.8 | −0.5% |
+| 2048 | 1216.8 | 1155.2 | +5.1% |
+
+No monotonic trend, sign changes twice. A separate control measured a fixed cost of ~780 ms
+per forward pass at 32 tokens versus 1043 ms at 1056 tokens on this model — a 1.34× ratio
+across a 33× difference in token count. Per-forward overhead, not compute, dominates at 153M
+parameters, and it swamps whatever the reuse saves. Cache clone cost is charged to the warm
+path and is non-trivial at these sizes.
+
+**We make no latency claim.** The numbers above are reported so they are not re-derived and
+mistaken for signal later. A meaningful latency measurement needs a regime where compute
+dominates: the 600M or 1.6B lineages, and/or prefixes well beyond 2048.
+
+---
+
+## 4. Threats to validity
+
+* **One device, one model size.** Everything in §3.3 may change at 1.6B; §3.1 should not.
+* **Random weights.** Sound for parity and FLOP-level timing; says nothing about quality.
+* **Single-device.** No PCIe or RDMA transfer was performed or timed. The machine has two
+  GPUs (RTX 5060 Ti, RTX 3060), so this is testable and simply has not been done — any
+  inter-GPU replication figure would be fabricated.
+* **fp32 throughout.** A fp16/bf16 runtime halves both cache figures and moves the crossover.
+* **Parity is measured on final-token logits**, the quantity that determines the next token.
+  Divergence confined to earlier positions would not be caught.
+
+---
+
+## 5. What this does and does not support
+
+Supported:
+
+1. Prefix state reuse in this hybrid architecture is **implementable and numerically exact**,
+   given an absolute-position causal mask.
+2. The SSD/attention cache split is **real and measurable**: 684 KiB constant vs 3.0 KiB/token.
+3. The `is_causal=True` pitfall is a **silent correctness bug** in cached hybrid inference and
+   is worth documenting on its own.
+
+Not supported by anything here: any speedup figure; any inter-GPU or RDMA transfer time; any
+claim about test-time training; any comparison against vLLM, SGLang, or a published baseline;
+and any claim that a hybrid cache is O(1).
+
+This is a technical note, not a conference paper. The parity gate and the negative control are
+the parts worth reusing.
+
+---
+
+## 6. Reproduction
+
+```bash
+# Correctness gate (CPU, seconds). Exit code is the result.
+python -m pytest src/tests/test_btb_state_reuse_parity.py -v
+
+# Full measurement (GPU). Exits non-zero if parity fails; prints no speedup in that case.
+python research/btb/verify_state_reuse.py \
+    --config src/configs/darwin_x_100m.yaml \
+    --prefix-tokens 128 512 1024 2048 --suffix-tokens 16 --burst 8
 ```
 
----
-
-## 3. Empirical Results
-
-We evaluated F51 Darwin-X on an **NVIDIA GeForce RTX 5060 Ti (16 GB VRAM)** using realistic multi-agent burst scenarios.
-
-### 3.1. TTFT Speedup Under Bursts
-
-| Prefix Length | Burst Size ($N$) | Cold Baseline TTFT (ms) | F51 Darwin-X Warm TTFT (ms) | Speedup (Mean) | Speedup (Post-Trigger) |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| **128 tokens** | $10\text{ reqs}$ | $2326.4\text{ ms}$ | **$989.0\text{ ms}$** | **$+57.5\%$** | **$+55.9\%$** |
-| **256 tokens** | $20\text{ reqs}$ | $2137.1\text{ ms}$ | **$805.4\text{ ms}$** | **$+62.3\%$** | **$+63.7\%$** |
-| **512 tokens** | $50\text{ reqs}$ | $1462.9\text{ ms}$ | **$1160.8\text{ ms}$** | **$+20.6\%$** | **$+22.5\%$** |
-| **1024 tokens** | $50\text{ reqs}$ | $1324.4\text{ ms}$ | **$656.9\text{ ms}$** | **$+50.4\%$** | **$+51.8\%$** |
-
-> **Key Finding:** For a 1024-token shared prefix with 50 subagent requests, F51 Darwin-X reduces mean TTFT from **1324.4 ms to 656.9 ms**, achieving a **50.4% speedup** while maintaining 100% output fidelity.
-
----
-
-## 4. Conclusion & Future Work
-
-F51 Darwin-X proves that combining **constant-size SSM state replication** with **predictive burst detection** and **in-place test-time training** delivers state-of-the-art serving efficiency for bursty LLM workloads. Future work includes extending the Causal Bus to multi-node RDMA fabrics and retrofitting Multi-Token Prediction (MTP) drafters onto on-device edge runtimes.
+Recorded output: `research/btb/state_reuse_results.json`.
 
 ---
 
 ## References
 
-1. Birmiwal, S., & Bhat, A. (2026). *Biting the Bullet: Predictive Speculative KV Replication for Bursty LLM Inference*.
-2. DeepSeek AI. (2026). *DeepSeek-V3 Technical Report: Multi-Head Latent Attention and Auxiliary-Loss-Free Load Balancing*.
-3. Sun, Y., et al. (2026). *Test-Time Training with KV Binding Is Secretly Linear Attention*. ICML 2026.
-4. Gu, A., & Dao, T. (2024). *Mamba: Linear-Time Sequence Modeling with Selective State Spaces*.
+1. Gu, A., & Dao, T. (2024). *Mamba: Linear-Time Sequence Modeling with Selective State Spaces*.
+2. Dao, T., & Gu, A. (2024). *Transformers are SSMs: Generalized Models and Efficient Algorithms
+   Through Structured State Space Duality*.
+3. Kwon, W., et al. (2023). *Efficient Memory Management for Large Language Model Serving with
+   PagedAttention* (vLLM). SOSP.
+4. Zheng, L., et al. (2024). *SGLang: Efficient Execution of Structured Language Model Programs*.
+
+> Prior work on burst detection and speculative KV replication motivated this line of
+> investigation. That reference is deliberately omitted here pending verification of its
+> bibliographic details — it was cited in an earlier draft from an unverified summary, and
+> this report cites nothing it has not checked.
