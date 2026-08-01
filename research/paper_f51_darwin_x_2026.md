@@ -232,7 +232,7 @@ Supported:
 2. The SSD/attention cache split is **real and measurable**: 684 KiB constant vs 3.0 KiB/token.
 3. The `is_causal=True` pitfall is a **silent correctness bug** in cached hybrid inference and
    is worth documenting on its own.
-4. At 517M, prefix reuse under a parity gate delivers **4.3×–24×** on bursts of 50, growing
+4. At 517M, prefix reuse under a parity gate delivers **4.3× to >18×** on bursts of 50, growing
    with prefix length — and **nothing measurable at 153M**. Scale is the variable that decides
    whether this optimization is worth implementing at all.
 
