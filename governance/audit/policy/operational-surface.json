@@ -166,6 +166,10 @@
       "classification": "research"
     },
     {
+      "path": "research/btb/bench_warm_vs_suffix.py",
+      "classification": "research"
+    },
+    {
       "path": "research/btb/burst_client.py",
       "classification": "research"
     },
@@ -338,10 +342,6 @@
       "classification": "research"
     },
     {
-      "path": "research/graft_cross_family.py",
-      "classification": "research"
-    },
-    {
       "path": "research/gradient_attribution.py",
       "classification": "research"
     },
@@ -350,11 +350,11 @@
       "classification": "research"
     },
     {
-      "path": "research/grow_model.py",
+      "path": "research/graft_cross_family.py",
       "classification": "research"
     },
     {
-      "path": "research/reassemble_certified.py",
+      "path": "research/grow_model.py",
       "classification": "research"
     },
     {
@@ -443,6 +443,10 @@
     },
     {
       "path": "research/quick_validate_v2.py",
+      "classification": "research"
+    },
+    {
+      "path": "research/reassemble_certified.py",
       "classification": "research"
     },
     {

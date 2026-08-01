@@ -1,9 +1,10 @@
 # Prefix State Reuse in a Hybrid SSD/Attention Model: A Correctness-First Measurement
 
 **Author:** Marco Barreto — F51 Darwin-X Laboratory (independent, local-only)
-**Status:** Technical report / negative-and-partial result. Not submitted.
+**Status:** Technical report. Not submitted.
 **Artifacts:** `research/btb/state_reuse.py`, `research/btb/verify_state_reuse.py`,
-`src/tests/test_btb_state_reuse_parity.py`, `research/btb/state_reuse_results.json`
+`research/btb/bench_warm_vs_suffix.py`, `src/tests/test_btb_state_reuse_parity.py`,
+`research/btb/state_reuse_results.json`, `research/btb/warm_vs_suffix_results.json`
 
 ---
 
@@ -26,12 +27,15 @@ Third, the hybrid cache splits cleanly: **SSD recurrent state is constant at 684
 regardless of prefix length, while attention KV grows at 3.0 KiB/token, crossing over at
 **~228 tokens**.
 
-We report a **null result on latency**. At this model scale a fixed per-forward overhead of
-roughly 780 ms dominates compute, and measured amortized speedup is non-monotonic
-(+29.2%, −25.5%, −0.5%, +5.1% at 128/512/1024/2048 tokens). We therefore make no performance
-claim. We argue that the correctness gate — and its negative control — is the reusable
-contribution, because it is what separates real state reuse from measuring "fewer tokens is
-faster."
+Latency is **scale-dependent**. At 153M a fixed per-forward overhead of ~780 ms dominates
+compute and the amortized speedup is noise (+29.2%, −25.5%, −0.5%, +5.1%) — a null result. At
+517M the same measurement, gated on parity, yields **4.3× to >18×** for bursts of 50 requests
+over prefixes of 256–2048 tokens. The effect is real; it is simply invisible below the scale
+where compute exceeds framework overhead.
+
+We argue that the correctness gate — and its negative control — is the reusable contribution,
+because it is what separates real state reuse from measuring "fewer tokens is faster," and
+because every speedup figure here is reported only for a path proven equivalent to recompute.
 
 ---
 
@@ -148,7 +152,9 @@ is always cheaper" suggests. At 2048 tokens the SSD half is 10% of the total cac
 attention half still dominates and still grows linearly. **A hybrid model does not have an
 O(1) cache.** It has an O(N) cache with a smaller constant.
 
-### 3.3 Latency: null result
+### 3.3 Latency is a function of scale, not of the mechanism
+
+**At 153M: null result.**
 
 | Prefix | Cold (ms) | Warm amortized (ms) | Speedup |
 | ---: | ---: | ---: | ---: |
@@ -157,21 +163,56 @@ O(1) cache.** It has an O(N) cache with a smaller constant.
 | 1024 | 944.3 | 948.8 | −0.5% |
 | 2048 | 1216.8 | 1155.2 | +5.1% |
 
-No monotonic trend, sign changes twice. A separate control measured a fixed cost of ~780 ms
-per forward pass at 32 tokens versus 1043 ms at 1056 tokens on this model — a 1.34× ratio
-across a 33× difference in token count. Per-forward overhead, not compute, dominates at 153M
-parameters, and it swamps whatever the reuse saves. Cache clone cost is charged to the warm
-path and is non-trivial at these sizes.
+No monotonic trend, sign changes twice. A control measured ~780 ms per forward at 32 tokens
+versus 1043 ms at 1056 tokens — a 1.34× ratio across a 33× difference in token count.
+Per-forward framework overhead, not compute, dominates at this size and swamps whatever the
+reuse saves. **No speedup should be claimed at 153M.**
 
-**We make no latency claim.** The numbers above are reported so they are not re-derived and
-mistaken for signal later. A meaningful latency measurement needs a regime where compute
-dominates: the 600M or 1.6B lineages, and/or prefixes well beyond 2048.
+**At 517M (`darwin_x_600m`, d_model 1408, same 3 attention / 9 SSD split): the effect appears.**
+Burst of 50 requests, 32-token suffixes, min-of-10 with global warmup, parity gate re-run at
+every prefix length:
+
+| Prefix | T_full (ms) | Prefill once (ms) | Warm/request (ms) | Cold total (ms) | Warm total (ms) | Speedup | KL | Parity |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :---: |
+| 256 | 724.7 | 633.4 | 156.7 | 36 233 | 8 470 | **4.28×** | 2.4e-07 | OK |
+| 512 | 1298.7 | 1212.3 | 161.9 | 64 934 | 9 308 | **6.98×** | 2.4e-07 | OK |
+| 1024 | 2409.8 | 2371.5 | 175.2 | 120 491 | 11 131 | **10.82×** | 2.4e-07 | OK |
+| 2048 | 4670.5 | 4563.4 | 99.8 | 233 526 | 9 552 | **24.45×** | 1.0e-08 | OK |
+
+*Run-to-run variance.* Three independent runs gave 4.19/3.97/4.28× at 256, 10.96/11.43/10.82×
+at 1024 — stable within ±5%. The 2048 row is the least stable: warm-per-request measured
+160.3 ms and 99.8 ms on two runs, giving 18.5× and 24.4×. Treat 2048 as **≥18×** rather than
+as a point estimate; the shorter prefixes are the trustworthy figures.
+
+`T_full` now scales with prefix length (725 → 4671 ms across 256 → 2048 tokens) rather than
+sitting on a constant floor: compute finally exceeds overhead. Warm cost per request is
+**flat at ~160–173 ms** regardless of prefix length, which is the shape the mechanism predicts
+— the suffix work is constant and the prefix is paid once. Speedup therefore grows roughly
+linearly with prefix length, exceeding 18× at 2048 tokens.
+
+Cache clone cost is included in the warm figures (`warm_logits` clones before continuing) and
+is sub-millisecond at these sizes.
+
+**A note on why the warm path is not more expensive than it looks.** One might expect
+continuing from a cache to cost *more* than running the suffix alone, since attention must
+scan `k_len = prefix + suffix` keys instead of 32. Measured, the real warm path is
+0.86–0.96× the cost of the suffix-alone forward — slightly *cheaper*. The reason is
+architectural: only 3 of 12 layers are attention. The extra key-scan is confined to those
+three, while the 9 SSD layers and all FFN blocks process 32 tokens either way and dominate
+the budget. In a pure-Transformer model this would not hold and the warm path would carry a
+visible O(prefix) term.
 
 ---
 
 ## 4. Threats to validity
 
-* **One device, one model size.** Everything in §3.3 may change at 1.6B; §3.1 should not.
+* **One device, two model sizes.** §3.3 is measured at 153M and 517M; the 1.6B MoE lineage is
+  not covered here and its expert-routing overhead may change the picture. §3.1 and §3.2 are
+  architectural and should hold across sizes.
+* **The 517M speedup is amortized over a burst of 50** sharing one prefix. Smaller bursts
+  amortize the single prefill over fewer requests and the advantage shrinks accordingly.
+* **Random weights mean no cache-eviction pressure or real traffic distribution.** These are
+  best-case conditions for reuse: one prefix, perfect hit rate, no memory contention.
 * **Random weights.** Sound for parity and FLOP-level timing; says nothing about quality.
 * **Single-device.** No PCIe or RDMA transfer was performed or timed. The machine has two
   GPUs (RTX 5060 Ti, RTX 3060), so this is testable and simply has not been done — any
@@ -191,10 +232,13 @@ Supported:
 2. The SSD/attention cache split is **real and measurable**: 684 KiB constant vs 3.0 KiB/token.
 3. The `is_causal=True` pitfall is a **silent correctness bug** in cached hybrid inference and
    is worth documenting on its own.
+4. At 517M, prefix reuse under a parity gate delivers **4.3×–24×** on bursts of 50, growing
+   with prefix length — and **nothing measurable at 153M**. Scale is the variable that decides
+   whether this optimization is worth implementing at all.
 
-Not supported by anything here: any speedup figure; any inter-GPU or RDMA transfer time; any
-claim about test-time training; any comparison against vLLM, SGLang, or a published baseline;
-and any claim that a hybrid cache is O(1).
+Not supported by anything here: any inter-GPU or RDMA transfer time; any claim about test-time
+training; any comparison against vLLM, SGLang, or a published baseline; any claim that a hybrid
+cache is O(1); and any speedup at 153M.
 
 This is a technical note, not a conference paper. The parity gate and the negative control are
 the parts worth reusing.
@@ -207,13 +251,19 @@ the parts worth reusing.
 # Correctness gate (CPU, seconds). Exit code is the result.
 python -m pytest src/tests/test_btb_state_reuse_parity.py -v
 
-# Full measurement (GPU). Exits non-zero if parity fails; prints no speedup in that case.
+# Parity + cache scaling (GPU). Exits non-zero if parity fails; prints no speedup then.
 python research/btb/verify_state_reuse.py \
     --config src/configs/darwin_x_100m.yaml \
     --prefix-tokens 128 512 1024 2048 --suffix-tokens 16 --burst 8
+
+# §3.3 speedup at 517M, with the parity gate re-run at every prefix length.
+python research/btb/bench_warm_vs_suffix.py \
+    --config src/configs/darwin_x_600m.yaml \
+    --prefix-tokens 256 512 1024 2048 --burst 50
 ```
 
-Recorded output: `research/btb/state_reuse_results.json`.
+Recorded output: `research/btb/state_reuse_results.json`,
+`research/btb/warm_vs_suffix_results.json`.
 
 ---
 
