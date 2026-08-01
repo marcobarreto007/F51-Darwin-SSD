@@ -1076,6 +1076,73 @@ class _MoEForwardMixin:
         # Normalize: experts that got more tokens emit stronger bias
         return (usage / total).detach().clone()
 
+    def _dispatch_fine_experts(
+        self,
+        flat_x: torch.Tensor,
+        flat_weights: torch.Tensor,
+        flat_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        """Roteia tokens para os fine experts com UM sync GPU->CPU por camada.
+
+        O dispatch anterior iterava ``flat_indices.unique()`` em Python e, para
+        cada expert, fazia ``int(t.item())`` e ``torch.where(mask)``. Cada uma
+        dessas duas operacoes bloqueia ate a GPU terminar, entao o custo era
+        2 syncs x experts_ativos x camadas. Medido no 100M (32 experts,
+        12 camadas): 381 chamadas de ``nonzero`` por forward, 274 ms de CPU
+        contra 20.6 ms de CUDA.
+
+        Aqui os tokens sao ordenados por expert uma unica vez com ``argsort``
+        estavel; as fronteiras de cada expert saem de um unico ``.tolist()``.
+        A ordenacao estavel preserva a ordem (linha, slot) que ``torch.where``
+        produzia, de modo que cada expert recebe as mesmas linhas na mesma
+        ordem e a saida e bit a bit identica — ver
+        ``src/tests/test_moe_dispatch_equivalence.py``.
+        """
+        output = torch.zeros_like(flat_x)
+        num_tokens, top_k = flat_indices.shape
+        if num_tokens == 0:
+            return output
+
+        # Achata (token, slot) -> uma atribuicao por linha.
+        assignments = flat_indices.reshape(-1)
+        token_rows = torch.arange(
+            num_tokens, device=flat_indices.device
+        ).repeat_interleave(top_k)
+        assignment_weights = flat_weights.reshape(-1)
+
+        # Ordenacao ESTAVEL: dentro de um expert, mantem a ordem crescente de
+        # (linha, slot), identica a varredura row-major de torch.where.
+        order = torch.argsort(assignments, stable=True)
+        sorted_experts = assignments[order]
+        sorted_rows = token_rows[order]
+        sorted_weights = assignment_weights[order]
+
+        # Unico ponto de sincronizacao da camada: fronteiras dos grupos.
+        unique_experts, counts = torch.unique_consecutive(
+            sorted_experts, return_counts=True
+        )
+        expert_ids = unique_experts.tolist()
+        group_sizes = counts.tolist()
+
+        start = 0
+        for expert_idx, size in zip(expert_ids, group_sizes):
+            stop = start + size
+            rows = sorted_rows[start:stop]
+
+            # ── Nitro: lazy-restore cold expert from CPU ──
+            if self.nitro_enabled and self._expert_gpu.get(expert_idx) is None:
+                self._restore_expert(expert_idx, flat_x.device)
+
+            expert = self.fine_experts[expert_idx]
+            # ── NEUROENDOCRINE: pass system to expert for gating ──
+            expert_out = expert(flat_x[rows], self.neuroendocrine, expert_idx)
+            output = output.index_add(
+                0, rows, sorted_weights[start:stop].unsqueeze(-1) * expert_out
+            )
+            start = stop
+
+        return output
+
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, dict[str, Any]]:
         # ── PRE-FORWARD: Aplicar decisões hormonais acumuladas ──
         self._pre_forward_actions()
@@ -1088,29 +1155,13 @@ class _MoEForwardMixin:
         flat_x = x.reshape(-1, d_model)
         flat_weights = weights.reshape(-1, self.config.experts_per_token)
         flat_indices = indices.reshape(-1, self.config.experts_per_token)
-        output = torch.zeros_like(flat_x)
 
         # ── Lazy GPU device init (once) ──
         if not self._expert_gpu:
             self._init_expert_devices(x.device)
 
         # ── Group tokens by expert (batched dispatch) ──
-        # Only iterate experts that actually received tokens,
-        # avoiding 14 Python loop iterations when only 2-4 are active.
-        active_experts = flat_indices.unique()
-        for expert_idx_tensor in active_experts:
-            expert_idx = int(expert_idx_tensor.item())
-            expert = self.fine_experts[expert_idx]
-            mask = flat_indices == expert_idx
-
-            # ── Nitro: lazy-restore cold expert from CPU ──
-            if self.nitro_enabled and self._expert_gpu.get(expert_idx) is None:
-                self._restore_expert(expert_idx, x.device)
-
-            token_rows, slots = torch.where(mask)
-            # ── NEUROENDOCRINE: pass system to expert for gating ──
-            expert_out = expert(flat_x[token_rows], self.neuroendocrine, expert_idx)
-            output[token_rows] += flat_weights[token_rows, slots].unsqueeze(-1) * expert_out
+        output = self._dispatch_fine_experts(flat_x, flat_weights, flat_indices)
 
         if self.shared_experts:
             # Soma direta (nao media) -- DeepSeekMoE trata shared experts com
