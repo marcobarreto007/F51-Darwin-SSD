@@ -46,8 +46,15 @@ def plain_forward(ids):
     return model.norm(x)
 
 
-def mmin(fn, warmup=5, reps=10):
-    """min-of-N, mesma metodologia do bench_honest."""
+def mmin(fn, warmup=5, reps=30):
+    """Mediana de N repeticoes apos warmup.
+
+    min-of-N (o que o bench_honest usava) e fragil quando a distribuicao e
+    bimodal: pega a cauda otimista e esconde a instabilidade. Modelos rapidos
+    nesta maquina mostraram 38-172 ms para a MESMA carga de 32 tokens sob
+    min-of-10. A mediana com reps maior e mais honesta, e o dispersor abaixo
+    reporta quanto ainda oscila.
+    """
     for _ in range(warmup):
         fn()
     ts = []
@@ -56,12 +63,30 @@ def mmin(fn, warmup=5, reps=10):
         s, e = torch.cuda.Event(True), torch.cuda.Event(True)
         s.record(); fn(); e.record(); torch.cuda.synchronize()
         ts.append(s.elapsed_time(e))
-    return min(ts)
+    return statistics.median(ts)
+
+
+def mstats(fn, warmup=5, reps=30):
+    """Mediana + coeficiente de variacao robusto (IQR/mediana)."""
+    for _ in range(warmup):
+        fn()
+    ts = []
+    for _ in range(reps):
+        torch.cuda.synchronize()
+        s, e = torch.cuda.Event(True), torch.cuda.Event(True)
+        s.record(); fn(); e.record(); torch.cuda.synchronize()
+        ts.append(s.elapsed_time(e))
+    ts.sort()
+    med = statistics.median(ts)
+    q1 = ts[len(ts) // 4]
+    q3 = ts[(3 * len(ts)) // 4]
+    return med, (q3 - q1) / med if med > 0 else 0.0
 
 
 print(f"{'prefix':>7} {'T_full':>9} {'T_suffix':>10} {'WARM_real':>10} {'infl':>6} "
-      f"{'spd_bench':>10} {'spd_real':>9} {'paridade':>10}")
-print("-" * 85)
+      f"{'spd_bench':>10} {'spd_real':>9} {'IQR/med':>8} {'paridade':>9}")
+print("-" * 95)
+UNSTABLE = 0.15  # IQR/mediana acima disto -> numero nao publicavel
 
 rows = []
 for P in a.prefix_tokens:
@@ -76,10 +101,10 @@ for P in a.prefix_tokens:
     rep = parity(cold_logits(model, pre, suf), warm_logits(model, pc, P, suf))
     par_ok = rep.kl_div <= 1e-5 and rep.top1_agree
 
-    t_full = mmin(lambda: plain_forward(full))
-    t_prefix = mmin(lambda: plain_forward(pre))
-    t_suffix = mmin(lambda: plain_forward(suf))          # o que o bench_honest usa
-    t_warm = mmin(lambda: warm_logits(model, pc, P, suf))  # o custo warm REAL
+    t_full, d_full = mstats(lambda: plain_forward(full))
+    t_prefix, _ = mstats(lambda: plain_forward(pre))
+    t_suffix, d_suf = mstats(lambda: plain_forward(suf))    # o que o bench_honest usa
+    t_warm, d_warm = mstats(lambda: warm_logits(model, pc, P, suf))  # custo warm REAL
 
     N = a.burst
     cold_total = N * t_full
@@ -88,17 +113,23 @@ for P in a.prefix_tokens:
     spd_bench = cold_total / warm_bench
     spd_real = cold_total / warm_real
     infl = t_warm / t_suffix
+    dispersion = max(d_full, d_suf, d_warm)
+    stable = dispersion <= UNSTABLE
 
     print(f"{P:>7} {t_full:>8.1f}ms {t_suffix:>9.1f}ms {t_warm:>9.1f}ms "
-          f"{infl:>5.2f}x {spd_bench:>9.2f}x {spd_real:>8.2f}x {'OK' if par_ok else 'FAIL':>10}")
+          f"{infl:>5.2f}x {spd_bench:>9.2f}x {spd_real:>8.2f}x "
+          f"{dispersion:>7.1%} {('OK' if par_ok else 'FAIL') + ('' if stable else ' !'):>9}")
     rows.append(dict(prefix=P, t_full=t_full, t_prefix=t_prefix, t_suffix=t_suffix,
                      t_warm=t_warm, inflation=infl, spd_bench=spd_bench,
-                     spd_real=spd_real, parity_ok=par_ok, kl=rep.kl_div))
+                     spd_real=spd_real, parity_ok=par_ok, kl=rep.kl_div,
+                     dispersion=dispersion, stable=stable))
 
-print("\nT_suffix cresce com o prefixo?  (warm real DEVE crescer; sufixo-sozinho nao)")
-for r in rows:
-    print(f"  prefixo {r['prefix']:>5}:  T_suffix {r['t_suffix']:7.1f} ms   "
-          f"WARM_real {r['t_warm']:7.1f} ms")
+unstable = [r["prefix"] for r in rows if not r["stable"]]
+if unstable:
+    print(f"\n  ATENCAO: prefixos {unstable} com IQR/mediana > {UNSTABLE:.0%}. "
+          f"Nao publicar esses numeros como estimativa pontual.")
+else:
+    print(f"\n  Todas as linhas estaveis (IQR/mediana <= {UNSTABLE:.0%}).")
 
 out = ROOT / "research/btb/warm_vs_suffix_results.json"
 out.write_text(json.dumps({"model": cfg.model_name, "burst": a.burst, "rows": rows}, indent=2))
