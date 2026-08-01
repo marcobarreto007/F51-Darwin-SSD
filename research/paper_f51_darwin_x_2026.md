@@ -4,7 +4,7 @@
 **Status:** Technical report. Not submitted.
 **Artifacts:** `research/btb/state_reuse.py`, `research/btb/verify_state_reuse.py`,
 `research/btb/bench_warm_vs_suffix.py`, `src/tests/test_btb_state_reuse_parity.py`,
-`research/btb/state_reuse_results.json`, `research/btb/warm_vs_suffix_results.json`
+`research/btb/state_reuse_results.json`, `research/btb/warm_vs_suffix_600m.json`
 
 ---
 
@@ -263,7 +263,8 @@ python research/btb/bench_warm_vs_suffix.py \
 ```
 
 Recorded output: `research/btb/state_reuse_results.json`,
-`research/btb/warm_vs_suffix_results.json`.
+`research/btb/warm_vs_suffix_600m.json` (517M table above);
+`research/btb/warm_vs_suffix_hybrid_100m.json` holds the 153M warm-vs-suffix run.
 
 ---
 
