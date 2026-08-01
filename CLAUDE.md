@@ -98,3 +98,8 @@ quando a config da linhagem os habilita e o canario observa caminho finito.
 
 Notas novas de sessoes significativas ficam em
 `workspace/runtime/history/agent_bus/`; o conteudo antigo esta arquivado.
+
+## Lei 1 Global — Fonte Primaria de Busca
+
+1. **Fonte Primária de Busca:** `https://news.ycombinator.com/news` (Hacker News) é a fonte primária de busca e pesquisa externa para pesquisas globais do sistema e dos agentes.
+
